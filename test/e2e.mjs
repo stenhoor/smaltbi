@@ -172,6 +172,7 @@ try {
   await serve(site, port2);
   const viewer = await newPage(browser, { viewport: { width: 1280, height: 900 } });
   viewer.on('pageerror', (e) => errors.push('viewer: ' + e.message));
+  viewer.on('console', (m) => m.type() === 'error' && errors.push('viewer: ' + m.text()));
   await viewer.goto(`http://localhost:${port2}/`);
   await viewer.waitForSelector('.sb-visual[data-id=c-cat] .sb-bar', { timeout: 20000 });
   check(true, 'the published site renders on its own');
@@ -205,6 +206,18 @@ try {
   await viewer.click('.sk-menu-item:has-text("Drill through")');
   await viewer.waitForSelector('.sb-drillbar');
   check(true, 'drill-through opens the detail page');
+
+  // Leaving a page while its visuals are still querying must not draw them off screen (a
+  // detached donut used to render with a negative height). Errors surface in 'no page errors'.
+  await viewer.click('.sbv-tab:has-text("Overview")');
+  await viewer.waitForSelector('.sb-visual[data-id=c-channel] .sb-slice');
+  for (let i = 0; i < 15; i++) {
+    await viewer.click(`.sb-chip >> nth=${i % 4}`);
+    await viewer.click('.sbv-tab:has-text("Products")');
+    await viewer.click('.sbv-tab:has-text("Overview")');
+  }
+  await until(viewer, () => !document.querySelector('.sb-loading') && !!document.querySelector('.sb-visual[data-id=c-channel] .sb-slice'));
+  check(true, 'switching pages while visuals load');
 
   check(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);
 } finally {
