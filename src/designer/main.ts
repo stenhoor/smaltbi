@@ -64,14 +64,19 @@ class Designer {
   mountView(): void {
     const state = this.view?.state;
     this.canvasHost.replaceChildren();
+    // App-level state first: the Model branch below can return early.
     this.root.classList.toggle('sbd-model-mode', this.mode === 'model');
+    this.root.classList.toggle('sbd-preview', this.preview);
+    this.previewBar = undefined;
     if (this.mode === 'model' && !this.preview) {
-      // The report view stays alive (hidden) so switching back is instant.
+      // The diagram replaces the canvas. The report view object is kept only for its view state
+      // (current page); it is rebuilt when switching back to Report or Preview.
       this.modelView = new ModelView(this.modelContext());
       this.canvasHost.append(this.modelView.root);
       this.modelView.render();
       if (this.view) return;
     } else this.modelView = null;
+    this.view?.destroy();
     const host = h('div.sbd-report-host');
     if (this.mode === 'model' && !this.preview) host.hidden = true;
     this.canvasHost.append(host);
@@ -87,12 +92,11 @@ class Designer {
       state ? { page: state.page } : undefined,
     );
     this.view.selectedVisual = this.selected;
-    this.root.classList.toggle('sbd-preview', this.preview);
     if (this.preview) {
       const bar = viewerBar(this.view, { extra: [h('button.sbv-btn', { onclick: () => this.togglePreview() }, '✎ Back to editing')] });
       this.canvasHost.prepend(bar);
       this.previewBar = bar;
-    } else this.previewBar = undefined;
+    }
     this.view.render();
   }
 
@@ -247,6 +251,8 @@ class Designer {
   togglePreview(): void {
     this.preview = !this.preview;
     this.selected = null;
+    // A relationship selected in the diagram must not stay selected (and deletable) while hidden.
+    this.modelSel = null;
     this.mountView();
     this.renderAll();
   }
@@ -588,12 +594,12 @@ class Designer {
       } else if (mod && e.key.toLowerCase() === 'd' && this.selected) {
         e.preventDefault();
         this.duplicateVisual(this.selected);
-      } else if ((e.key === 'Delete' || e.key === 'Backspace') && this.mode === 'model' && this.modelSel?.kind === 'rel') {
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && this.mode === 'model' && !this.preview && this.modelSel?.kind === 'rel') {
         e.preventDefault();
         const i = this.modelSel.index;
         this.selectModel(null);
         this.store.change('model', (r) => (r.model.relationships = (r.model.relationships ?? []).filter((_, j) => j !== i)));
-      } else if (e.key === 'Escape' && this.mode === 'model') this.selectModel(null);
+      } else if (e.key === 'Escape' && this.mode === 'model' && !this.preview) this.selectModel(null);
       else if ((e.key === 'Delete' || e.key === 'Backspace') && this.selected) {
         e.preventDefault();
         this.deleteVisual(this.selected);

@@ -10,7 +10,7 @@ tests and the Chromium end-to-end test green.
 - 18 visuals: the core set and the advanced set.
 - Cross-filtering, slicers (synced), filters at three levels, drill down/up, drill-through, tooltips,
   focus mode, show data, CSV export, bookmarks, URL state.
-- Designer: fields, drag-and-drop canvas, wells, format/filters/SQL panels, custom SQL, data/model/
+- Designer: fields, drag-and-drop canvas, wells, format/filters/SQL panels, custom SQL, data, measure and
   theme dialogs, undo/redo, autosave, preview.
 - Model view: an ER diagram of tables and relationships (drag to relate, click to edit, auto layout,
   ambiguous-path warnings), with table details, measures, calculated columns and hierarchies.

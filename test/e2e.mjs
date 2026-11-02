@@ -100,7 +100,7 @@ try {
   await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4 && document.querySelectorAll('.sbd-mv-rel').length === 3);
   check((await page.locator('.sbd-mv-card').count()) === 4 && (await page.locator('.sbd-mv-rel').count()) === 3, 'model view shows 4 tables and 3 relationships');
   const rels = () => page.evaluate(() => window.smaltbi.store.report.model.relationships.map((r) => `${r.from}>${r.to}`));
-  // Select the stores relationship by its line, delete it, undo.
+  // Select the stores relationship by its line and delete it.
   const storeRel = (await rels()).indexOf('sales.store_id>stores.id');
   await page.locator(`.sbd-mv-rel[data-rel="${storeRel}"] .sbd-mv-hit`).dispatchEvent('pointerdown');
   await until(page, () => /sales\.store_id/.test(document.querySelector('.sbd-mv-relcard')?.textContent ?? ''));
@@ -126,6 +126,24 @@ try {
   await page.mouse.up();
   const layout = await page.evaluate(() => window.smaltbi.store.report.model.layout?.products);
   check(!!layout, `moving a table saves its position (${JSON.stringify(layout)})`);
+  // Preview from Model view (review on #5): Delete must not remove the relationship that was
+  // selected in the hidden diagram, and returning must bring back the diagram and both side panes.
+  const relsBefore = (await rels()).length;
+  await page.locator('.sbd-mv-rel[data-rel="0"] .sbd-mv-hit').dispatchEvent('pointerdown');
+  await until(page, () => !!document.querySelector('.sbd-mv-relcard'));
+  await page.click('.sbd-tbtn:has-text("Preview")');
+  await until(page, () => document.querySelector('.sbd-app')?.classList.contains('sbd-preview'));
+  await page.keyboard.press('Delete');
+  await page.keyboard.press('Backspace');
+  check((await rels()).length === relsBefore, `Delete in Preview leaves relationships alone (${relsBefore} → ${(await rels()).length})`);
+  await page.click('.sbd-tbtn:has-text("Edit")');
+  const panesBack = await until(page, () => {
+    const visible = (sel) => (document.querySelector(sel)?.getBoundingClientRect().width ?? 0) > 0;
+    return !document.querySelector('.sbd-app').classList.contains('sbd-preview') && visible('.sbd-left') && visible('.sbd-right') && !!document.querySelector('.sbd-mv-card');
+  });
+  check(panesBack, 'returning from Preview shows the diagram, the Fields pane and the side panel');
+  check(!(await page.locator('.sbv-bar').count()), 'the preview bar is gone after returning');
+
   // Back to the report: visuals still query through the relationships.
   await page.click('.sbd-seg-btn:has-text("Report")');
   await until(page, () => document.querySelectorAll('.sb-visual[data-id=c-cat] .sb-bar').length === 4);

@@ -1,5 +1,5 @@
-// Designer dialogs: data sources, the model (measures, columns, relationships, hierarchies),
-// themes, and publishing.
+// Designer dialogs: data sources, the measure / calculated column editor, themes, and publishing.
+// Relationships and hierarchies are edited in the model view (modelview.ts, modelpanel.ts).
 import type { CalcColumn, DataStep, Format, Measure, SqlValue, Theme } from '../core/types.js';
 import { formatter } from '../core/format.js';
 import { compileQuery } from '../core/compile.js';
