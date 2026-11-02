@@ -1,0 +1,108 @@
+{
+  "smaltbi": 1,
+  "name": "Smalt Coffee & Tea — Sales",
+  "description": "Sample report over a small retail star schema: sales, customers, products, stores. Sample data only.",
+  "data": {
+    "database": { "name": "sample-sales", "storage": "memory" },
+    "steps": [
+      { "import": "data/products.csv", "table": "products" },
+      { "import": "data/stores.csv", "table": "stores" },
+      { "import": "data/customers.csv", "table": "customers" },
+      { "import": "data/sales.csv", "table": "sales" }
+    ]
+  },
+  "model": {
+    "relationships": [
+      { "from": "sales.customer_id", "to": "customers.id" },
+      { "from": "sales.product_id", "to": "products.id" },
+      { "from": "sales.store_id", "to": "stores.id" }
+    ],
+    "columns": [
+      { "table": "sales", "name": "Year", "sql": "strftime('%Y', sales.order_date)", "type": "text" },
+      { "table": "sales", "name": "Quarter", "sql": "'Q' || ((CAST(strftime('%m', sales.order_date) AS INTEGER) + 2) / 3)", "type": "text" },
+      { "table": "sales", "name": "Year Quarter", "sql": "[Year] || ' ' || [Quarter]", "type": "text" },
+      { "table": "sales", "name": "Month", "sql": "strftime('%Y-%m', sales.order_date)", "type": "date", "format": "month" },
+      { "table": "sales", "name": "Line Revenue", "sql": "sales.quantity * sales.unit_price * (1 - sales.discount)", "type": "number", "format": "currency" }
+    ],
+    "measures": [
+      { "table": "sales", "name": "Revenue", "sql": "SUM([Line Revenue])", "format": { "currency": "USD", "decimals": 0 } },
+      { "table": "sales", "name": "Cost", "sql": "SUM(sales.quantity * products.unit_cost)", "format": { "currency": "USD", "decimals": 0 } },
+      { "table": "sales", "name": "Gross Margin", "sql": "[Revenue] - [Cost]", "format": { "currency": "USD", "decimals": 0 } },
+      { "table": "sales", "name": "Margin %", "sql": "([Revenue] - [Cost]) / NULLIF([Revenue], 0)", "format": "percent" },
+      { "table": "sales", "name": "Orders", "sql": "COUNT(*)", "format": "integer" },
+      { "table": "sales", "name": "Units", "sql": "SUM(sales.quantity)", "format": "integer" },
+      { "table": "sales", "name": "Active Customers", "sql": "COUNT(DISTINCT sales.customer_id)", "format": "integer" },
+      { "table": "sales", "name": "Avg Order Value", "sql": "[Revenue] / NULLIF([Orders], 0)", "format": "currency" },
+      { "table": "sales", "name": "Revenue 2025", "sql": "SUM([Line Revenue]) FILTER (WHERE sales.order_date >= '2025-01-01')", "format": { "currency": "USD", "decimals": 0 } },
+      { "table": "sales", "name": "Revenue 2024", "sql": "SUM([Line Revenue]) FILTER (WHERE sales.order_date < '2025-01-01')", "format": { "currency": "USD", "decimals": 0 } },
+      { "table": "sales", "name": "Discount Rate", "sql": "SUM(sales.quantity * sales.unit_price * sales.discount) / NULLIF(SUM(sales.quantity * sales.unit_price), 0)", "format": "percent" }
+    ],
+    "hierarchies": [{ "table": "sales", "name": "Date", "levels": ["Year", "Quarter", "Month"] }],
+    "tables": {
+      "sales": { "label": "Sales", "columns": { "id": { "hidden": true }, "customer_id": { "hidden": true }, "product_id": { "hidden": true }, "store_id": { "hidden": true }, "unit_price": { "format": "currency" }, "discount": { "format": "percent" } } },
+      "customers": { "label": "Customers", "columns": { "id": { "hidden": true } } },
+      "products": { "label": "Products", "columns": { "id": { "hidden": true }, "list_price": { "format": "currency" }, "unit_cost": { "format": "currency" } } },
+      "stores": { "label": "Stores", "columns": { "id": { "hidden": true } } }
+    }
+  },
+  "theme": "smalt",
+  "pages": [
+    {
+      "id": "overview",
+      "name": "Overview",
+      "visuals": [
+        { "id": "title", "type": "text", "layout": { "x": 0, "y": 0, "w": 6, "h": 1 }, "fields": {}, "options": { "text": "# Sales overview\nSmalt Coffee & Tea · all channels" } },
+        { "id": "s-region", "type": "slicer", "layout": { "x": 6, "y": 0, "w": 6, "h": 1 }, "fields": { "field": ["stores.region"] }, "options": { "style": "buttons", "sync": true } },
+        { "id": "k-rev", "type": "card", "layout": { "x": 0, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Revenue 2025"], "target": ["sales.Revenue 2024"], "trend": ["sales.Month"] }, "options": { "caption": "Revenue 2025 (to date)" } },
+        { "id": "k-margin", "type": "card", "layout": { "x": 3, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Margin %"], "trend": ["sales.Month"] }, "options": { "caption": "Gross margin" } },
+        { "id": "k-orders", "type": "card", "layout": { "x": 6, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Orders"], "trend": ["sales.Month"] } },
+        { "id": "k-aov", "type": "card", "layout": { "x": 9, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Avg Order Value"], "trend": ["sales.Month"] } },
+        { "id": "c-date", "type": "column", "title": "Revenue over time", "subtitle": "Double-click a column to drill down", "layout": { "x": 0, "y": 3, "w": 8, "h": 5 }, "fields": { "category": ["sales.Date"], "values": ["sales.Revenue"] }, "options": { "labels": false } },
+        { "id": "c-channel", "type": "donut", "title": "Revenue by channel", "layout": { "x": 8, "y": 3, "w": 4, "h": 5 }, "fields": { "category": ["stores.channel"], "values": ["sales.Revenue"] }, "options": { "labels": true } },
+        { "id": "c-cat", "type": "bar", "title": "Revenue by category", "layout": { "x": 0, "y": 8, "w": 4, "h": 5 }, "fields": { "category": ["products.category", "products.subcategory", "products.name"], "values": ["sales.Revenue"] }, "options": { "labels": true } },
+        { "id": "c-combo", "type": "combo", "title": "Revenue and margin by month", "layout": { "x": 4, "y": 8, "w": 8, "h": 5 }, "fields": { "category": ["sales.Month"], "columns": ["sales.Revenue"], "lines": ["sales.Margin %"] } }
+      ]
+    },
+    {
+      "id": "products",
+      "name": "Products",
+      "visuals": [
+        { "id": "s-cat", "type": "slicer", "title": "Category", "layout": { "x": 0, "y": 0, "w": 3, "h": 2 }, "fields": { "field": ["products.category"] }, "options": { "style": "dropdown" } },
+        { "id": "s-year", "type": "slicer", "title": "Year", "layout": { "x": 3, "y": 0, "w": 3, "h": 2 }, "fields": { "field": ["sales.Year"] }, "options": { "style": "buttons", "single": true } },
+        { "id": "k-units", "type": "card", "layout": { "x": 6, "y": 0, "w": 3, "h": 2 }, "fields": { "values": ["sales.Units"] } },
+        { "id": "k-disc", "type": "card", "layout": { "x": 9, "y": 0, "w": 3, "h": 2 }, "fields": { "values": ["sales.Discount Rate"] }, "options": { "goodWhen": "down" } },
+        { "id": "p-tree", "type": "treemap", "title": "Revenue by subcategory", "layout": { "x": 0, "y": 2, "w": 5, "h": 5 }, "fields": { "category": ["products.subcategory", "products.name"], "values": ["sales.Revenue"] } },
+        { "id": "p-scatter", "type": "scatter", "title": "Units vs. margin by product", "subtitle": "Bubble size: revenue", "layout": { "x": 5, "y": 2, "w": 7, "h": 5 }, "fields": { "details": ["products.name"], "legend": ["products.category"], "x": ["sales.Units"], "y": ["sales.Margin %"], "size": ["sales.Revenue"] } },
+        { "id": "p-matrix", "type": "matrix", "title": "Revenue by category and year", "layout": { "x": 0, "y": 7, "w": 7, "h": 6 }, "fields": { "rows": ["products.category", "products.subcategory"], "columns": ["sales.Year"], "values": ["sales.Revenue"] }, "options": { "format": "heat" } },
+        { "id": "p-table", "type": "table", "title": "Products", "layout": { "x": 7, "y": 7, "w": 5, "h": 6 }, "fields": { "columns": ["products.name"], "values": ["sales.Units", "sales.Revenue", "sales.Margin %"] }, "options": { "format": "bars" } }
+      ]
+    },
+    {
+      "id": "customers",
+      "name": "Customers & stores",
+      "visuals": [
+        { "id": "cu-country", "type": "bar", "title": "Revenue by customer country", "subtitle": "Right-click a bar to drill through", "layout": { "x": 0, "y": 0, "w": 4, "h": 6 }, "fields": { "category": ["customers.country"], "values": ["sales.Revenue"] } },
+        { "id": "cu-heat", "type": "heatmap", "title": "Revenue by segment and quarter", "layout": { "x": 4, "y": 0, "w": 8, "h": 3 }, "fields": { "rows": ["customers.segment"], "columns": ["sales.Year Quarter"], "values": ["sales.Revenue"] } },
+        { "id": "cu-wf", "type": "waterfall", "title": "Revenue build-up by store region", "layout": { "x": 4, "y": 3, "w": 4, "h": 3 }, "fields": { "category": ["stores.region"], "values": ["sales.Revenue"] }, "options": { "labels": false } },
+        { "id": "cu-gauge", "type": "gauge", "title": "2025 vs. 2024 revenue", "layout": { "x": 8, "y": 3, "w": 4, "h": 3 }, "fields": { "values": ["sales.Revenue 2025"], "target": ["sales.Revenue 2024"] } },
+        { "id": "cu-table", "type": "table", "title": "Top customers", "layout": { "x": 0, "y": 6, "w": 12, "h": 6 }, "fields": { "columns": ["customers.name", "customers.country", "customers.segment"], "values": ["sales.Orders", "sales.Revenue", "sales.Avg Order Value"] }, "limit": 50, "options": { "format": "bars" } }
+      ]
+    },
+    {
+      "id": "country",
+      "name": "Country detail",
+      "drillthrough": ["customers.country"],
+      "visuals": [
+        { "id": "d-title", "type": "text", "layout": { "x": 0, "y": 0, "w": 6, "h": 1 }, "fields": {}, "options": { "text": "# Country detail\nReach this page by drilling through from a country." } },
+        { "id": "d-rev", "type": "card", "layout": { "x": 0, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Revenue"], "trend": ["sales.Month"] } },
+        { "id": "d-cust", "type": "card", "layout": { "x": 4, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Active Customers"] } },
+        { "id": "d-aov", "type": "card", "layout": { "x": 8, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Avg Order Value"] } },
+        { "id": "d-line", "type": "area", "title": "Revenue by month and segment", "layout": { "x": 0, "y": 3, "w": 7, "h": 5 }, "fields": { "category": ["sales.Month"], "series": ["customers.segment"], "values": ["sales.Revenue"] }, "options": { "stack": "stacked" } },
+        { "id": "d-table", "type": "table", "title": "Customers", "layout": { "x": 7, "y": 3, "w": 5, "h": 5 }, "fields": { "columns": ["customers.name", "customers.city"], "values": ["sales.Revenue"] } }
+      ]
+    }
+  ],
+  "bookmarks": [
+    { "name": "Europe only", "state": { "page": "overview", "selections": { "s-region": [{ "field": "stores.region", "op": "in", "values": ["Europe"] }] } } }
+  ]
+}

@@ -1,0 +1,18 @@
+id,name,city,country,region,channel
+1,New York Roastery,New York,United States,North America,Store
+2,Seattle Roastery,Seattle,United States,North America,Store
+3,Austin Market,Austin,United States,North America,Store
+4,Chicago Station,Chicago,United States,North America,Store
+5,Toronto Roastery,Toronto,Canada,North America,Store
+6,Vancouver Corner,Vancouver,Canada,North America,Store
+7,Berlin Corner,Berlin,Germany,Europe,Store
+8,Munich Market,Munich,Germany,Europe,Store
+9,Paris Station,Paris,France,Europe,Store
+10,Lyon Station,Lyon,France,Europe,Store
+11,London Roastery,London,United Kingdom,Europe,Store
+12,Manchester Corner,Manchester,United Kingdom,Europe,Store
+13,Tokyo Roastery,Tokyo,Japan,Asia Pacific,Store
+14,Osaka Corner,Osaka,Japan,Asia Pacific,Store
+15,Sydney Roastery,Sydney,Australia,Asia Pacific,Store
+16,Melbourne Station,Melbourne,Australia,Asia Pacific,Store
+17,Online Shop,Online,Online,Online,Online

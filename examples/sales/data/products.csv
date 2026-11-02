@@ -1,0 +1,29 @@
+id,name,category,subcategory,list_price,unit_cost
+1,Ethiopia Yirgacheffe,Coffee,Beans,15.56,8.61
+2,Colombia Huila,Coffee,Beans,24.38,11.13
+3,Sumatra Mandheling,Coffee,Beans,10.82,6.53
+4,House Espresso,Coffee,Beans,18.17,9.07
+5,Decaf Swiss Water,Coffee,Beans,19.87,10.41
+6,Morning Blend,Coffee,Ground,14.88,9.55
+7,French Roast,Coffee,Ground,21.26,13.07
+8,Breakfast Ground,Coffee,Ground,9.67,5.12
+9,Sencha,Tea,Green,21.84,11.46
+10,Gyokuro,Tea,Green,17.35,9.28
+11,Dragon Well,Tea,Green,14.35,6.52
+12,Earl Grey,Tea,Black,13.07,6.04
+13,Assam,Tea,Black,10.88,6.55
+14,Darjeeling,Tea,Black,13.65,6.21
+15,Chamomile,Tea,Herbal,12.94,7.27
+16,Rooibos,Tea,Herbal,9.51,6.13
+17,Peppermint,Tea,Herbal,17.37,10.3
+18,Pour-over Kit,Equipment,Brewers,89.46,43.41
+19,French Press,Equipment,Brewers,79.65,45.44
+20,Moka Pot,Equipment,Brewers,31.45,19.27
+21,Cold Brew Jar,Equipment,Brewers,94.01,60.7
+22,Hand Grinder,Equipment,Grinders,48.1,22.55
+23,Burr Grinder,Equipment,Grinders,114.28,58.27
+24,Ceramic Mug,Accessories,Cups,14.64,9.18
+25,Travel Tumbler,Accessories,Cups,12.79,7.74
+26,Glass Cup,Accessories,Cups,13.2,7.55
+27,Paper Filters,Accessories,Filters,16.63,7.81
+28,Steel Filter,Accessories,Filters,7.39,4.14
