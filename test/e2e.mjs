@@ -171,7 +171,9 @@ try {
   check(o1 !== o2, `slicer filters other visuals (${o1} → ${o2})`);
   check(viewer.url().includes('#s='), 'view state is in the URL');
 
-  // Drill down on the date column chart.
+  // Drill down on the date column chart, once the slicer's refreshes have finished (a redraw
+  // between the two clicks of a double-click would swallow it).
+  await until(viewer, () => !document.querySelector('.sb-loading'));
   await viewer.dblclick('.sb-visual[data-id=c-date] .sb-bar >> nth=0');
   await until(viewer, () => document.querySelector('.sb-visual[data-id=c-date] .sb-drill-level')?.textContent === 'Quarter');
   const level = await viewer.locator('.sb-visual[data-id=c-date] .sb-drill-level').textContent();
@@ -180,6 +182,7 @@ try {
   // Drill-through.
   await viewer.click('.sbv-tab:has-text("Customers")');
   await viewer.waitForSelector('.sb-visual[data-id=cu-country] .sb-bar');
+  await until(viewer, () => !document.querySelector('.sb-loading'));
   await viewer.click('.sb-visual[data-id=cu-country] .sb-bar >> nth=0', { button: 'right' });
   await viewer.click('.sk-menu-item:has-text("Drill through")');
   await viewer.waitForSelector('.sb-drillbar');
