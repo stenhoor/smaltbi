@@ -27,7 +27,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - Relevant values: dimensions filter each other through the fact table (slicers list only values
   with data under the other selections).
 - Fixed page sizes per page (16:9, 4:3, Letter, A4), scaled to fit; responsive stays the default.
-- Extract the shared kit into its own package (`smaltkit`), used by smaltui and smaltbi.
+- Extract the shared kit into the `smaltkit` repository and package, used by smaltui and smaltbi
+  ([ADR 0005](adr/0005-smaltkit-and-smaltbrand.md)).
 - Measure editor with completion and syntax highlighting (shared editor kit from smaltui).
 - Field wells: drag to reorder, drag between wells, multi-select; field search with keyboard.
 - Conditional formatting rules (by value, by measure, icons) for tables, matrices and cards.
@@ -50,7 +51,9 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - Credentials: reports declare connections that need them; the viewer asks the reader and keeps
   them in memory only.
 - Publishing: multi-report sites (index page, shared themes and data), optional "Edit a copy"
-  (ships the designer), a small removable "Made with smaltbi" mark.
+  (ships the designer), a small removable "Made with smaltbi" mark (the smaltbrand badge).
+- Adopt smaltbrand once it exists: the Smalt theme's colors and fonts, the designer logo and the
+  visual-type icons come from its tokens and icon set.
 - Role-playing dimensions (a dimension related twice, e.g. order date and ship date).
 - Many-to-many through bridge tables; both-direction filtering where explicitly enabled.
 
