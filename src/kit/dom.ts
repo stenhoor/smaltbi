@@ -1,17 +1,19 @@
 // Tiny DOM toolkit: element builder, menus, dialogs, toasts, downloads. No framework.
 // Shared-kit candidate (docs/adr/0003-shared-kit.md).
 
-type Attrs = Record<string, string | number | boolean | null | undefined | EventListener>;
+type Attrs = Record<string, unknown>;
 type Child = Node | string | null | undefined | false;
 
 /** h('button.primary', { onclick }, 'Save') */
-export function h<K extends keyof HTMLElementTagNameMap>(sel: K | string, attrs: Attrs = {}, ...children: (Child | Child[])[]): HTMLElementTagNameMap[K] {
+export function h<K extends keyof HTMLElementTagNameMap>(sel: K, attrs?: Attrs, ...children: (Child | Child[])[]): HTMLElementTagNameMap[K];
+export function h(sel: string, attrs?: Attrs, ...children: (Child | Child[])[]): HTMLElement;
+export function h(sel: string, attrs: Attrs = {}, ...children: (Child | Child[])[]): HTMLElement {
   const [tag, ...classes] = sel.split('.');
-  const el = document.createElement(tag || 'div') as HTMLElementTagNameMap[K];
+  const el = document.createElement(tag || 'div');
   if (classes.length) el.className = classes.join(' ');
   for (const [k, v] of Object.entries(attrs)) {
     if (v === null || v === undefined || v === false) continue;
-    if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v as EventListener);
     else if (k === 'class') el.className += (el.className ? ' ' : '') + v;
     else if (k === 'html') el.innerHTML = String(v);
     else if (k in el && typeof v !== 'string') (el as unknown as Record<string, unknown>)[k] = v;
