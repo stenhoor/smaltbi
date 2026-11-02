@@ -17,8 +17,17 @@ tests and the Chromium end-to-end test green.
 
 ## 0.2: Depth in the model and the designer
 
-- Time intelligence helpers as SQL templates: previous period, year-to-date, same period last year,
-  rolling N (generated measures over a date column; no new language).
+Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
+
+- Quick measures for time intelligence, written as plain SQL: previous period, year-to-date, same
+  period last year, rolling N (generated from a date column; no new language).
+- "Add date table" in the model view (calendar table, relationship, Year › Quarter › Month › Day).
+- Unambiguous models: flag tables reachable by more than one active path; extra relationships
+  must be inactive; the compiler errors instead of guessing.
+- Relevant values: dimensions filter each other through the fact table (slicers list only values
+  with data under the other selections).
+- Fixed page sizes per page (16:9, 4:3, Letter, A4), scaled to fit; responsive stays the default.
+- Extract the shared kit into its own package (`smaltkit`), used by smaltui and smaltbi.
 - Measure editor with completion and syntax highlighting (shared editor kit from smaltui).
 - Field wells: drag to reorder, drag between wells, multi-select; field search with keyboard.
 - Conditional formatting rules (by value, by measure, icons) for tables, matrices and cards.
@@ -34,8 +43,14 @@ tests and the Chromium end-to-end test green.
 - Plugin loading by URL (with integrity hashes) in designer and viewer; plugin manifest; the
   "plugin" gallery group.
 - A maps plugin (choropleth and points, GeoJSON/TopoJSON shapes as data files).
-- Data: refresh button and freshness indicator for linked sources; incremental reload; materialized
-  views as a "cache this table" switch; parameters (what-if values usable in measures).
+- Data: refresh button and freshness indicator; optional auto-refresh interval per report;
+  incremental reload; materialized views as a "cache this table" switch; parameters (what-if
+  values usable in measures).
+- Large files are imported into OPFS by default (link in place stays available).
+- Credentials: reports declare connections that need them; the viewer asks the reader and keeps
+  them in memory only.
+- Publishing: multi-report sites (index page, shared themes and data), optional "Edit a copy"
+  (ships the designer), a small removable "Made with smaltbi" mark.
 - Role-playing dimensions (a dimension related twice, e.g. order date and ship date).
 - Many-to-many through bridge tables; both-direction filtering where explicitly enabled.
 
@@ -49,7 +64,7 @@ tests and the Chromium end-to-end test green.
 
 ## 0.5: Reporting polish
 
-- PDF/print layouts (page size, headers, footers) and PNG export.
+- PDF/print layouts (page size, headers, footers) and PDF/PNG export of the current page from the viewer.
 - Report-level tooltips pages; custom tooltip fields.
 - Theme gallery, theme from a brand color, contrast checks (WCAG AA) in the theme editor.
 - Accessibility: keyboard navigation of marks, screen-reader summaries, "show as table" everywhere.
@@ -58,6 +73,6 @@ tests and the Chromium end-to-end test green.
 ## 1.0
 
 - Stable report format with migrations from earlier versions.
-- Shared kit published (with smaltui), API docs for plugins, a documentation site with the sample
+- Shared kit (`smaltkit`) at 1.0, API docs for plugins, a documentation site with the sample
   reports live.
 - smaltdb 1.0 as the engine.
