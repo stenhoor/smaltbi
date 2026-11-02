@@ -143,8 +143,10 @@ function render(ctx: RenderContext, p: Prepared, o: ChartOpts): void {
     const left = Math.min(W * 0.4, Math.max(...catLabels.map((l) => textWidth(l, fs))) + 10);
     const top = 4;
     const bottom = 20;
-    const right = 12 + (o.labels ? 36 : 0);
-    const x = linear(ext[0][0], ext[0][1], left, W - right, { count: Math.max(2, Math.floor((W - left) / 90)) });
+    const count = Math.max(2, Math.floor((W - left) / 90));
+    const lastTick = linear(ext[0][0], ext[0][1], 0, 1, { count }).ticks.at(-1) ?? 0;
+    const right = Math.max(12 + (o.labels ? 40 : 0), textWidth(fmtAxis(lastTick), fs) / 2 + 4);
+    const x = linear(ext[0][0], ext[0][1], left, W - right, { count });
     const y = band(cats.length, top, H - bottom, 0.25);
     for (const t of x.ticks) svg += `<line class="sb-gridline" x1="${r2(x(t))}" x2="${r2(x(t))}" y1="${top}" y2="${H - bottom}"/><text class="sb-tick" x="${r2(x(t))}" y="${H - 6}" text-anchor="middle">${esc(fmtAxis(t))}</text>`;
     const bars = series.filter((s) => s.kind === 'bar');
@@ -176,7 +178,18 @@ function render(ctx: RenderContext, p: Prepared, o: ChartOpts): void {
     const right = yB ? Math.max(...yB.ticks.map((t) => textWidth(fmtAxis2(t), fs))) + 12 : 10;
     const top = 8;
     const maxLabel = Math.max(...catLabels.map((l) => textWidth(l, fs)));
-    const xb = band(cats.length, left, W - right, series.some((s) => s.kind === 'bar') ? 0.25 : 0, series.some((s) => s.kind === 'bar') ? 0.125 : 0.5);
+    const hasBars = series.some((s) => s.kind === 'bar');
+    let xb = band(cats.length, left, W - right, hasBars ? 0.25 : 0, hasBars ? 0.125 : 0.5);
+    // Very few categories: keep bars from becoming slabs.
+    const maxBar = 72 * Math.max(1, series.filter((s) => s.kind === 'bar').length * (o.stack === 'none' ? 0.6 : 0.4));
+    if (hasBars && xb.bandwidth > maxBar) {
+      const shift = (xb.bandwidth - maxBar) / 2;
+      const base = xb;
+      const nb = ((i: number) => base(i) + shift) as typeof xb;
+      nb.step = base.step;
+      nb.bandwidth = maxBar;
+      xb = nb;
+    }
     const rotate = maxLabel > xb.step * 0.95 && cats.length > 1;
     const bottom = rotate ? Math.min(H * 0.35, Math.min(maxLabel, 90) * 0.7 + 14) : 20;
     const y = linear(yA.domain[0], yA.domain[1], H - bottom, top, { nice: false, zero: false });

@@ -41,7 +41,7 @@ test('SQL quoting', () => {
 
 test('themes compile to scoped CSS variables, with dark mode', async () => {
   const css = themeCss(BUILTIN_THEMES.smalt!);
-  assert.match(css, /\.sb-report\{--sb-bg:#f4f6f9;/);
+  assert.match(css, /\.sb-themed\{--sb-bg:#f4f6f9;/);
   assert.match(css, /--sb-c11:/);
   assert.match(css, /prefers-color-scheme: dark/);
   const t = mergeTheme(BUILTIN_THEMES.smalt!, { name: 'Mine', colors: { accent: '#ff0000' } });

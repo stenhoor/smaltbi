@@ -51,7 +51,7 @@ export class ReportView {
     this.state = { page: state?.page ?? this.report.pages.find((p) => !p.hidden)?.id ?? this.report.pages[0]?.id ?? '', ...state } as ViewState;
     if (!this.report.pages.some((p) => p.id === this.state.page)) this.state.page = this.report.pages[0]?.id ?? '';
     this.styleEl = h('style');
-    this.root = h('div.sb-report', { 'data-mode-ui': opts.mode });
+    this.root = h('div.sb-themed.sb-report', { 'data-mode-ui': opts.mode });
     this.tooltip = h('div.sb-tooltip', { role: 'tooltip' });
     host.replaceChildren(this.styleEl, this.root, this.tooltip);
     this.applyTheme();
@@ -87,6 +87,7 @@ export class ReportView {
     this.state = { ...s };
     if (!this.report.pages.some((p) => p.id === this.state.page)) this.state.page = this.report.pages[0]?.id ?? '';
     this.render();
+    this.emit();
   }
 
   private emit(): void {
@@ -136,7 +137,7 @@ export class ReportView {
       {
         'data-id': v.id,
         'data-type': v.type,
-        style: `grid-column:${v.layout.x + 1} / span ${v.layout.w};grid-row:${v.layout.y + 1} / span ${v.layout.h}`,
+        style: `grid-column:${v.layout.x + 1} / span ${v.layout.w};grid-row:${v.layout.y + 1} / span ${v.layout.h};--h:${v.layout.h}`,
       },
       header,
       body,
@@ -435,12 +436,27 @@ export class ReportView {
     else delete sel[v.id];
     this.state.selections = sel;
     for (const other of this.page.visuals) {
-      if (other.id === v.id) {
-        const rt = this.runtimes.get(v.id);
-        if (rt) this.draw(v, rt); // highlight
-      } else void this.refresh(other.id);
+      if (other.id === v.id) this.restyle(v);
+      else void this.refresh(other.id);
     }
     this.emit();
+  }
+
+  /** Update selection highlighting in place (no re-render: keeps hover and double-click working). */
+  private restyle(v: Visual): void {
+    const rt = this.runtimes.get(v.id);
+    if (!rt?.data) return;
+    const def = visualDef(v.type);
+    if (def?.selfInteractive) return this.draw(v, rt);
+    const tupleSel = this.state.selections?.[v.id]?.find((f) => f.op === 'tuples');
+    const keys = tupleSel ? new Set((tupleSel.tuples ?? []).map((t) => JSON.stringify(t.map(norm)))) : null;
+    const data = rt.data;
+    rt.body.querySelectorAll('[data-row]').forEach((el) => {
+      const row = Number(el.getAttribute('data-row'));
+      const on = keys ? keys.has(JSON.stringify(this.rowTuple(data, row).map(norm))) : null;
+      el.classList.toggle('sb-dim', on === false);
+      el.classList.toggle('sb-on', on === true);
+    });
   }
 
   drillDown(v: Visual, row: number): void {

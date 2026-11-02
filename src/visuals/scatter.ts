@@ -63,7 +63,9 @@ registerVisual({
     const ytmp = linear(Math.min(...fin(ys)), Math.max(...fin(ys)), 0, 1, { zero, count: Math.max(2, Math.floor(H / 50)) });
     const left = Math.max(...ytmp.ticks.map((t) => textWidth(fy(t), 11))) + 12;
     const bottom = 34;
-    const x = linear(Math.min(...fin(xs)), Math.max(...fin(xs)), left + 6, W - 10, { zero, count: Math.max(2, Math.floor(W / 90)) });
+    const xcount = Math.max(2, Math.floor(W / 90));
+    const xLast = linear(Math.min(...fin(xs)), Math.max(...fin(xs)), 0, 1, { zero, count: xcount }).ticks.at(-1) ?? 0;
+    const x = linear(Math.min(...fin(xs)), Math.max(...fin(xs)), left + 6, W - Math.max(10, textWidth(fx(xLast), 11) / 2 + 2), { zero, count: xcount });
     const y = linear(ytmp.domain[0], ytmp.domain[1], H - bottom, 8, { nice: false, zero: false });
     let svg = '';
     for (const t of ytmp.ticks) svg += `<line class="sb-gridline" x1="${left}" x2="${W - 10}" y1="${r2(y(t))}" y2="${r2(y(t))}"/><text class="sb-tick" x="${left - 6}" y="${r2(y(t) + 4)}" text-anchor="end">${esc(fy(t))}</text>`;

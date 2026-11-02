@@ -85,7 +85,7 @@
         { "id": "cu-heat", "type": "heatmap", "title": "Revenue by segment and quarter", "layout": { "x": 4, "y": 0, "w": 8, "h": 3 }, "fields": { "rows": ["customers.segment"], "columns": ["sales.Year Quarter"], "values": ["sales.Revenue"] } },
         { "id": "cu-wf", "type": "waterfall", "title": "Revenue build-up by store region", "layout": { "x": 4, "y": 3, "w": 4, "h": 3 }, "fields": { "category": ["stores.region"], "values": ["sales.Revenue"] }, "options": { "labels": false } },
         { "id": "cu-gauge", "type": "gauge", "title": "2025 vs. 2024 revenue", "layout": { "x": 8, "y": 3, "w": 4, "h": 3 }, "fields": { "values": ["sales.Revenue 2025"], "target": ["sales.Revenue 2024"] } },
-        { "id": "cu-table", "type": "table", "title": "Top customers", "layout": { "x": 0, "y": 6, "w": 12, "h": 6 }, "fields": { "columns": ["customers.name", "customers.country", "customers.segment"], "values": ["sales.Orders", "sales.Revenue", "sales.Avg Order Value"] }, "limit": 50, "options": { "format": "bars" } }
+        { "id": "cu-table", "type": "table", "title": "Top customers", "layout": { "x": 0, "y": 6, "w": 12, "h": 6 }, "fields": { "columns": ["customers.name", "customers.country", "customers.segment"], "values": ["sales.Orders", "sales.Revenue", "sales.Avg Order Value"] }, "limit": 50, "sort": [{ "by": "values:1", "dir": "desc" }], "options": { "format": "bars" } }
       ]
     },
     {

@@ -81,8 +81,8 @@ function colorVars(t: Pick<Theme, 'colors' | 'palette' | 'sequential' | 'divergi
   return out;
 }
 
-/** Compile a theme to a stylesheet scoped to `scope` (default `.sb-report`). */
-export function themeCss(t: Theme, scope = '.sb-report'): string {
+/** Compile a theme to a stylesheet scoped to `scope` (default `.sb-themed`: the report and any chrome around it). */
+export function themeCss(t: Theme, scope = '.sb-themed'): string {
   const v = t.visual ?? {};
   const s = t.sizes ?? {};
   const f = t.fonts ?? {};

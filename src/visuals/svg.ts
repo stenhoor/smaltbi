@@ -64,6 +64,7 @@ export interface Band {
 
 /** A band scale over `n` slots in [r0, r1]. `pad` is the inner gap as a fraction of the step. */
 export function band(n: number, r0: number, r1: number, pad = 0.2, outer = pad / 2): Band {
+  r1 = Math.max(r0, r1);
   const step = (r1 - r0) / Math.max(1, n - pad + outer * 2);
   const f = ((i: number) => r0 + step * (outer + i)) as Band;
   f.step = step;

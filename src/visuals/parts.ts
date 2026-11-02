@@ -361,13 +361,16 @@ registerVisual({
     const tr = ctx.extra.trend;
     if (tr && tr.rows > 1) {
       const m = tr.measures[0]!;
-      const vals = Array.from({ length: tr.rows }, (_, i) => toNum(m.values[i]));
-      const lo = Math.min(...vals.filter(Number.isFinite));
-      const hi = Math.max(...vals.filter(Number.isFinite));
+      const all = Array.from({ length: tr.rows }, (_, i) => toNum(m.values[i]));
+      const idx = [...all.keys()].filter((i) => Number.isFinite(all[i]!));
+      const lo = Math.min(...idx.map((i) => all[i]!));
+      const hi = Math.max(...idx.map((i) => all[i]!));
       const w = Math.max(40, ctx.width);
       const h = Math.max(16, Math.min(48, ctx.height * 0.3));
-      const pts = vals.map((x, i) => `${r2((i / (vals.length - 1)) * w)},${r2(h - 2 - ((x - lo) / (hi - lo || 1)) * (h - 4))}`);
-      spark = `<svg class="sb-spark" width="${w}" height="${h}" preserveAspectRatio="none"><path class="sb-area sb-c0" d="M0,${h}L${pts.join('L')}L${w},${h}Z"/><path class="sb-line sb-c0" d="M${pts.join('L')}"/></svg>`;
+      const xOf = (i: number) => r2((i / (all.length - 1)) * w);
+      const pts = idx.map((i) => `${xOf(i)},${r2(h - 2 - ((all[i]! - lo) / (hi - lo || 1)) * (h - 4))}`);
+      if (pts.length > 1)
+        spark = `<svg class="sb-spark" width="${w}" height="${h}" preserveAspectRatio="none"><path class="sb-area sb-c0" d="M${xOf(idx[0]!)},${h}L${pts.join('L')}L${xOf(idx[idx.length - 1]!)},${h}Z"/><path class="sb-line sb-c0" d="M${pts.join('L')}"/></svg>`;
     }
     const caption = String(ctx.options.caption || v.label);
     ctx.el.innerHTML = `<div class="sb-kpi"><div class="sb-kpi-value">${esc(v.fmt(val))}</div><div class="sb-kpi-caption">${esc(caption)}</div>${cmp}${spark}</div>`;
