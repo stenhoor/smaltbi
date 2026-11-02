@@ -22,6 +22,14 @@ site that runs entirely in each visitor's browser. There is no server.
 4. **Beautiful.** Portable theme files (colors, palettes, fonts, layout) drive every pixel of a report,
    in light and dark.
 
+## Try it
+
+Every push to `main` deploys to GitHub Pages:
+
+- <https://stenhoor.github.io/smaltbi/>: the designer, with the sample report.
+- <https://stenhoor.github.io/smaltbi/sample/>: the sample report, published as a standalone static site.
+- <https://stenhoor.github.io/smaltbi/viewer.html?report=examples/sales/report.json>: the viewer.
+
 ## Quick start
 
 ```bash
