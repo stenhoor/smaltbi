@@ -190,3 +190,66 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
   .sbd-left, .sbd-right { display: none; }
   .sbd-tgroup, .sbd-engine { display: none; }
 }
+
+/* ---------------------------------------------------------------- report / model switch */
+.sbd-seg { display: inline-flex; background: var(--d-bg); border: 1px solid var(--d-border); border-radius: 8px; padding: 2px; }
+.sbd-seg-btn { background: none; border: 0; padding: 4px 12px; border-radius: 6px; cursor: pointer; color: var(--d-muted); font-weight: 500; }
+.sbd-seg-btn.sbd-on { background: var(--d-surface); color: var(--d-text); box-shadow: 0 1px 2px rgba(16, 24, 40, 0.1); }
+.sbd-model-mode .sbd-pages { display: none; }
+.sbd-btn.sbd-danger { color: var(--d-danger); }
+.sbd-btn.sbd-danger:hover { border-color: var(--d-danger); }
+
+/* ---------------------------------------------------------------- model (ER) diagram */
+.sbd-mv { position: relative; height: 100%; display: flex; flex-direction: column; background: var(--d-bg); }
+.sbd-mv-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; background: var(--d-surface); border-bottom: 1px solid var(--d-border); }
+.sbd-mv-toolbar .sbd-btn { padding: 4px 10px; }
+.sbd-mv-zoom { display: inline-flex; gap: 2px; }
+.sbd-mv-zoom .sbd-btn { min-width: 30px; }
+.sbd-mv-warn { color: #9a5b00; background: #fff4dc; border: 1px solid #f1d59a; border-radius: 6px; padding: 3px 8px; font-size: 12px; }
+.sbd-mv-legend { margin-left: auto; color: var(--d-muted); font-size: 12px; }
+.sbd-mv-scroll { flex: 1; overflow: auto; position: relative;
+  background-image: radial-gradient(color-mix(in oklab, var(--d-muted) 22%, transparent) 1px, transparent 1px); background-size: 18px 18px; }
+.sbd-mv-board { position: relative; transform-origin: 0 0; min-width: 100%; min-height: 100%; }
+.sbd-mv-lines { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.sbd-mv-rel { pointer-events: auto; cursor: pointer; }
+.sbd-mv-hit { fill: none; stroke: transparent; stroke-width: 14; }
+.sbd-mv-path { fill: none; stroke: color-mix(in oklab, var(--d-muted) 75%, transparent); stroke-width: 1.6; }
+.sbd-mv-arrow { fill: color-mix(in oklab, var(--d-muted) 85%, transparent); }
+.sbd-mv-mark { font: 600 13px system-ui, sans-serif; fill: var(--d-muted); }
+.sbd-mv-rel:hover .sbd-mv-path, .sbd-mv-rel.sbd-on .sbd-mv-path { stroke: var(--d-accent); stroke-width: 2.4; }
+.sbd-mv-rel:hover .sbd-mv-arrow, .sbd-mv-rel.sbd-on .sbd-mv-arrow, .sbd-mv-rel.sbd-on .sbd-mv-mark, .sbd-mv-rel:hover .sbd-mv-mark { fill: var(--d-accent); }
+.sbd-mv-inactive .sbd-mv-path { stroke-dasharray: 5 4; opacity: 0.7; }
+.sbd-mv-temp { fill: none; stroke: var(--d-accent); stroke-width: 2; stroke-dasharray: 4 3; }
+.sbd-mv-card { position: absolute; background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 10px; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 14px rgba(16, 24, 40, 0.06); overflow: hidden; user-select: none; transition: box-shadow 0.15s, border-color 0.15s; }
+.sbd-mv-card.sbd-on { border-color: var(--d-accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--d-accent) 22%, transparent); }
+.sbd-mv-card.sbd-mv-hidden { opacity: 0.6; }
+.sbd-mv-dragging { box-shadow: 0 16px 40px rgba(16, 24, 40, 0.2); z-index: 5; }
+.sbd-mv-flash { animation: sbd-flash 0.9s ease-out; }
+@keyframes sbd-flash { 0% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--d-accent) 45%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.sbd-mv-head { display: flex; align-items: baseline; gap: 6px; height: 38px; padding: 10px 12px 0; cursor: move; border-bottom: 1px solid var(--d-border); background: linear-gradient(var(--d-accent-soft), var(--d-surface)); }
+.sbd-mv-title { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbd-mv-kind { font-size: 10px; color: var(--d-accent); text-transform: uppercase; letter-spacing: 0.04em; }
+.sbd-mv-count { margin-left: auto; font-size: 11px; color: var(--d-muted); white-space: nowrap; }
+.sbd-mv-cols { overflow-y: auto; padding: 4px 0; scrollbar-width: thin; }
+.sbd-mv-col { display: flex; align-items: center; gap: 7px; height: 22px; padding: 0 12px; cursor: crosshair; font-size: 12px; }
+.sbd-mv-col:hover { background: var(--d-accent-soft); }
+.sbd-mv-col.sbd-mv-lit, .sbd-mv-col.sbd-mv-target { background: color-mix(in oklab, var(--d-accent) 18%, transparent); }
+.sbd-mv-col.sbd-mv-target { outline: 2px solid var(--d-accent); outline-offset: -2px; }
+.sbd-mv-col.sbd-mv-hidden { color: var(--d-muted); }
+.sbd-mv-col.sbd-mv-calc .sbd-mv-name { font-style: italic; }
+.sbd-mv-icon { width: 16px; text-align: center; color: var(--d-muted); font-size: 10px; font-weight: 600; flex: none; }
+.sbd-mv-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbd-mv-key, .sbd-mv-fk { font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.03em; }
+.sbd-mv-key { background: color-mix(in oklab, #d4a72c 25%, transparent); color: #8a6400; }
+.sbd-mv-fk { background: var(--d-accent-soft); color: var(--d-accent); }
+.sbd-mv-foot { display: flex; gap: 12px; padding: 5px 12px 7px; border-top: 1px solid var(--d-border); font-size: 11px; color: var(--d-measure); }
+.sbd-mv-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sbd-mv-stat { border: 1px solid var(--d-border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; }
+.sbd-mv-stat b { font-size: 18px; }
+.sbd-mv-stat span { color: var(--d-muted); font-size: 12px; }
+.sbd-mv-tname { font-weight: 650; font-size: 15px; }
+.sbd-mv-link { display: block; width: 100%; text-align: left; background: var(--d-bg); border: 1px solid var(--d-border); border-radius: 6px; padding: 5px 8px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.sbd-mv-link:hover { border-color: var(--d-accent); }
+.sbd-mv-relcard { border: 1px solid var(--d-border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; background: var(--d-bg); }
+.sbd-mv-relcard code { font-size: 12px; }
+@media (prefers-color-scheme: dark) { .sbd-mv-warn { background: #3a2c10; border-color: #6b5220; color: #f0c56b; } .sbd-mv-key { color: #e8c25a; } }

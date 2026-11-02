@@ -31,8 +31,8 @@ function renderPie(ctx: RenderContext, donut: boolean): void {
   const side = showLegend && (legendPos === 'right' || (legendPos === 'auto' && ctx.width > ctx.height * 1.4));
   const legendW = side ? Math.min(ctx.width * 0.4, Math.max(...names.map((s) => textWidth(s, 11))) + 30) : 0;
   const legendH = showLegend && !side ? 26 : 0;
-  const W = ctx.width - legendW;
-  const H = ctx.height - legendH;
+  const W = Math.max(20, ctx.width - legendW);
+  const H = Math.max(20, ctx.height - legendH);
   const R = Math.max(10, Math.min(W, H) / 2 - (ctx.options.labels ? 22 : 6));
   const r0 = donut ? R * Number(ctx.options.hole ?? 0.6) : 0;
   const cx = W / 2;

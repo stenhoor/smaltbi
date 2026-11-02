@@ -1,6 +1,6 @@
 # ADR 0003: A shared kit with smaltui
 
-Date: 2026-11-02. Status: accepted. Packaging decided in ADR 0004 and ADR 0005: the `smaltkit` repository and npm package, TypeScript shipped as JS + `.d.ts`. Brand assets go to a separate future `smaltbrand` repository.
+Date: 2026-11-02. Status: accepted. Packaging decided in ADR 0004 and ADR 0005: the `smaltkit` repository and npm package, TypeScript shipped as JS + `.d.ts`. Brand assets go to a separate future `smalt-brand` repository.
 
 ## Context
 

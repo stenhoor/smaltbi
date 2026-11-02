@@ -14,7 +14,9 @@ import { corsHint } from '../kit/urls.js';
 import { DocStore, emptyReport, freeSpot, newId, type ChangeKind } from './store.js';
 import { FIELD_MIME, fieldsPane } from './fields.js';
 import { defaultFilter, panel } from './panel.js';
-import { dataDialog, measureDialog, modelDialog, publishDialog, themeDialog, type DialogContext } from './dialogs.js';
+import { dataDialog, measureDialog, publishDialog, themeDialog, type DialogContext } from './dialogs.js';
+import { ModelView, type ModelSelection } from './modelview.js';
+import { modelPanel } from './modelpanel.js';
 
 const SAMPLE = 'examples/sales/report.json';
 const appBase = document.baseURI;
@@ -24,6 +26,10 @@ class Designer {
   selected: string | null = null;
   tab = 'Build';
   preview = false;
+  /** Report canvas or the model (ER) diagram. */
+  mode: 'report' | 'model' = 'report';
+  modelSel: ModelSelection = null;
+  private modelView: ModelView | null = null;
   collapsed = new Set<string>();
   private previewBar: ReturnType<typeof viewerBar> | undefined;
   private fieldsHost = h('aside.sbd-left');
@@ -58,7 +64,21 @@ class Designer {
   mountView(): void {
     const state = this.view?.state;
     this.canvasHost.replaceChildren();
+    // App-level state first: the Model branch below can return early.
+    this.root.classList.toggle('sbd-model-mode', this.mode === 'model');
+    this.root.classList.toggle('sbd-preview', this.preview);
+    this.previewBar = undefined;
+    if (this.mode === 'model' && !this.preview) {
+      // The diagram replaces the canvas. The report view object is kept only for its view state
+      // (current page); it is rebuilt when switching back to Report or Preview.
+      this.modelView = new ModelView(this.modelContext());
+      this.canvasHost.append(this.modelView.root);
+      this.modelView.render();
+      if (this.view) return;
+    } else this.modelView = null;
+    this.view?.destroy();
     const host = h('div.sbd-report-host');
+    if (this.mode === 'model' && !this.preview) host.hidden = true;
     this.canvasHost.append(host);
     this.view = new ReportView(
       this.session,
@@ -72,13 +92,54 @@ class Designer {
       state ? { page: state.page } : undefined,
     );
     this.view.selectedVisual = this.selected;
-    this.root.classList.toggle('sbd-preview', this.preview);
     if (this.preview) {
       const bar = viewerBar(this.view, { extra: [h('button.sbv-btn', { onclick: () => this.togglePreview() }, '✎ Back to editing')] });
       this.canvasHost.prepend(bar);
       this.previewBar = bar;
-    } else this.previewBar = undefined;
+    }
     this.view.render();
+  }
+
+  /** The report canvas is on screen (not replaced by the model diagram). */
+  get reportVisible(): boolean {
+    return this.mode === 'report' || this.preview;
+  }
+
+  /** Re-render the report canvas, unless the model diagram is showing (it is rebuilt on return). */
+  renderReport(): void {
+    if (this.reportVisible) this.view.render();
+  }
+
+  private modelContext() {
+    return {
+      store: this.store,
+      session: this.session,
+      selection: this.modelSel,
+      select: (s: ModelSelection) => this.selectModel(s),
+    };
+  }
+
+  selectModel(s: ModelSelection): void {
+    this.modelSel = s;
+    if (this.modelView) {
+      this.modelView.setContext(this.modelContext());
+      this.modelView.render();
+    }
+    this.renderPanel();
+  }
+
+  setMode(mode: 'report' | 'model'): void {
+    if (this.mode === mode) return;
+    this.mode = mode;
+    this.modelSel = null;
+    if (mode === 'report') {
+      this.modelView = null;
+      this.mountView();
+    } else {
+      this.select(null);
+      this.mountView();
+    }
+    this.renderAll();
   }
 
   renderAll(): void {
@@ -97,12 +158,19 @@ class Designer {
     this.top.replaceChildren(
       h('div.sbd-logo', { html: '<svg viewBox="0 0 24 24" width="20" height="20"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="6" width="4" height="15" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg><b>smaltbi</b>' }),
       name,
+      ...(this.preview
+        ? []
+        : [h(
+            'div.sbd-seg',
+            { role: 'tablist' },
+            h('button.sbd-seg-btn' + (this.mode === 'report' ? '.sbd-on' : ''), { role: 'tab', title: 'Design report pages', onclick: () => this.setMode('report') }, 'Report'),
+            h('button.sbd-seg-btn' + (this.mode === 'model' ? '.sbd-on' : ''), { role: 'tab', title: 'Tables and relationships (ER diagram)', onclick: () => this.setMode('model') }, 'Model'),
+          )]),
       h(
         'div.sbd-tgroup',
         {},
         btn('File', 'New, open, save', () => this.fileMenu()),
         btn('Data', 'Data sources', () => void dataDialog(this.dctx)),
-        btn('Model', 'Relationships, hierarchies, measures', () => void modelDialog(this.dctx)),
         btn('Theme', 'Colors, fonts, layout', () => void themeDialog(this.dctx, (t) => this.applyTheme(t))),
       ),
       h(
@@ -172,6 +240,7 @@ class Designer {
     this.store.on((kind, id) => void this.onChange(kind, id));
     this.session = session;
     this.selected = null;
+    this.modelSel = null;
     this.view.destroy();
     this.view = undefined as unknown as ReportView;
     this.mountView();
@@ -182,6 +251,8 @@ class Designer {
   togglePreview(): void {
     this.preview = !this.preview;
     this.selected = null;
+    // A relationship selected in the diagram must not stay selected (and deletable) while hidden.
+    this.modelSel = null;
     this.mountView();
     this.renderAll();
   }
@@ -219,6 +290,17 @@ class Designer {
 
   renderPanel(): void {
     if (this.preview) return void this.panelHost.replaceChildren();
+    if (this.mode === 'model' && this.modelView) {
+      this.panelHost.replaceChildren(
+        modelPanel({
+          ...this.modelContext(),
+          diagram: this.modelView,
+          editMeasure: (t, n) => void measureDialog(this.dctx, t, n),
+          editColumn: (t, n) => void measureDialog(this.dctx, t, n, 'column'),
+        }),
+      );
+      return;
+    }
     this.panelHost.replaceChildren(
       panel({
         store: this.store,
@@ -367,6 +449,12 @@ class Designer {
 
   /** Click on a field: add it to the selected visual's best role, or start a new visual. */
   addField(ref: string, target?: Visual): void {
+    if (this.mode === 'model') {
+      const table = ref.slice(0, ref.indexOf('.'));
+      this.selectModel({ kind: 'table', table });
+      this.modelView?.reveal(table);
+      return;
+    }
     const kind = this.session.model.kindOf(ref);
     const sel = target ?? (this.selected ? this.store.visual(this.selected)?.visual : undefined);
     if (!sel) {
@@ -462,11 +550,11 @@ class Designer {
   /** Dropping a field on empty canvas creates a visual there. */
   private bindCanvasDrop(): void {
     this.canvasHost.addEventListener('dragover', (e) => {
-      if (!this.preview && e.dataTransfer?.types.includes(FIELD_MIME)) e.preventDefault();
+      if (!this.preview && this.mode === 'report' && e.dataTransfer?.types.includes(FIELD_MIME)) e.preventDefault();
     });
     this.canvasHost.addEventListener('drop', (e) => {
       const ref = e.dataTransfer?.getData(FIELD_MIME);
-      if (!ref || this.preview) return;
+      if (!ref || this.preview || this.mode !== 'report') return;
       e.preventDefault();
       const grid = this.canvasHost.querySelector('.sb-page') as HTMLElement | null;
       let at: { x: number; y: number } | undefined;
@@ -506,7 +594,13 @@ class Designer {
       } else if (mod && e.key.toLowerCase() === 'd' && this.selected) {
         e.preventDefault();
         this.duplicateVisual(this.selected);
-      } else if ((e.key === 'Delete' || e.key === 'Backspace') && this.selected) {
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && this.mode === 'model' && !this.preview && this.modelSel?.kind === 'rel') {
+        e.preventDefault();
+        const i = this.modelSel.index;
+        this.selectModel(null);
+        this.store.change('model', (r) => (r.model.relationships = (r.model.relationships ?? []).filter((_, j) => j !== i)));
+      } else if (e.key === 'Escape' && this.mode === 'model' && !this.preview) this.selectModel(null);
+      else if ((e.key === 'Delete' || e.key === 'Backspace') && this.selected) {
         e.preventDefault();
         this.deleteVisual(this.selected);
       } else if (e.key === 'Escape') this.select(null);
@@ -520,38 +614,43 @@ class Designer {
       switch (kind) {
         case 'visual': {
           const found = id ? this.store.visual(id) : undefined;
-          if (found && found.page.id === this.page.id) this.view.updateVisual(found.visual);
+          if (found && found.page.id === this.page.id && this.reportVisible) this.view.updateVisual(found.visual);
           break;
         }
         case 'layout':
         case 'page':
-          this.view.render();
+          this.renderReport();
           break;
         case 'pages':
           if (!this.store.page(this.view.state.page)) this.view.state.page = this.store.report.pages[0]!.id;
-          this.view.render();
+          this.renderReport();
           break;
         case 'model':
           this.session.rebuildModel();
           this.renderFields();
-          this.view.render();
+          this.renderReport();
+          this.modelView?.render();
+          break;
+        case 'diagram':
+          this.modelView?.render();
           break;
         case 'data':
           toast('Loading data…');
           await this.session.reloadData();
           this.renderFields();
-          this.view.render();
+          this.renderReport();
+          this.modelView?.render();
           toast('Data loaded', 'ok');
           break;
         case 'theme':
           await this.session.setTheme(this.store.report.theme);
           this.view.applyTheme();
-          this.view.render();
+          this.renderReport();
           break;
         default:
           this.session.rebuildModel();
           this.renderFields();
-          this.view.render();
+          this.renderReport();
       }
     } catch (e) {
       const msg = (e as Error).message ?? String(e);

@@ -55,7 +55,7 @@ registerVisual({
     const showLegend = lc && ctx.options.legend !== 'none';
     const legendH = showLegend ? 24 : 0;
     const W = ctx.width;
-    const H = ctx.height - legendH;
+    const H = Math.max(20, ctx.height - legendH);
     const fx = axisFormatter(xc.field.format);
     const fy = axisFormatter(yc.field.format);
     const fin = (a: number[]) => a.filter(Number.isFinite);

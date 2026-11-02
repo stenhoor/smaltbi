@@ -43,7 +43,8 @@ npm run serve      # http://localhost:8080
 
 `npm run dev` rebuilds on change. `npm run check` type-checks and runs the unit tests (compiled SQL
 is executed against the real smaltdb engine in Node). `node test/e2e.mjs` drives the designer and a
-published site in Chromium (needs Playwright).
+published site in Chromium (needs Playwright); `E2E_CPU_THROTTLE=4 node test/e2e.mjs` runs it with the
+browser's CPU slowed 4×, to catch timing races.
 
 ## Features
 
@@ -64,6 +65,12 @@ range, search), text (markdown with live values), image, waterfall, funnel, tree
 **Interaction.** Cross-filtering between visuals (Ctrl-click to add), slicers (optionally synced across
 pages), drill down/up along hierarchies, drill-through to detail pages, tooltips, "include/exclude
 this", focus mode, show as table, CSV export, bookmarks, and the whole view state in the URL.
+
+**Model view.** An ER diagram of the tables: cards with their columns (PK/FK badges, types,
+calculated columns, measure and hierarchy counts, row counts) and relationship lines between the
+joined columns, marked `*` / `1` with the filter direction. Drag a column onto another table's key to
+relate them; click a line to make it inactive, swap or delete it; drag cards to arrange (positions are
+saved in the report); auto layout, detect relationships, zoom and fit; ambiguous paths are flagged.
 
 **Designer.** Fields pane, drag-and-drop canvas on a 12-column grid, field wells with aggregation and
 labels, format options, visual/page/report filters (value pickers, between, top N, SQL), a SQL tab that

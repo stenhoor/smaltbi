@@ -1,6 +1,6 @@
-// Designer dialogs: data sources, the model (measures, columns, relationships, hierarchies),
-// themes, and publishing.
-import type { CalcColumn, DataStep, Format, Hierarchy, Measure, Relationship, SqlValue, Theme } from '../core/types.js';
+// Designer dialogs: data sources, the measure / calculated column editor, themes, and publishing.
+// Relationships and hierarchies are edited in the model view (modelview.ts, modelpanel.ts).
+import type { CalcColumn, DataStep, Format, Measure, SqlValue, Theme } from '../core/types.js';
 import { formatter } from '../core/format.js';
 import { compileQuery } from '../core/compile.js';
 import { Model } from '../core/model.js';
@@ -227,94 +227,6 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
     },
   });
   await dialog(existing ? `Edit ${kind}` : kind === 'measure' ? 'New measure' : 'New calculated column', body, buttons, { wide: true });
-}
-
-export async function modelDialog(ctx: DialogContext): Promise<void> {
-  const model = ctx.session.model;
-  const spec = structuredClone(ctx.store.report.model);
-  spec.relationships ??= [];
-  spec.hierarchies ??= [];
-  const cols = [...model.tables.values()].flatMap((t) => [...t.columns.values()].filter((c) => !c.calc).map((c) => `${t.name}.${c.name}`));
-  const rels = h('div.sbd-steps');
-  const renderRels = () => {
-    rels.replaceChildren(
-      ...spec.relationships!.map((r, i) =>
-        h(
-          'div.sbd-step',
-          {},
-          h('span', {}, `${r.from}  →  ${r.to}`, r.active === false ? ' (inactive)' : ''),
-          h('button.sbd-chip-btn', { title: 'Remove', onclick: () => (spec.relationships!.splice(i, 1), renderRels()) }, '×'),
-        ),
-      ),
-    );
-    if (!spec.relationships!.length) rels.append(h('div.sbd-hint', {}, 'No relationships. Visuals can then only combine fields of one table.'));
-  };
-  renderRels();
-  const colSel = () => h('select.sbd-input', {}, ...cols.map((c) => h('option', { value: c }, c))) as HTMLSelectElement;
-  const from = colSel();
-  const to = colSel();
-  const hiers = h('div.sbd-steps');
-  const renderH = () => {
-    hiers.replaceChildren(...spec.hierarchies!.map((x, i) => h('div.sbd-step', {}, h('span', {}, `${x.table}.${x.name}: ${x.levels.join(' › ')}`), h('button.sbd-chip-btn', { onclick: () => (spec.hierarchies!.splice(i, 1), renderH()) }, '×'))));
-  };
-  renderH();
-  const hName = h('input.sbd-input', { placeholder: 'Date' }) as HTMLInputElement;
-  const hTable = h('select.sbd-input', {}, ...[...model.tables.keys()].map((t) => h('option', { value: t }, t))) as HTMLSelectElement;
-  const hLevels = h('input.sbd-input', { placeholder: 'Year, Quarter, Month' }) as HTMLInputElement;
-  const measures = h(
-    'div.sbd-steps',
-    {},
-    ...(spec.measures ?? []).map((m) => h('div.sbd-step', {}, h('span', {}, h('b', {}, m.name), ` (${m.table})  `, h('code', {}, m.sql)))),
-    ...(spec.columns ?? []).map((c) => h('div.sbd-step', {}, h('span', {}, h('b', {}, c.name), ` (${c.table}, column)  `, h('code', {}, c.sql)))),
-  );
-  const problems = model.validate();
-  const body = h(
-    'div.sbd-form',
-    {},
-    problems.length ? h('div.sbd-test.sbd-bad', {}, problems.join('\n')) : null,
-    h('div.sbd-section-title', {}, 'Relationships (many → one)'),
-    rels,
-    h(
-      'div.sbd-row',
-      {},
-      from,
-      h('span', {}, '→'),
-      to,
-      h('button.sbd-btn', { onclick: () => (spec.relationships!.push({ from: from.value, to: to.value }), renderRels()) }, 'Add'),
-    ),
-    h(
-      'button.sbd-btn',
-      {
-        onclick: () => {
-          const sug: Relationship[] = new Model(ctx.session.schema, { ...spec }).suggestRelationships();
-          const fk = ctx.session.schema.foreignKeys ?? [];
-          let n = 0;
-          for (const r of [...fk, ...sug])
-            if (!spec.relationships!.some((x) => x.from === r.from)) {
-              spec.relationships!.push(r);
-              n++;
-            }
-          renderRels();
-          toast(n ? `Added ${n} relationship${n > 1 ? 's' : ''}` : 'Nothing new found');
-        },
-      },
-      'Detect relationships',
-    ),
-    h('div.sbd-section-title', {}, 'Hierarchies (drill paths)'),
-    hiers,
-    h('div.sbd-row', {}, hName, hTable, hLevels, h('button.sbd-btn', { onclick: () => {
-      const levels = hLevels.value.split(',').map((s) => s.trim()).filter(Boolean);
-      if (!hName.value || levels.length < 2) return toast('A hierarchy needs a name and at least two levels', 'error');
-      spec.hierarchies!.push({ table: hTable.value, name: hName.value, levels } as Hierarchy);
-      hName.value = hLevels.value = '';
-      renderH();
-    } }, 'Add')),
-    h('div.sbd-section-title', {}, 'Measures and calculated columns'),
-    h('div.sbd-hint', {}, 'Create and edit these from the Fields pane (+ƒ next to a table, or right-click a field).'),
-    measures,
-  );
-  const ok = await dialog('Model', body, [{ label: 'Cancel' }, { label: 'Apply', primary: true, value: () => true }], { wide: true });
-  if (ok) ctx.store.change('model', (r) => (r.model = { ...r.model, relationships: spec.relationships, hierarchies: spec.hierarchies }));
 }
 
 // ------------------------------------------------------------------ theme

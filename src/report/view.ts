@@ -149,6 +149,8 @@ export class ReportView {
     this.runtimes.set(v.id, rt);
     this.renderHeader(v, def, header);
     rt.ro = new ResizeObserver(() => {
+      // Detached or hidden (e.g. the designer switched to the model diagram): nothing to draw.
+      if (!body.isConnected || !body.clientWidth || !body.clientHeight) return;
       const size = `${body.clientWidth}x${body.clientHeight}`;
       if (size !== rt.lastSize && rt.data) this.draw(v, rt);
     });
@@ -206,14 +208,15 @@ export class ReportView {
     rt.frame.classList.add('sb-loading');
     try {
       const { data, extra, sql } = await this.load(v, def, rt);
-      if (gen !== rt.gen) return;
+      // Superseded by a newer refresh, or the page was re-rendered / left while querying.
+      if (gen !== rt.gen || this.runtimes.get(id) !== rt) return;
       rt.data = data;
       rt.extra = extra;
       rt.sql = sql;
       rt.error = undefined;
       this.draw(v, rt);
     } catch (e) {
-      if (gen !== rt.gen) return;
+      if (gen !== rt.gen || this.runtimes.get(id) !== rt) return;
       rt.data = undefined;
       rt.error = (e as Error).message ?? String(e);
       rt.body.innerHTML = `<div class="${e instanceof ModelError ? 'sb-empty' : 'sb-error'}">${esc(rt.error)}</div>`;
@@ -225,6 +228,9 @@ export class ReportView {
   private draw(v: Visual, rt: VisualRuntime): void {
     const def = visualDef(v.type);
     if (!def || !rt.data) return;
+    // Not on screen (detached, or hidden behind the model diagram): the ResizeObserver draws the
+    // stored data once the body has a size.
+    if (!rt.body.isConnected || !rt.body.clientWidth || !rt.body.clientHeight) return;
     rt.lastSize = `${rt.body.clientWidth}x${rt.body.clientHeight}`;
     const own = this.state.selections?.[v.id];
     const tupleSel = own?.find((f) => f.op === 'tuples');
