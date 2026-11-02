@@ -12,6 +12,8 @@ tests and the Chromium end-to-end test green.
   focus mode, show data, CSV export, bookmarks, URL state.
 - Designer: fields, drag-and-drop canvas, wells, format/filters/SQL panels, custom SQL, data/model/
   theme dialogs, undo/redo, autosave, preview.
+- Model view: an ER diagram of tables and relationships (drag to relate, click to edit, auto layout,
+  ambiguous-path warnings), with table details, measures, calculated columns and hierarchies.
 - Themes: tokens → CSS variables, three built-ins, editor, import/export, dark mode.
 - Static publishing (ZIP and CLI). Sample dataset and report. Unit + e2e tests, CI.
 

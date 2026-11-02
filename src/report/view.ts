@@ -149,6 +149,8 @@ export class ReportView {
     this.runtimes.set(v.id, rt);
     this.renderHeader(v, def, header);
     rt.ro = new ResizeObserver(() => {
+      // Detached or hidden (e.g. the designer switched to the model diagram): nothing to draw.
+      if (!body.isConnected || !body.clientWidth || !body.clientHeight) return;
       const size = `${body.clientWidth}x${body.clientHeight}`;
       if (size !== rt.lastSize && rt.data) this.draw(v, rt);
     });

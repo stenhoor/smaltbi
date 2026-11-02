@@ -50,6 +50,8 @@ export interface ModelSpec {
   hierarchies?: Hierarchy[];
   /** Per-table display settings. */
   tables?: Record<string, TableSettings>;
+  /** Where each table card sits in the designer's model diagram (pixels). Display only. */
+  layout?: Record<string, { x: number; y: number }>;
 }
 
 export interface Relationship {

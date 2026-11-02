@@ -66,6 +66,12 @@ range, search), text (markdown with live values), image, waterfall, funnel, tree
 pages), drill down/up along hierarchies, drill-through to detail pages, tooltips, "include/exclude
 this", focus mode, show as table, CSV export, bookmarks, and the whole view state in the URL.
 
+**Model view.** An ER diagram of the tables: cards with their columns (PK/FK badges, types,
+calculated columns, measure and hierarchy counts, row counts) and relationship lines between the
+joined columns, marked `*` / `1` with the filter direction. Drag a column onto another table's key to
+relate them; click a line to make it inactive, swap or delete it; drag cards to arrange (positions are
+saved in the report); auto layout, detect relationships, zoom and fit; ambiguous paths are flagged.
+
 **Designer.** Fields pane, drag-and-drop canvas on a 12-column grid, field wells with aggregation and
 labels, format options, visual/page/report filters (value pickers, between, top N, SQL), a SQL tab that
 shows exactly what runs and lets you replace it, a measure editor with a live test, undo/redo,

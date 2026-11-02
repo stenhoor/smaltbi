@@ -32,7 +32,7 @@ bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worke
 | `report/view.ts` | `ReportView`: lays out a page, plans and runs each visual's queries, renders, and handles every interaction. Used by both the designer and the viewer. |
 | `visuals/` | The plugin API (`api.ts`) and the built-in visuals. |
 | `theme/theme.ts` | Theme merge (`extends`) and compilation to CSS custom properties. |
-| `designer/` | The designer: document store with undo/autosave, fields pane, panels, dialogs, canvas editing. |
+| `designer/` | The designer: document store with undo/autosave, fields pane, panels, dialogs, canvas editing, and the model view (`modelview.ts`: the ER diagram; `modelpanel.ts`: table and relationship details). |
 | `publish/publish.ts` | Builds the static site file set and zips it (`kit/zip.ts`). |
 | `kit/` | Small framework-free helpers, staged for sharing with smaltui (see ADR 0003). |
 

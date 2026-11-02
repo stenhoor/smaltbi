@@ -61,7 +61,8 @@ environment manifests. To report on an existing OPFS database, use
   "hierarchies": [ { "table": "sales", "name": "Date", "levels": ["Year", "Quarter", "Month"] } ],
   "tables": {
     "sales": { "label": "Sales", "hidden": false, "columns": { "id": { "hidden": true }, "discount": { "format": "percent" } } }
-  }
+  },
+  "layout": { "sales": { "x": 368, "y": 40 }, "customers": { "x": 696, "y": 40 } }   // model diagram positions (display only)
 }
 ```
 

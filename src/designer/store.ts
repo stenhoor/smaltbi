@@ -3,7 +3,9 @@ import type { Page, Report, Visual } from '../core/types.js';
 
 const AUTOSAVE = 'smaltbi.autosave';
 
-export type ChangeKind = 'visual' | 'layout' | 'page' | 'pages' | 'model' | 'data' | 'theme' | 'report';
+/** What changed, so the designer refreshes only what depends on it. `diagram` is the model
+ * diagram's card positions: saved and undoable, but nothing re-queries. */
+export type ChangeKind = 'visual' | 'layout' | 'page' | 'pages' | 'model' | 'diagram' | 'data' | 'theme' | 'report';
 
 export class DocStore {
   private undoStack: string[] = [];

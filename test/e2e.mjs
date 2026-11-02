@@ -95,6 +95,42 @@ try {
   const undone = await until(page, () => document.querySelectorAll('.sb-visual.sb-selected .sb-bar').length === 1);
   check(undone, 'undo removes the added field');
 
+  // Model view: the ER diagram of tables and relationships.
+  await page.click('.sbd-seg-btn:has-text("Model")');
+  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4 && document.querySelectorAll('.sbd-mv-rel').length === 3);
+  check((await page.locator('.sbd-mv-card').count()) === 4 && (await page.locator('.sbd-mv-rel').count()) === 3, 'model view shows 4 tables and 3 relationships');
+  const rels = () => page.evaluate(() => window.smaltbi.store.report.model.relationships.map((r) => `${r.from}>${r.to}`));
+  // Select the stores relationship by its line, delete it, undo.
+  const storeRel = (await rels()).indexOf('sales.store_id>stores.id');
+  await page.locator(`.sbd-mv-rel[data-rel="${storeRel}"] .sbd-mv-hit`).dispatchEvent('pointerdown');
+  await until(page, () => /sales\.store_id/.test(document.querySelector('.sbd-mv-relcard')?.textContent ?? ''));
+  check(/sales\.store_id/.test((await page.locator('.sbd-mv-relcard').textContent()) ?? ''), 'clicking a line selects the relationship');
+  await page.click('.sbd-btn.sbd-danger:has-text("Delete")');
+  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 2);
+  check((await rels()).length === 2, 'a relationship can be deleted');
+  // Re-create it by dragging sales.store_id onto stores.id.
+  const src = await page.locator('.sbd-mv-card[data-table=sales] .sbd-mv-col[data-col=store_id]').boundingBox();
+  const dst = await page.locator('.sbd-mv-card[data-table=stores] .sbd-mv-col[data-col=id]').boundingBox();
+  await page.mouse.move(src.x + 20, src.y + src.height / 2);
+  await page.mouse.down();
+  await page.mouse.move((src.x + dst.x) / 2, (src.y + dst.y) / 2, { steps: 5 });
+  await page.mouse.move(dst.x + 30, dst.y + dst.height / 2, { steps: 5 });
+  await page.mouse.up();
+  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 3);
+  check((await rels()).includes('sales.store_id>stores.id'), 'dragging a column onto a key creates the relationship (many → one)');
+  // Move a card: its position is saved in the report.
+  const head = await page.locator('.sbd-mv-card[data-table=products] .sbd-mv-head').boundingBox();
+  await page.mouse.move(head.x + 40, head.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(head.x + 40, head.y + 130, { steps: 5 });
+  await page.mouse.up();
+  const layout = await page.evaluate(() => window.smaltbi.store.report.model.layout?.products);
+  check(!!layout, `moving a table saves its position (${JSON.stringify(layout)})`);
+  // Back to the report: visuals still query through the relationships.
+  await page.click('.sbd-seg-btn:has-text("Report")');
+  await until(page, () => document.querySelectorAll('.sb-visual[data-id=c-cat] .sb-bar').length === 4);
+  check((await page.locator('.sb-visual[data-id=c-cat] .sb-bar').count()) === 4, 'report renders again after editing the model');
+
   // Theme: switch to Midnight.
   await page.click('.sbd-tbtn:has-text("Theme")');
   await page.click('.sbd-theme-card:has-text("Midnight")');
