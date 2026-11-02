@@ -1,6 +1,6 @@
 # ADR 0003: A shared kit with smaltui
 
-Date: 2026-11-02. Status: accepted (staging); packaging open (see OPEN_QUESTIONS 12–13).
+Date: 2026-11-02. Status: accepted. Packaging decided in ADR 0004: a new repository and npm package (working name `smaltkit`), TypeScript shipped as JS + `.d.ts`.
 
 ## Context
 
