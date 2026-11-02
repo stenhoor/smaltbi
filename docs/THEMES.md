@@ -74,6 +74,6 @@ example `{ "surface": "#fff8e6", "text": "#3b2f00" }`.
 
 | Name | Look |
 |---|---|
-| `smalt` | Default. Cobalt (smalt) accent, Inter / system sans, soft cards, light and dark. Its colors and fonts will come from the future smaltbrand tokens (ADR 0005). |
+| `smalt` | Default. Cobalt (smalt) accent, Inter / system sans, soft cards, light and dark. Its colors and fonts will come from the future smalt-brand tokens (ADR 0005). |
 | `paper` | Editorial: warm paper, Source Serif, flat cards, no markers. |
 | `midnight` | Dark control room: teal accent, IBM Plex Sans with Plex Mono numbers. |
