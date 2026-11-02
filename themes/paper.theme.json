@@ -1,0 +1,28 @@
+{
+  "name": "Paper",
+  "colors": {
+    "background": "#f7f3ec",
+    "surface": "#fffdf9",
+    "text": "#24201a",
+    "muted": "#6e665a",
+    "border": "#e6dfd2",
+    "grid": "#efe9de",
+    "accent": "#a4372a",
+    "positive": "#3d7a4a",
+    "negative": "#a4372a",
+    "neutral": "#b3a998",
+    "selection": "#a4372a"
+  },
+  "palette": ["#a4372a", "#2f4b6e", "#c99a3b", "#5c7a52", "#7a4d6e", "#3f7f86", "#b86b3c", "#6b6b8f"],
+  "sequential": ["#f3eadb", "#a4372a"],
+  "diverging": ["#a4372a", "#f3eadb", "#2f4b6e"],
+  "fonts": {
+    "body": "'Source Serif 4', Georgia, 'Times New Roman', serif",
+    "heading": "'Source Serif 4', Georgia, 'Times New Roman', serif",
+    "numeric": "'Source Serif 4', Georgia, serif",
+    "imports": ["https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"]
+  },
+  "sizes": { "base": 14, "title": 16, "subtitle": 13, "label": 12, "kpi": 38, "small": 11 },
+  "visual": { "radius": 2, "padding": 16, "border": "1px solid var(--sb-border)", "shadow": "none", "titleAlign": "left", "titleWeight": 600, "gridlines": true, "barRadius": 0, "lineWidth": 1.75, "markerSize": 0 },
+  "page": { "gap": 16, "padding": 24 }
+}
