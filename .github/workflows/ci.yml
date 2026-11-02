@@ -18,3 +18,5 @@ jobs:
       # Playwright is installed only in CI (not a project dependency).
       - run: npm i --no-save playwright@1.63.0 && npx playwright install --with-deps chromium
       - run: node test/e2e.mjs
+      # Again with the browser CPU slowed 4x, to catch timing races in the tests (issue #4).
+      - run: E2E_CPU_THROTTLE=4 node test/e2e.mjs

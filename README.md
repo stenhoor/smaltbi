@@ -43,7 +43,8 @@ npm run serve      # http://localhost:8080
 
 `npm run dev` rebuilds on change. `npm run check` type-checks and runs the unit tests (compiled SQL
 is executed against the real smaltdb engine in Node). `node test/e2e.mjs` drives the designer and a
-published site in Chromium (needs Playwright).
+published site in Chromium (needs Playwright); `E2E_CPU_THROTTLE=4 node test/e2e.mjs` runs it with the
+browser's CPU slowed 4×, to catch timing races.
 
 ## Features
 

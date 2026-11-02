@@ -24,6 +24,28 @@ function serve(dir, p) {
   return new Promise((r) => setTimeout(r, 500));
 }
 
+// E2E_CPU_THROTTLE=4 slows the browser's CPU 4x (Chrome DevTools), to shake out timing races.
+const throttle = Number(process.env.E2E_CPU_THROTTLE || 0);
+async function newPage(browser, opts) {
+  const p = await browser.newPage(opts);
+  if (throttle > 1) {
+    const cdp = await p.context().newCDPSession(p);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: throttle });
+  }
+  return p;
+}
+
+// Wait until a condition holds in the page (instead of sleeping and hoping). Returns false on
+// timeout, so the following check() reports the failure with its own message.
+async function until(page, fn, arg, timeout = 15000) {
+  try {
+    await page.waitForFunction(fn, arg, { timeout, polling: 100 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 let failures = 0;
 const check = (cond, msg) => {
   console.log(`${cond ? 'ok  ' : 'FAIL'} ${msg}`);
@@ -33,7 +55,7 @@ const check = (cond, msg) => {
 await serve(root, port);
 const browser = await chromium.launch();
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  const page = await newPage(browser, { viewport: { width: 1440, height: 900 }, acceptDownloads: true });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
@@ -50,7 +72,7 @@ try {
   // Click a measure with nothing selected: a KPI card appears.
   await page.click('.sbd-canvas', { position: { x: 5, y: 5 } });
   await page.click('.sbd-field:has-text("Units")');
-  await page.waitForTimeout(500);
+  await until(page, ([n]) => document.querySelectorAll('.sb-page > .sb-visual').length === n, [before + 1]);
   check((await count()) === before + 1, 'clicking a measure adds a card');
   const cardText = await page.locator('.sb-visual.sb-selected .sb-kpi-value').textContent();
   check(/\d/.test(cardText ?? ''), `new card shows a value (${cardText})`);
@@ -58,7 +80,7 @@ try {
   // Change it into a column chart and add a dimension.
   await page.click('.sbd-vtype[title^="Column chart"]');
   await page.click('.sbd-field:has-text("segment")');
-  await page.waitForTimeout(600);
+  await until(page, () => document.querySelectorAll('.sb-visual.sb-selected .sb-bar').length === 3);
   const bars = await page.locator('.sb-visual.sb-selected .sb-bar').count();
   check(bars === 3, `changed to a column chart by segment (${bars} bars)`);
 
@@ -68,15 +90,16 @@ try {
   check(/GROUP BY "customers"\."segment"/.test(sql ?? ''), 'SQL tab shows the generated query');
 
   // Undo removes the dimension again.
+  // Without the segment axis, the column chart shows a single bar again.
   await page.keyboard.press('Control+z');
-  await page.waitForTimeout(500);
-  check((await page.locator('.sb-visual.sb-selected .sb-kpi-value, .sb-visual.sb-selected .sb-bar').count()) >= 1, 'undo works');
+  const undone = await until(page, () => document.querySelectorAll('.sb-visual.sb-selected .sb-bar').length === 1);
+  check(undone, 'undo removes the added field');
 
   // Theme: switch to Midnight.
   await page.click('.sbd-tbtn:has-text("Theme")');
   await page.click('.sbd-theme-card:has-text("Midnight")');
   await page.click('.sk-dialog-foot button:has-text("Use this theme")');
-  await page.waitForTimeout(500);
+  await until(page, () => getComputedStyle(document.querySelector('.sb-report')).backgroundColor === 'rgb(11, 13, 18)');
   const bg = await page.evaluate(() => getComputedStyle(document.querySelector('.sb-report')).backgroundColor);
   check(bg === 'rgb(11, 13, 18)', `theme applied (${bg})`);
 
@@ -93,26 +116,28 @@ try {
   execFileSync('python3', ['-c', `import zipfile,sys; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])`, zipPath, site]);
   const port2 = port + 1;
   await serve(site, port2);
-  const viewer = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const viewer = await newPage(browser, { viewport: { width: 1280, height: 900 } });
   viewer.on('pageerror', (e) => errors.push('viewer: ' + e.message));
   await viewer.goto(`http://localhost:${port2}/`);
   await viewer.waitForSelector('.sb-visual[data-id=c-cat] .sb-bar', { timeout: 20000 });
   check(true, 'the published site renders on its own');
+  // count() does not wait: wait for the cards to render first (issue #4).
+  await until(viewer, (sel) => document.querySelectorAll(sel).length >= 4, '.sb-kpi-value');
   const units = await viewer.locator('.sb-kpi-value').count();
-  check(units >= 4, 'published report has its cards');
+  check(units >= 4, `published report has its cards (${units})`);
 
   // Cross-filter: click the "Europe" slicer button, the Orders card changes.
   const orders = () => viewer.locator('.sb-visual[data-id=k-orders] .sb-kpi-value').textContent();
   const o1 = await orders();
   await viewer.click('.sb-chip:has-text("Europe")');
-  await viewer.waitForTimeout(700);
+  await until(viewer, (before) => document.querySelector('.sb-visual[data-id=k-orders] .sb-kpi-value')?.textContent !== before, o1);
   const o2 = await orders();
   check(o1 !== o2, `slicer filters other visuals (${o1} → ${o2})`);
   check(viewer.url().includes('#s='), 'view state is in the URL');
 
   // Drill down on the date column chart.
   await viewer.dblclick('.sb-visual[data-id=c-date] .sb-bar >> nth=0');
-  await viewer.waitForTimeout(700);
+  await until(viewer, () => document.querySelector('.sb-visual[data-id=c-date] .sb-drill-level')?.textContent === 'Quarter');
   const level = await viewer.locator('.sb-visual[data-id=c-date] .sb-drill-level').textContent();
   check(level === 'Quarter', `drill down to ${level}`);
 
