@@ -60,10 +60,47 @@ try {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 
+  // ---------------------------------------------------------------- landing page
+  const landing = await browser.newPage({ viewport: { width: 1360, height: 900 } });
+  landing.on('pageerror', (e) => errors.push('landing: ' + e.message));
+  landing.on('console', (m) => m.type() === 'error' && errors.push('landing: ' + m.text()));
+  await landing.goto(`http://localhost:${port}/`);
+  const hero = await landing.evaluate(() => ({
+    eyebrow: document.querySelector('.eyebrow')?.textContent,
+    h1: document.querySelector('h1')?.textContent,
+    logo: [...document.querySelectorAll('.brand img')].some((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0),
+    designer: document.querySelector('.cta .btn.primary')?.getAttribute('href'),
+    sample: document.querySelector('.cta a[href="sample/"]') !== null,
+    tokens: getComputedStyle(document.body).backgroundColor,
+  }));
+  check(hero.eyebrow === 'Small. Alternative. Insight.' && /powered by smaltdb/.test(hero.h1 ?? '') && hero.logo, `landing page: tagline, headline and logo (${JSON.stringify(hero)})`);
+  check(hero.tokens === 'rgb(245, 246, 248)', `landing page uses the brand tokens (${hero.tokens})`);
+  check(hero.designer === 'designer.html?report=examples/sales/report.json' && hero.sample, 'landing page links the designer and the published sample');
+  // The embedded live report renders inside the page.
+  await landing.locator('#demoFrame').scrollIntoViewIfNeeded();
+  const frame = landing.frameLocator('#demoFrame');
+  await frame.locator('.sb-visual[data-id=c-cat] .sb-bar').first().waitFor({ timeout: 20000 });
+  check(true, 'landing page embeds a live report');
+  // The theme toggle switches the page and the embedded report (shared setting, storage event).
+  await landing.click('#themeBtn'); // auto → light
+  await landing.click('#themeBtn'); // light → dark
+  const dark = await until(landing, () => getComputedStyle(document.body).backgroundColor === 'rgb(20, 23, 31)');
+  const frameDark = await until(landing, () => {
+    const d = document.getElementById('demoFrame').contentDocument;
+    return d && getComputedStyle(d.querySelector('.sb-report')).backgroundColor === 'rgb(20, 23, 31)';
+  });
+  check(dark && frameDark, 'the theme toggle switches the landing page and the embedded report to dark');
+  await landing.click('#themeBtn'); // dark → auto
+  // Old links to the designer at the site root are forwarded.
+  await landing.goto(`http://localhost:${port}/?report=examples/sales/report.json`);
+  await landing.waitForURL(/designer\.html\?report=/);
+  check(true, 'old ?report= links at the root forward to the designer');
+  await landing.close();
+
   // ---------------------------------------------------------------- designer
-  await page.goto(`http://localhost:${port}/`);
+  await page.goto(`http://localhost:${port}/designer.html`);
   await page.evaluate(() => localStorage.clear());
-  await page.goto(`http://localhost:${port}/?report=examples/sales/report.json`);
+  await page.goto(`http://localhost:${port}/designer.html?report=examples/sales/report.json`);
   await page.waitForSelector('.sb-visual[data-id=c-cat] .sb-bar', { timeout: 20000 });
   check(true, 'designer opens the sample report');
   const count = () => page.locator('.sb-page > .sb-visual').count();

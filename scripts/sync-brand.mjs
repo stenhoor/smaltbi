@@ -25,6 +25,7 @@ const files = {
   'badges/powered-by-smaltdb.svg': 'powered-by-smaltdb.svg',
   'badges/powered-by-smaltdb-on-dark.svg': 'powered-by-smaltdb-on-dark.svg',
   'tokens/tokens.json': 'tokens.json',
+  'tokens/tokens.css': 'tokens.css',
 };
 mkdirSync(out, { recursive: true });
 for (const [from, to] of Object.entries(files)) copyFileSync(join(src, from), join(out, to));

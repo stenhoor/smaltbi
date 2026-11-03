@@ -1,4 +1,5 @@
-// Assembles the GitHub Pages site in _site/: the designer (index.html), the viewer, the engine,
+// Assembles the GitHub Pages site in _site/: the landing page (index.html), the designer
+// (designer.html), the viewer, the engine,
 // built-in themes and the sample report, plus the sample published as a standalone site in
 // _site/sample/. Run after `npm run build`.
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -10,7 +11,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, '_site');
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
-for (const f of ['index.html', 'viewer.html']) cpSync(join(root, f), join(out, f));
+for (const f of ['index.html', 'designer.html', 'viewer.html']) cpSync(join(root, f), join(out, f));
 for (const d of ['dist', 'vendor', 'themes', 'examples', 'brand']) {
   if (!existsSync(join(root, d))) throw new Error(`${d}/ is missing: run npm install && npm run build`);
   cpSync(join(root, d), join(out, d), { recursive: true, filter: (p) => !p.endsWith('.map') });

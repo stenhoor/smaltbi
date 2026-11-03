@@ -1,6 +1,6 @@
 {
   "repo": "stenhoor/smalt-brand",
-  "commit": "f857b8fd6ed4f775de0535049dd306b28af8a6c6",
+  "commit": "5a7daf6c3d0132141b07d0df12067ec43fb0d76d",
   "files": {
     "logos/smaltbi/lockup.svg": "lockup.svg",
     "logos/smaltbi/lockup-on-dark.svg": "lockup-on-dark.svg",
@@ -15,6 +15,7 @@
     "badges/powered-by-smaltbi-on-dark.svg": "powered-by-smaltbi-on-dark.svg",
     "badges/powered-by-smaltdb.svg": "powered-by-smaltdb.svg",
     "badges/powered-by-smaltdb-on-dark.svg": "powered-by-smaltdb-on-dark.svg",
-    "tokens/tokens.json": "tokens.json"
+    "tokens/tokens.json": "tokens.json",
+    "tokens/tokens.css": "tokens.css"
   }
 }

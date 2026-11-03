@@ -68,7 +68,7 @@ working on them.
 ```bash
 npm install            # also vendors the smaltdb engine into vendor/smaltdb/
 npm run build          # dist/ (designer.js, viewer.js, css)
-npm run serve          # http://localhost:8080 (COOP/COEP headers)
+npm run serve          # http://localhost:8080: landing page; /designer.html, /viewer.html (COOP/COEP headers)
 npm run typecheck
 npm test               # unit tests; compiled SQL runs against the real smaltdb engine
 node test/e2e.mjs      # Chromium end-to-end (Playwright); run after npm run build
