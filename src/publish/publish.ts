@@ -24,6 +24,7 @@ export const VIEWER_HTML = (title: string) => `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${title.replace(/[<&]/g, (c) => (c === '<' ? '&lt;' : '&amp;'))}</title>
+  <link rel="icon" type="image/svg+xml" href="brand/favicon-32.svg">
   <link rel="stylesheet" href="report.css">
   <script type="module" src="viewer.js"></script>
 </head>
@@ -53,6 +54,7 @@ Files:
   index.html, viewer.js, report.css   the viewer
   vendor/smaltdb/                     the smaltdb engine (runs in a Web Worker)
   report.json                         the report: data steps, model, pages, theme
+  brand/                              favicon and the "Powered by smaltbi" badge
   data/                               the data files the report loads
 `;
 
@@ -67,9 +69,10 @@ export async function publishEntries(session: ReportSession, opts: PublishOption
   const log = opts.log ?? (() => {});
   const report = structuredClone(session.report) as Report;
   const entries: ZipEntry[] = [];
-  const manifest = (await (await fetch(new URL('dist/publish-manifest.json', opts.appBase))).json()) as { viewer: string[]; engine: string[] };
+  const manifest = (await (await fetch(new URL('dist/publish-manifest.json', opts.appBase))).json()) as { viewer: string[]; engine: string[]; brand?: string[] };
   log('viewer');
   for (const f of manifest.viewer) entries.push({ path: f.replace(/^dist\//, ''), data: await fetchBytes(new URL(f, opts.appBase).href) });
+  for (const f of manifest.brand ?? []) entries.push({ path: f, data: await fetchBytes(new URL(f, opts.appBase).href) });
   log('engine');
   for (const f of manifest.engine) entries.push({ path: f, data: await fetchBytes(new URL(f, opts.appBase).href) });
 

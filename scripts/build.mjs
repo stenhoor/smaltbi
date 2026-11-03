@@ -51,7 +51,9 @@ function copyStatic() {
   } catch {
     console.warn('vendor/smaltdb missing: run npm install');
   }
-  writeFileSync(join(root, 'dist/publish-manifest.json'), JSON.stringify({ viewer: ['dist/viewer.js', 'dist/report.css'], engine: files }, null, 2) + '\n');
+  // Brand files a published report shows (favicon, "Powered by" badge), from brand/ (smalt-brand copies).
+  const brand = ['brand/favicon-32.svg', 'brand/favicon-16.svg', 'brand/powered-by-smaltbi.svg', 'brand/powered-by-smaltbi-on-dark.svg'];
+  writeFileSync(join(root, 'dist/publish-manifest.json'), JSON.stringify({ viewer: ['dist/viewer.js', 'dist/report.css'], engine: files, brand }, null, 2) + '\n');
 }
 
 if (args.includes('--watch')) {

@@ -1,11 +1,25 @@
-# smaltbi
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="brand/lockup-on-dark.svg">
+    <img alt="smaltbi" src="brand/lockup.svg" width="320">
+  </picture>
+</h1>
 
-**Business intelligence in the browser, on [smaltdb](https://github.com/stenhoor/smaltdb).**
+**Small. Alternative. Insight.**
 
-smaltbi is a report designer and viewer in the spirit of Power BI and Tableau, built as a static
-web app. Load CSV, JSON or Parquet files (or point at an existing smaltdb database), model them
-with relationships and SQL measures, drag fields onto a canvas, and publish the result as a static
-site that runs entirely in each visitor's browser. There is no server.
+Business intelligence in the browser, powered by [smaltdb](https://github.com/stenhoor/smaltdb).
+
+smaltbi is a report designer and viewer, built as a static web app. Load CSV, JSON or Parquet files
+(or open an existing smaltdb database), model them with relationships and SQL measures, drag fields
+onto a canvas, and publish the result as a static site. Every report runs entirely in its reader's
+browser.
+
+<a href="https://smaltdb.dev">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="brand/powered-by-smaltdb-on-dark.svg">
+    <img alt="Powered by smaltdb" src="brand/powered-by-smaltdb.svg" width="172" height="28">
+  </picture>
+</a>
 
 > **Status: 0.1.0, a working skeleton.** The designer, viewer, semantic model, query compiler,
 > 18 visual types, cross-filtering, drill down/through, themes and static publishing work end to
@@ -119,8 +133,16 @@ static host. `node scripts/publish.mjs report.json out/` does the same from the 
 ## Dependencies
 
 Runtime: **smaltdb** only (loaded at run time from `vendor/smaltdb/`). Build: esbuild and TypeScript.
-No UI framework, no chart library, no CSS framework. Anything else goes through the plugin policy in
-[docs/PLUGINS.md](docs/PLUGINS.md).
+The UI, charts and styles are plain HTML, CSS and SVG written for smaltbi. Anything else goes through
+the plugin policy in [docs/PLUGINS.md](docs/PLUGINS.md).
+
+## Brand
+
+Logos, the "Powered by" badges, colours and type come from
+[stenhoor/smalt-brand](https://github.com/stenhoor/smalt-brand/blob/main/BRAND.md). `brand/` holds
+copies of smaltbi's assets (synced with `scripts/sync-brand.mjs`, never edited by hand), and the default
+**Smalt** theme uses the brand's Kiln palette and Geist type. Published reports show the
+"Powered by smaltbi" badge; turn it off per report in the Publish dialog (`branding.poweredBy: false`).
 
 ## License
 

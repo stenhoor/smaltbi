@@ -5,7 +5,7 @@ import type { FieldRef, Report, Theme, Visual } from '../core/types.js';
 import { visualDef } from '../visuals/index.js';
 import { ReportSession } from '../report/session.js';
 import { ReportView } from '../report/view.js';
-import { viewerBar } from '../report/chrome.js';
+import { poweredByBadge, viewerBar } from '../report/chrome.js';
 import { pageLayout } from '../theme/theme.js';
 import { type Engine, loadEngine } from '../kit/engine.js';
 import { dialog, download, fileName, h, pickFile, showMenu, toast } from '../kit/dom.js';
@@ -96,6 +96,9 @@ class Designer {
       const bar = viewerBar(this.view, { extra: [h('button.sbv-btn', { onclick: () => this.togglePreview() }, '✎ Back to editing')] });
       this.canvasHost.prepend(bar);
       this.previewBar = bar;
+      // Preview shows what readers get, including the badge.
+      const badge = poweredByBadge(this.store.report);
+      if (badge) this.canvasHost.append(badge);
     }
     this.view.render();
   }
@@ -156,7 +159,16 @@ class Designer {
     name.addEventListener('change', () => this.store.change('report', (r) => (r.name = name.value || 'Untitled report')));
     const btn = (label: string, title: string, fn: () => void, cls = '') => h('button.sbd-tbtn' + cls, { title, onclick: fn }, label);
     this.top.replaceChildren(
-      h('div.sbd-logo', { html: '<svg viewBox="0 0 24 24" width="20" height="20"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="6" width="4" height="15" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg><b>smaltbi</b>' }),
+      h('a.sbd-logo', {
+        href: 'https://github.com/stenhoor/smaltbi',
+        target: '_blank',
+        rel: 'noopener',
+        title: 'smaltbi: Small. Alternative. Insight.',
+        // Brand assets from stenhoor/smalt-brand (brand/): the Scatter mark and the wordmark, light and dark.
+        html:
+          '<img class="sbd-light" src="brand/scatter-mark.svg" alt="" width="24" height="24"><img class="sbd-dark" src="brand/scatter-mark-on-dark.svg" alt="" width="24" height="24">' +
+          '<img class="sbd-light" src="brand/wordmark.svg" alt="smaltbi" height="15"><img class="sbd-dark" src="brand/wordmark-on-dark.svg" alt="smaltbi" height="15">',
+      }),
       name,
       ...(this.preview
         ? []

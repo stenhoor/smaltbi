@@ -30,7 +30,12 @@ function cellStyle(mode: unknown, v: number, [lo, hi]: [number, number]): string
     const p = Math.max(0, Math.min(100, (Math.max(0, v) / (hi > 0 ? hi : 1)) * 100));
     return ` style="--bar:${p.toFixed(1)}%" data-bar`;
   }
-  if (mode === 'heat') return ` style="background:${seqColor((v - lo) / (hi - lo || 1))}"`;
+  if (mode === 'heat') {
+    // Past the middle of the ramp the cell is strong (dark smalt in light mode, pale smalt in dark
+    // mode): its text switches to the theme's on-mark colour so it stays readable in both.
+    const t = (v - lo) / (hi - lo || 1);
+    return ` style="background:${seqColor(t)}${t > 0.55 ? ';color:var(--sb-on-mark,#fff)' : ''}"`;
+  }
   return '';
 }
 

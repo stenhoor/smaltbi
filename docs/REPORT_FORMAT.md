@@ -14,7 +14,8 @@ The sample, [`examples/sales/report.json`](../examples/sales/report.json), uses 
   "theme": "smalt",             // built-in name, a URL/path to a .theme.json, or an inline theme
   "filters": [ … ],             // report-level filters (every page)
   "pages": [ … ],
-  "bookmarks": [ … ]
+  "bookmarks": [ … ],
+  "branding": { "poweredBy": true }   // the "Powered by smaltbi" badge in the viewer (default true)
 }
 ```
 

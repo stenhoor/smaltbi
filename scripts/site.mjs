@@ -11,7 +11,7 @@ const out = join(root, '_site');
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 for (const f of ['index.html', 'viewer.html']) cpSync(join(root, f), join(out, f));
-for (const d of ['dist', 'vendor', 'themes', 'examples']) {
+for (const d of ['dist', 'vendor', 'themes', 'examples', 'brand']) {
   if (!existsSync(join(root, d))) throw new Error(`${d}/ is missing: run npm install && npm run build`);
   cpSync(join(root, d), join(out, d), { recursive: true, filter: (p) => !p.endsWith('.map') });
 }

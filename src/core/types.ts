@@ -18,6 +18,11 @@ export interface Report {
   filters?: Filter[];
   pages: Page[];
   bookmarks?: Bookmark[];
+  /** Published-report branding. */
+  branding?: {
+    /** Show the "Powered by smaltbi" badge (from stenhoor/smalt-brand) in the viewer. Default true. */
+    poweredBy?: boolean;
+  };
 }
 
 // ------------------------------------------------------------------ data
@@ -285,4 +290,6 @@ export interface ThemeColors {
   negative: string;
   neutral: string;
   selection: string;
+  /** Text drawn on top of series colours (data labels on slices, tiles, heat cells). Default white. */
+  onMark: string;
 }

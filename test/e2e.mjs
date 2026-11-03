@@ -157,6 +157,21 @@ try {
   const bg = await page.evaluate(() => getComputedStyle(document.querySelector('.sb-report')).backgroundColor);
   check(bg === 'rgb(11, 13, 18)', `theme applied (${bg})`);
 
+  // Brand (stenhoor/smalt-brand copies in brand/): the designer logo and favicon load.
+  const logo = await page.evaluate(() => [...document.querySelectorAll('.sbd-logo img')].map((i) => i.complete && i.naturalWidth > 0));
+  check(logo.length === 4 && logo.every(Boolean), `designer logo images load (${logo})`);
+  check((await page.getAttribute('link[rel=icon]', 'href')) === 'brand/favicon-32.svg', 'designer has the smaltbi favicon');
+
+  // The "Powered by" badge can be switched off per report in the Publish dialog.
+  const branding = () => page.evaluate(() => window.smaltbi.store.report.branding?.poweredBy);
+  await page.click('.sbd-tbtn:has-text("Publish")');
+  await page.locator('.sk-dialog label:has-text("Powered by") input').uncheck();
+  const off = await branding();
+  await page.locator('.sk-dialog label:has-text("Powered by") input').check();
+  const on = await branding();
+  await page.click('.sk-dialog-foot button:has-text("Cancel")');
+  check(off === false && on === undefined, `the Publish dialog turns the badge off and on (${off} → ${on})`);
+
   // Publish a static site.
   await page.click('.sbd-tbtn:has-text("Publish")');
   const [download] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.click('.sk-dialog-foot button:has-text("Download site")')]);
@@ -180,6 +195,15 @@ try {
   await until(viewer, (sel) => document.querySelectorAll(sel).length >= 4, '.sb-kpi-value');
   const units = await viewer.locator('.sb-kpi-value').count();
   check(units >= 4, `published report has its cards (${units})`);
+  // The published site carries the brand files: the badge links to smaltbi and its image loads.
+  const badge = await viewer.evaluate(() => {
+    const a = document.querySelector('.sbv-badge');
+    const img = [...(a?.querySelectorAll('img') ?? [])].find((i) => getComputedStyle(i).display !== 'none');
+    return { href: a?.getAttribute('href'), alt: img?.alt, loaded: !!img && img.complete && img.naturalWidth > 0 };
+  });
+  check(badge.href === 'https://github.com/stenhoor/smaltbi' && badge.alt === 'Powered by smaltbi' && badge.loaded, `published report shows the "Powered by smaltbi" badge (${JSON.stringify(badge)})`);
+  const favicon = await viewer.evaluate(async () => (await fetch(document.querySelector('link[rel=icon]').href)).status);
+  check(favicon === 200, `published site serves its favicon (${favicon})`);
 
   // Cross-filter: click the "Europe" slicer button, the Orders card changes.
   const orders = () => viewer.locator('.sb-visual[data-id=k-orders] .sb-kpi-value').textContent();

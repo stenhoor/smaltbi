@@ -67,3 +67,24 @@ export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[] } = {}
   );
   return Object.assign(bar, { renderTabs });
 }
+
+/** Link of the "Powered by smaltbi" badge (smalt-brand badges/README.md). */
+export const POWERED_BY_URL = 'https://github.com/stenhoor/smaltbi';
+
+/**
+ * The "Powered by smaltbi" badge from stenhoor/smalt-brand (copied into brand/), light and dark
+ * variants switched by the viewer's colour mode. null when the report turns it off.
+ */
+export function poweredByBadge(report: { branding?: { poweredBy?: boolean } }, base = ''): HTMLElement | null {
+  if (report.branding?.poweredBy === false) return null;
+  return h(
+    'footer.sbv-foot',
+    {},
+    h(
+      'a.sbv-badge',
+      { href: POWERED_BY_URL, target: '_blank', rel: 'noopener', title: 'smaltbi: business intelligence in the browser, powered by smaltdb' },
+      h('img.sbv-badge-light', { src: base + 'brand/powered-by-smaltbi.svg', alt: 'Powered by smaltbi', width: 172, height: 28 }),
+      h('img.sbv-badge-dark', { src: base + 'brand/powered-by-smaltbi-on-dark.svg', alt: 'Powered by smaltbi', width: 172, height: 28 }),
+    ),
+  );
+}
