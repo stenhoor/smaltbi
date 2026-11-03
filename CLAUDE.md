@@ -55,8 +55,9 @@ working on them.
   [stenhoor/smalt-brand](https://github.com/stenhoor/smalt-brand/blob/main/BRAND.md). Use it as the source rather
   than editing copies by hand. `brand/` holds copies of smaltbi's logos, favicons, badges and `tokens.json`;
   refresh them with `node scripts/sync-brand.mjs <smalt-brand checkout>`, never by editing. The Smalt theme
-  (`themes/smalt.theme.json`) and the designer chrome (`styles/app.css`) use the Kiln tokens; update them when
-  `tokens.json` changes. Visual-type icons wait for the brand's icon style.
+  (`themes/smalt.theme.json`) uses the Kiln tokens; update it when `tokens.json` changes. The designer chrome
+  (`styles/app.css`), the landing page and `brand/tokens.css` read the tokens directly. Icons (`src/visuals/icons.ts`)
+  follow the brand's Chevron style (BRAND.md, Iconography).
 - **smaltkit:** shared code lives in [stenhoor/smaltkit](https://github.com/stenhoor/smaltkit) (ADR 0005), pinned as
   `github:stenhoor/smaltkit#<commit>`. The charts, tables, formatting, SVG and DOM helpers and their CSS (`ui.css`,
   bundled into `dist/report.css`) come from there: change them in smaltkit, then bump the pin in its own PR. Still to

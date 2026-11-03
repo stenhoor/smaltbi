@@ -54,7 +54,7 @@ Files:
   index.html, viewer.js, report.css   the viewer
   vendor/smaltdb/                     the smaltdb engine (runs in a Web Worker)
   report.json                         the report: data steps, model, pages, theme
-  brand/                              favicon and the "Powered by smaltbi" badge
+  brand/                              favicon, the smaltbi mark and the "Powered by smaltbi" badge
   data/                               the data files the report loads
 `;
 

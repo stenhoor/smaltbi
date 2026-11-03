@@ -3,14 +3,14 @@
 // The definitions (roles, options, queries) live here; drawing is done by smaltkit.
 import * as kit from 'smaltkit';
 import { chartContext, registerVisual } from './api.js';
+import { ICONS } from './icons.js';
 
-const ico = (d: string) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
 
 registerVisual({
   type: 'table',
   label: 'Table',
   group: 'core',
-  icon: ico('M3 4h18v16H3zm2 2v3h6V6zm8 0v3h6V6zM5 11v3h6v-3zm8 0v3h6v-3zM5 16v2h6v-2zm8 0v2h6v-2z'),
+  icon: ICONS.table!,
   roles: [
     { name: 'columns', label: 'Columns', kind: 'dimension' },
     { name: 'values', label: 'Values', kind: 'measure' },
@@ -38,7 +38,7 @@ registerVisual({
   type: 'matrix',
   label: 'Matrix',
   group: 'core',
-  icon: ico('M3 4h18v16H3zm2 2v3h4V6zm6 0v3h4V6zm6 0v3h2V6zM5 11v3h4v-3zm6 0v3h4v-3zm6 0v3h2v-3zM5 16v2h4v-2z'),
+  icon: ICONS.matrix!,
   roles: [
     { name: 'rows', label: 'Rows', kind: 'dimension' },
     { name: 'columns', label: 'Columns', kind: 'dimension', max: 2 },

@@ -2,8 +2,8 @@
 // The definitions (roles, options, queries) live here; drawing is done by smaltkit.
 import * as kit from 'smaltkit';
 import { LABELS_OPTION, LEGEND_OPTION, type VisualDef, chartContext, registerVisual } from './api.js';
+import { ICONS } from './icons.js';
 
-const ico = (d: string) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
 
 // ------------------------------------------------------------------ pie / donut
 
@@ -16,7 +16,7 @@ registerVisual({
   type: 'pie',
   label: 'Pie chart',
   group: 'core',
-  icon: ico('M11 3a9 9 0 1 0 9 10h-9zM13 2v9h9a9 9 0 0 0-9-9z'),
+  icon: ICONS.pie!,
   roles: pieRoles,
   options: [LABELS_OPTION, LEGEND_OPTION],
   sort: 'value',
@@ -28,7 +28,7 @@ registerVisual({
   type: 'donut',
   label: 'Donut chart',
   group: 'core',
-  icon: ico('M12 3a9 9 0 1 0 9 9h-4a5 5 0 1 1-5-5zM14 3v4.3A5 5 0 0 1 16.7 10H21a9 9 0 0 0-7-7z'),
+  icon: ICONS.donut!,
   roles: pieRoles,
   options: [{ key: 'center', label: 'Total in center', type: 'bool', default: true }, LABELS_OPTION, LEGEND_OPTION],
   sort: 'value',
@@ -42,7 +42,7 @@ registerVisual({
   type: 'funnel',
   label: 'Funnel',
   group: 'advanced',
-  icon: ico('M3 4h18v3H3zM6 9h12v3H6zM8 14h8v3H8zM10 19h4v2h-4z'),
+  icon: ICONS.funnel!,
   roles: [
     { name: 'category', label: 'Stage', kind: 'dimension', max: 1 },
     { name: 'values', label: 'Value', kind: 'measure', max: 1 },
@@ -58,7 +58,7 @@ registerVisual({
   type: 'treemap',
   label: 'Treemap',
   group: 'advanced',
-  icon: ico('M3 3h10v11H3zM14 3h7v6h-7zM14 10h7v11h-7zM3 15h10v6H3z'),
+  icon: ICONS.treemap!,
   roles: [
     { name: 'category', label: 'Category', kind: 'dimension', drill: true },
     { name: 'values', label: 'Values', kind: 'measure', max: 1 },
@@ -75,7 +75,7 @@ registerVisual({
   type: 'waterfall',
   label: 'Waterfall',
   group: 'advanced',
-  icon: ico('M3 12h3v8H3zM7 8h3v4H7zM11 5h3v3h-3zM15 5h3v9h-3zM19 5h2v15h-2z'),
+  icon: ICONS.waterfall!,
   roles: [
     { name: 'category', label: 'Category', kind: 'dimension', max: 1 },
     { name: 'values', label: 'Change', kind: 'measure', max: 1 },
@@ -91,7 +91,7 @@ registerVisual({
   type: 'gauge',
   label: 'Gauge',
   group: 'advanced',
-  icon: ico('M12 5a9 9 0 0 0-9 9h3a6 6 0 0 1 12 0h3a9 9 0 0 0-9-9zM11 14l5-6 1 1-5 6z'),
+  icon: ICONS.gauge!,
   roles: [
     { name: 'values', label: 'Value', kind: 'measure', max: 1 },
     { name: 'target', label: 'Target', kind: 'measure', max: 1 },
@@ -107,7 +107,7 @@ registerVisual({
   type: 'card',
   label: 'KPI card',
   group: 'core',
-  icon: ico('M3 5h18v14H3zM6 9h7v2H6zM6 13h12v3H6z'),
+  icon: ICONS.card!,
   roles: [
     { name: 'values', label: 'Value', kind: 'measure', max: 1 },
     { name: 'target', label: 'Compare to', kind: 'measure', max: 1 },

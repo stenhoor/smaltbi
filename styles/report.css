@@ -148,7 +148,19 @@
 /* ---------------------------------------------------------------- viewer chrome (published reports) */
 .sbv-body { margin: 0; min-height: 100vh; background: var(--sb-bg, #f5f6f8); color: var(--sb-text, #151922); font-family: var(--sb-font, Geist, system-ui, sans-serif); }
 .sbv-bar { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: 16px; padding: 10px 20px; background: color-mix(in oklab, var(--sb-surface) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--sb-border); }
-.sbv-title { font-family: var(--sb-font-heading); font-weight: 650; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 32vw; }
+.sbv-title { display: flex; align-items: center; gap: 9px; font-family: var(--sb-font-heading); font-weight: 650; font-size: 15px; white-space: nowrap; overflow: hidden; max-width: 32vw; }
+.sbv-name { overflow: hidden; text-overflow: ellipsis; }
+.sbv-mark { display: inline-flex; flex: none; line-height: 0; }
+.sbv-mark img { width: 22px; height: 22px; }
+.sbv-mark-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  body:not([data-mode=light]) .sbv-mark-light { display: none; }
+  body:not([data-mode=light]) .sbv-mark-dark { display: inline; }
+}
+body[data-mode=dark] .sbv-mark-light { display: none; }
+body[data-mode=dark] .sbv-mark-dark { display: inline; }
+.sbv-mode { display: inline-flex; align-items: center; gap: 6px; }
+.sbv-mode svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
 .sbv-tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; flex: 1; }
 .sbv-tab { font: inherit; font-size: 13px; color: var(--sb-muted); background: none; border: 0; padding: 7px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
 .sbv-tab:hover { color: var(--sb-text); background: color-mix(in oklab, var(--sb-text) 6%, transparent); }

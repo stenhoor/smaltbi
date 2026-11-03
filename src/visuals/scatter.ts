@@ -2,14 +2,14 @@
 // The definitions (roles, options, queries) live here; drawing is done by smaltkit.
 import * as kit from 'smaltkit';
 import { LEGEND_OPTION, chartContext, registerVisual } from './api.js';
+import { ICONS } from './icons.js';
 
-const ico = (d: string) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
 
 registerVisual({
   type: 'scatter',
   label: 'Scatter chart',
   group: 'core',
-  icon: ico('M5 17a2 2 0 1 0 0 .1zM9 11a2.5 2.5 0 1 0 0 .1zM15 14a1.6 1.6 0 1 0 0 .1zM17 6a3 3 0 1 0 0 .1zM3 3h1.5v16.5H21V21H3z'),
+  icon: ICONS.scatter!,
   roles: [
     { name: 'details', label: 'Values (one point each)', kind: 'dimension' },
     { name: 'legend', label: 'Legend', kind: 'dimension', max: 1 },
@@ -26,7 +26,7 @@ registerVisual({
   type: 'heatmap',
   label: 'Heatmap',
   group: 'advanced',
-  icon: ico('M3 3h5v5H3zM9.5 3h5v5h-5zM16 3h5v5h-5zM3 9.5h5v5H3zM9.5 9.5h5v5h-5zM16 9.5h5v5h-5zM3 16h5v5H3zM9.5 16h5v5h-5zM16 16h5v5h-5z'),
+  icon: ICONS.heatmap!,
   roles: [
     { name: 'rows', label: 'Rows', kind: 'dimension', max: 1 },
     { name: 'columns', label: 'Columns', kind: 'dimension', max: 1 },
