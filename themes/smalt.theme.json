@@ -1,32 +1,64 @@
 {
   "name": "Smalt",
+  "description": "The smalt brand (stenhoor/smalt-brand): the Kiln palette, Geist and Geist Mono. Colours from brand/tokens.json.",
   "colors": {
-    "background": "#f4f6f9",
-    "surface": "#ffffff",
-    "text": "#18202b",
-    "muted": "#5f6b7a",
-    "border": "#e2e7ee",
-    "grid": "#edf0f4",
-    "accent": "#2a4fbf",
-    "positive": "#1f8a5b",
-    "negative": "#c8423b",
-    "neutral": "#9aa5b4",
-    "selection": "#2a4fbf"
+    "background": "#F5F6F8",
+    "surface": "#FFFFFF",
+    "text": "#151922",
+    "muted": "#5C6375",
+    "border": "#D6DBE4",
+    "grid": "#E8EBF0",
+    "accent": "#003399",
+    "positive": "#1D6B3A",
+    "negative": "#A3195B",
+    "neutral": "#5C6375",
+    "selection": "#003399",
+    "onMark": "#FFFFFF"
   },
-  "palette": ["#2a4fbf", "#e07b39", "#2f9e8f", "#c84c7c", "#7b5cc4", "#8aa63a", "#d4a72c", "#4a90c9", "#a3574a", "#5b6b7f", "#3fb7c4", "#d36f9e"],
-  "sequential": ["#e9eefb", "#2a4fbf"],
-  "diverging": ["#c8423b", "#f2f2f2", "#1f8a5b"],
+  "palette": [
+    "#2F5BB7",
+    "#E5622F",
+    "#6E4BC2",
+    "#0E7FAE",
+    "#B07D1A",
+    "#2E8B6E",
+    "#C2417A",
+    "#5C6375",
+    "#1F5F8B",
+    "#A33A12",
+    "#8E6BD8",
+    "#3F4656"
+  ],
+  "sequential": [
+    "#D6E0F3",
+    "#003399"
+  ],
+  "diverging": [
+    "#A33A12",
+    "#EEF1F6",
+    "#2F5BB7"
+  ],
   "fonts": {
-    "body": "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-    "heading": "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-    "numeric": "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    "body": "Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    "heading": "Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    "numeric": "Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    "imports": [
+      "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
+    ]
   },
-  "sizes": { "base": 13, "title": 14, "subtitle": 12, "label": 11, "kpi": 34, "small": 10 },
+  "sizes": {
+    "base": 13,
+    "title": 14,
+    "subtitle": 12,
+    "label": 11,
+    "kpi": 34,
+    "small": 10
+  },
   "visual": {
     "radius": 10,
     "padding": 14,
     "border": "1px solid var(--sb-border)",
-    "shadow": "0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06)",
+    "shadow": "0 1px 2px rgba(21,25,34,.04), 0 1px 3px rgba(21,25,34,.06)",
     "titleAlign": "left",
     "titleWeight": 600,
     "gridlines": true,
@@ -34,23 +66,52 @@
     "lineWidth": 2,
     "markerSize": 3
   },
-  "page": { "width": 1280, "rows": 12, "columns": 12, "rowHeight": 56, "gap": 12, "padding": 16, "fit": "width" },
+  "page": {
+    "width": 1280,
+    "rows": 12,
+    "columns": 12,
+    "rowHeight": 56,
+    "gap": 12,
+    "padding": 16,
+    "fit": "width"
+  },
   "dark": {
     "colors": {
-      "background": "#0f141b",
-      "surface": "#171e28",
-      "text": "#e6ebf2",
-      "muted": "#93a0b2",
-      "border": "#263040",
-      "grid": "#212a37",
-      "accent": "#7d9cff",
-      "positive": "#46c08a",
-      "negative": "#ff7a70",
-      "neutral": "#6b778a",
-      "selection": "#7d9cff"
+      "background": "#14171F",
+      "surface": "#1B1F29",
+      "text": "#E9EBF0",
+      "muted": "#9096A3",
+      "border": "#2C3240",
+      "grid": "#242936",
+      "accent": "#9DB4F5",
+      "positive": "#6FD69A",
+      "negative": "#FF9EC4",
+      "neutral": "#9096A3",
+      "selection": "#9DB4F5",
+      "onMark": "#14171F"
     },
-    "palette": ["#7d9cff", "#f29a5c", "#4cc3b2", "#e47aa3", "#a58cf0", "#b0cc5a", "#e8c25a", "#6fb3ea", "#cf8576", "#93a3b8", "#5fd3df", "#ec95bd"],
-    "sequential": ["#1d2740", "#7d9cff"],
-    "diverging": ["#ff7a70", "#2a3240", "#46c08a"]
+    "palette": [
+      "#9DB4F5",
+      "#FF8A5C",
+      "#B8A1F2",
+      "#5CBDE8",
+      "#E8C25A",
+      "#5FCFA8",
+      "#F09AC0",
+      "#B9BEC9",
+      "#7FD1E8",
+      "#FFB38F",
+      "#D3A6FF",
+      "#6F86C4"
+    ],
+    "sequential": [
+      "#1E2638",
+      "#9DB4F5"
+    ],
+    "diverging": [
+      "#FF8A5C",
+      "#2C3240",
+      "#9DB4F5"
+    ]
   }
 }

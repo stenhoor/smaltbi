@@ -11,16 +11,44 @@
     "positive": "#38d6a0",
     "negative": "#ff6b81",
     "neutral": "#5d6779",
-    "selection": "#38d6c4"
+    "selection": "#38d6c4",
+    "onMark": "#0b0d12"
   },
-  "palette": ["#38d6c4", "#ffb547", "#9d7bff", "#ff6b81", "#5ab0ff", "#c3e86b", "#ff8fd1", "#7ce3ff"],
-  "sequential": ["#14212a", "#38d6c4"],
-  "diverging": ["#ff6b81", "#1e2431", "#38d6a0"],
+  "palette": [
+    "#38d6c4",
+    "#ffb547",
+    "#9d7bff",
+    "#ff6b81",
+    "#5ab0ff",
+    "#c3e86b",
+    "#ff8fd1",
+    "#7ce3ff"
+  ],
+  "sequential": [
+    "#14212a",
+    "#38d6c4"
+  ],
+  "diverging": [
+    "#ff6b81",
+    "#1e2431",
+    "#38d6a0"
+  ],
   "fonts": {
     "body": "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif",
     "heading": "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif",
     "numeric": "'IBM Plex Mono', ui-monospace, monospace",
-    "imports": ["https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap"]
+    "imports": [
+      "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap"
+    ]
   },
-  "visual": { "radius": 6, "padding": 14, "border": "1px solid var(--sb-border)", "shadow": "0 0 0 1px rgba(255,255,255,.02)", "gridlines": true, "barRadius": 2, "lineWidth": 2, "markerSize": 0 }
+  "visual": {
+    "radius": 6,
+    "padding": 14,
+    "border": "1px solid var(--sb-border)",
+    "shadow": "0 0 0 1px rgba(255,255,255,.02)",
+    "gridlines": true,
+    "barRadius": 2,
+    "lineWidth": 2,
+    "markerSize": 0
+  }
 }

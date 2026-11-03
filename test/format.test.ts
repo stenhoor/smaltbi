@@ -41,12 +41,12 @@ test('SQL quoting', () => {
 
 test('themes compile to scoped CSS variables, with dark mode', async () => {
   const css = themeCss(BUILTIN_THEMES.smalt!);
-  assert.match(css, /\.sb-themed\{--sb-bg:#f4f6f9;/);
+  assert.match(css, /\.sb-themed\{--sb-bg:#F5F6F8;/);
   assert.match(css, /--sb-c11:/);
   assert.match(css, /prefers-color-scheme: dark/);
   const t = mergeTheme(BUILTIN_THEMES.smalt!, { name: 'Mine', colors: { accent: '#ff0000' } });
   assert.equal(t.colors!.accent, '#ff0000');
-  assert.equal(t.colors!.background, '#f4f6f9');
+  assert.equal(t.colors!.background, '#F5F6F8');
   const ext = await loadTheme({ name: 'X', extends: 'paper', palette: ['#000'] });
   assert.equal(ext.fonts!.body!.includes('Source Serif'), true);
   assert.match(themeCss(ext), /@import url\("https:\/\/fonts\.googleapis\.com/);

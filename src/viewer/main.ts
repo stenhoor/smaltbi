@@ -4,7 +4,7 @@ import '../visuals/index.js';
 import type { Report } from '../core/types.js';
 import { ReportSession } from '../report/session.js';
 import { ReportView } from '../report/view.js';
-import { viewerBar } from '../report/chrome.js';
+import { poweredByBadge, viewerBar } from '../report/chrome.js';
 import { stateFromHash, writeHash } from '../report/state.js';
 import { applyTheme } from '../theme/theme.js';
 import { h } from '../kit/dom.js';
@@ -29,7 +29,7 @@ async function main(): Promise<void> {
     let bar: ReturnType<typeof viewerBar> | undefined;
     const view = new ReportView(session, host, { mode: 'view', onState: (s) => (writeHash(s), bar?.renderTabs()) }, stateFromHash() ?? undefined);
     bar = viewerBar(view);
-    app.replaceChildren(bar, host);
+    app.replaceChildren(...[bar, host, poweredByBadge(report)].filter((x): x is HTMLElement => !!x));
     view.render();
     addEventListener('hashchange', () => {
       const s = stateFromHash();

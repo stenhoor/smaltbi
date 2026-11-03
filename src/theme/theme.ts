@@ -67,6 +67,7 @@ function colorVars(t: Pick<Theme, 'colors' | 'palette' | 'sequential' | 'divergi
     neg: c.negative,
     neutral: c.neutral,
     sel: c.selection,
+    'on-mark': c.onMark,
   };
   for (const [k, v] of Object.entries(map)) if (v) out.push(`--sb-${k}:${v}`);
   (t.palette ?? []).forEach((v, i) => out.push(`--sb-c${i}:${v}`));

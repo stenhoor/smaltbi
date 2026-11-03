@@ -33,6 +33,7 @@ Create one in the designer (**Theme** → customize → *Export theme*), or by h
 | `colors.positive` / `negative` | `--sb-pos` / `--sb-neg` | KPI deltas, waterfall up/down |
 | `colors.neutral` | `--sb-neutral` | Neutral marks |
 | `colors.selection` | `--sb-sel` | Selected table rows |
+| `colors.onMark` | `--sb-on-mark` | Data labels drawn on series colours (pie slices, treemap tiles, dark heat cells); default white |
 | `palette[0..11]` | `--sb-c0` … `--sb-c11` | Series colors (cycled when fewer than 12) |
 | `sequential` [low, …, high] | `--sb-seq-lo`, `--sb-seq-hi` | Heatmaps, matrix/table heat colors |
 | `diverging` [neg, mid, pos] | `--sb-div-lo`, `--sb-div-mid`, `--sb-div-hi` | Diverging scales |
@@ -74,6 +75,6 @@ example `{ "surface": "#fff8e6", "text": "#3b2f00" }`.
 
 | Name | Look |
 |---|---|
-| `smalt` | Default. Cobalt (smalt) accent, Inter / system sans, soft cards, light and dark. Its colors and fonts will come from the future smalt-brand tokens (ADR 0005). |
+| `smalt` | Default. The smalt brand ([stenhoor/smalt-brand](https://github.com/stenhoor/smalt-brand)): the Kiln palette (smalt `#003399` on graphite neutrals), Geist with tabular numbers, light and dark. Chart colours start from the brand's smalt, kiln orange, smaltbi violet and smaltui cerulean; every series colour is at least 3:1 against the card surface in both modes (checked by a unit test). |
 | `paper` | Editorial: warm paper, Source Serif, flat cards, no markers. |
 | `midnight` | Dark control room: teal accent, IBM Plex Sans with Plex Mono numbers. |

@@ -13,7 +13,7 @@
     "neutral": "#b3a998",
     "selection": "#a4372a"
   },
-  "palette": ["#a4372a", "#2f4b6e", "#c99a3b", "#5c7a52", "#7a4d6e", "#3f7f86", "#b86b3c", "#6b6b8f"],
+  "palette": ["#a4372a", "#2f4b6e", "#9a7420", "#5c7a52", "#7a4d6e", "#3f7f86", "#b86b3c", "#6b6b8f"],
   "sequential": ["#f3eadb", "#a4372a"],
   "diverging": ["#a4372a", "#f3eadb", "#2f4b6e"],
   "fonts": {

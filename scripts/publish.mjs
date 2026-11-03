@@ -24,6 +24,8 @@ mkdirSync(out, { recursive: true });
 cpSync(join(root, 'dist/viewer.js'), join(out, 'viewer.js'));
 cpSync(join(root, 'dist/report.css'), join(out, 'report.css'));
 cpSync(join(root, 'vendor/smaltdb'), join(out, 'vendor/smaltdb'), { recursive: true, filter: (p) => !p.endsWith('.map') });
+mkdirSync(join(out, 'brand'), { recursive: true });
+for (const f of ['favicon-32.svg', 'favicon-16.svg', 'powered-by-smaltbi.svg', 'powered-by-smaltbi-on-dark.svg']) cpSync(join(root, 'brand', f), join(out, 'brand', f));
 
 const used = new Set();
 for (const step of report.data?.steps ?? []) {
@@ -50,7 +52,7 @@ const esc = (s) => String(s).replace(/[<&]/g, (c) => (c === '<' ? '&lt;' : '&amp
 writeFileSync(join(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');
 writeFileSync(
   join(out, 'index.html'),
-  `<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>${esc(report.name)}</title>\n  <link rel="stylesheet" href="report.css">\n  <script type="module" src="viewer.js"></script>\n</head>\n<body class="sbv-body">\n  <div id="app"></div>\n  <noscript>This report needs JavaScript.</noscript>\n</body>\n</html>\n`,
+  `<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>${esc(report.name)}</title>\n  <link rel="icon" type="image/svg+xml" href="brand/favicon-32.svg">\n  <link rel="stylesheet" href="report.css">\n  <script type="module" src="viewer.js"></script>\n</head>\n<body class="sbv-body">\n  <div id="app"></div>\n  <noscript>This report needs JavaScript.</noscript>\n</body>\n</html>\n`,
 );
 writeFileSync(join(out, '_headers'), '/*\n  Cross-Origin-Opener-Policy: same-origin\n  Cross-Origin-Embedder-Policy: credentialless\n');
 console.log(`published ${report.name} → ${out}`);

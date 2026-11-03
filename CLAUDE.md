@@ -53,9 +53,10 @@ working on them.
   PR, and run the full check suite.
 - **smalt-brand:** logos, badges, colours and voice come from
   [stenhoor/smalt-brand](https://github.com/stenhoor/smalt-brand/blob/main/BRAND.md). Use it as the source rather
-  than editing copies by hand. The "Powered by" badges are on its `main`
-  (`badges/powered-by-smaltbi.svg` and `-on-dark.svg`); the Smalt theme, designer logo and visual-type icons are to
-  adopt its tokens and icons (ADR 0005, roadmap 0.3).
+  than editing copies by hand. `brand/` holds copies of smaltbi's logos, favicons, badges and `tokens.json`;
+  refresh them with `node scripts/sync-brand.mjs <smalt-brand checkout>`, never by editing. The Smalt theme
+  (`themes/smalt.theme.json`) and the designer chrome (`styles/app.css`) use the Kiln tokens; update them when
+  `tokens.json` changes. Visual-type icons wait for the brand's icon style.
 - **smaltkit:** shared code moves to a `smaltkit` repository (ADR 0005): today's `src/kit/`, `src/data/sources.ts`
   and the vendor/serve scripts, later smaltui's SQL editor and grid. Keep `src/kit/` free of smaltbi-specific code.
 - **Deploys:** merging to `main` redeploys https://stenhoor.github.io/smaltbi/. The Pages source must be

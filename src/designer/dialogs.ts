@@ -329,6 +329,15 @@ export async function publishDialog(ctx: DialogContext): Promise<void> {
   const r = ctx.store.report;
   const noSteps = !(r.data.steps ?? []).length || r.data.init === 'none';
   const snapshot = h('input', { type: 'checkbox', checked: noSteps }) as HTMLInputElement;
+  const badge = h('input', { type: 'checkbox', checked: r.branding?.poweredBy !== false }) as HTMLInputElement;
+  badge.addEventListener('change', () =>
+    ctx.store.change('report', (rep) => {
+      const branding = { ...(rep.branding ?? {}), poweredBy: badge.checked };
+      if (branding.poweredBy) delete (branding as { poweredBy?: boolean }).poweredBy;
+      rep.branding = Object.keys(branding).length ? branding : undefined;
+      if (!rep.branding) delete rep.branding;
+    }),
+  );
   const status = h('div.sbd-hint');
   const body = h(
     'div.sbd-form',
@@ -336,6 +345,7 @@ export async function publishDialog(ctx: DialogContext): Promise<void> {
     h('p', {}, 'Publishing creates a static website: the viewer, the smaltdb engine, report.json and its data files, in one ZIP. Unzip it onto any static host (GitHub Pages, Netlify, S3, an intranet web server). Every visitor’s browser runs the report; no server-side code.'),
     h('label.sbd-check', {}, snapshot, h('span', {}, 'Include a snapshot of the current data (CSV) instead of the report’s data steps')),
     noSteps ? h('div.sbd-hint', {}, 'This report has no data steps, so a snapshot is needed.') : null,
+    h('label.sbd-check', {}, badge, h('span', {}, 'Show the “Powered by smaltbi” badge')),
     status,
   );
   await dialog('Publish', body, [
