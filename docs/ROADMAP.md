@@ -16,7 +16,7 @@ tests and the Chromium end-to-end test green.
   ambiguous-path warnings), with table details, measures, calculated columns and hierarchies.
 - Themes: tokens → CSS variables, three built-ins, editor, import/export, dark mode.
 - Static publishing (ZIP and CLI). Sample dataset and report. Unit + e2e tests, CI.
-- Brand: smalt-brand logos, favicons and "Powered by smaltbi" badge; the Smalt theme and designer on
+- Brand: smalt-brand logos, favicons and the "Powered by smaltbi" badge (on by default, ADR 0004); the Smalt theme and designer on
   the Kiln palette with Geist, Geist Mono and Martian Mono.
 
 ## 0.2: Depth in the model and the designer
@@ -55,7 +55,7 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - Credentials: reports declare connections that need them; the viewer asks the reader and keeps
   them in memory only.
 - Publishing: multi-report sites (index page, shared themes and data), optional "Edit a copy"
-  (ships the designer), a small removable "Powered by" badge (from smalt-brand).
+  (ships the designer).
 - smalt-brand icons: the visual-type icons adopt its icon set once the brand chooses an icon style
   (logos, favicons, the "Powered by" badge, the Kiln palette and Geist type are adopted already).
 - Role-playing dimensions (a dimension related twice, e.g. order date and ship date).

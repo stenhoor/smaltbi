@@ -16,3 +16,4 @@ Date: 2026-11-02. Status: accepted. Answers to the questions in OPEN_QUESTIONS.m
 | 10 | Filter direction | **Through the fact table.** Slicers and dimension-only visuals show only values that have data under the other selections ("relevant values"). | 0.2 |
 | 11 | Publishing | All four: **multi-report sites** (index page, shared themes and data), an optional **"Edit a copy"** that ships the designer, a small removable **"Powered by"** badge, and **PDF/PNG export** of the current page in the viewer. | 0.3; PDF/PNG 0.5 |
 | 12 | Default font | **Keep system fallbacks.** The Smalt theme names Inter but downloads nothing; themes can import web fonts. | — |
+| 13 | "Powered by" badge | **On by default** (owner, 2026-11-03), removable per report with `branding.poweredBy: false` (a switch in the Publish dialog). The badge is smalt-brand's "Powered by smaltbi". | Shipped with the branding PR |
