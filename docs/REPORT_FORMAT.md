@@ -76,6 +76,9 @@ environment manifests. To report on an existing OPFS database, use
 - **`sortBy`** sorts a column by another column of the same table (month names by month number).
 - **Types**: `number`, `text`, `date`, `datetime`, `bool`, `any`. Introspection detects ISO date strings.
 - Without `relationships`, foreign keys declared in the database are used.
+- Relationships must be **unambiguous**: two active paths between the same tables (for example
+  `sales → customers` and `sales → stores → customers`) make queries that cross them fail with an
+  explanation. Set `"active": false` on one of them.
 
 ### Formats
 

@@ -26,9 +26,9 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - Quick measures for time intelligence, written as plain SQL: previous period, year-to-date, same
   period last year, rolling N (generated from a date column; no new language).
 - "Add date table" in the model view (calendar table, relationship, Year › Quarter › Month › Day).
-- Unambiguous models: flag tables reachable by more than one active path; extra relationships
-  must be inactive; the compiler errors instead of guessing.
-- Relevant values: dimensions filter each other through the fact table (slicers list only values
+- ✓ Unambiguous models: the model view flags tables reachable by more than one active path, and the
+  compiler errors instead of guessing; marking a relationship inactive resolves it.
+- ✓ Relevant values: dimensions filter each other through the fact table (slicers list only values
   with data under the other selections).
 - Fixed page sizes per page (16:9, 4:3, Letter, A4), scaled to fit; responsive stays the default.
 - Extract the shared kit into the `smaltkit` repository and package, used by smaltui and smaltbi

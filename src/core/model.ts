@@ -302,6 +302,41 @@ export class Model {
     throw new ModelError(`no relationship path from ${first} to ${missing.join(', ')}; add a relationship in the model`);
   }
 
+  /** Number of distinct active relationship paths from `root` to each table it reaches. */
+  pathCounts(root: string): Map<string, number> {
+    const count = new Map<string, number>();
+    const walk = (t: string, seen: Set<string>) => {
+      for (const e of this.edges) {
+        if (e.from.table !== t || seen.has(e.to.table)) continue;
+        count.set(e.to.table, (count.get(e.to.table) ?? 0) + 1);
+        walk(e.to.table, new Set([...seen, e.to.table]));
+      }
+    };
+    walk(root, new Set([root]));
+    return count;
+  }
+
+  /**
+   * Refuse to guess (ADR 0004, decision 9): if a table a query needs can be reached from its root
+   * by more than one active path, the join is ambiguous and the result would depend on which path
+   * was picked. The fix is to mark one of the relationships inactive.
+   */
+  assertUnambiguous(root: string, needed: Iterable<string>): void {
+    const counts = this.pathCounts(root);
+    const amb = [...new Set(needed)].filter((t) => t !== root && (counts.get(t) ?? 0) > 1);
+    if (!amb.length) return;
+    const list = amb.map((t) => `${root} → ${t}`).join(', ');
+    throw new ModelError(`There is more than one relationship path for ${list}. Mark one of the relationships inactive in the model view.`);
+  }
+
+  /** Pairs of tables connected by more than one active path (an ambiguous model). */
+  ambiguousPaths(): [string, string][] {
+    const out: [string, string][] = [];
+    const sources = new Set(this.edges.map((e) => e.from.table));
+    for (const start of sources) for (const [t, n] of this.pathCounts(start)) if (n > 1) out.push([start, t]);
+    return out;
+  }
+
   /** The LEFT JOIN clauses that bring `needed` tables in, starting from `root`. */
   joins(root: string, needed: Iterable<string>): string[] {
     const r = this.reach(root);

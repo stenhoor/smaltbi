@@ -42,8 +42,24 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
   const needed = new Set<string>();
   for (const f of [...dims, ...measures]) for (const t of f.tables) needed.add(t);
   const preferred = measures.flatMap((m) => [...m.tables]);
-  // Prefer the table of a measure that is not a lookup of another needed table.
-  const root = model.chooseRoot(needed, preferred);
+  let root: string;
+  if (measures.length) {
+    root = model.chooseRoot(needed, preferred);
+  } else {
+    // Relevant values (ADR 0004, decision 10): a dimension-only query (a slicer, a list of values)
+    // starts from a table that also reaches the filtered tables, normally the fact table, so other
+    // selections narrow it to values that have data. Without such a table, or without filters on
+    // other tables, it lists every value of its own table.
+    const withFilters = new Set([...needed, ...(q.filters ?? []).flatMap((f) => [...filterTables(model, f)])]);
+    root = model.chooseRoot(needed);
+    if (withFilters.size > needed.size) {
+      try {
+        root = model.chooseRoot(withFilters);
+      } catch {
+        // no table connects them: keep the dimension's own table; those filters are ignored below
+      }
+    }
+  }
 
   const where: string[] = [];
   const having: string[] = [];
@@ -57,6 +73,8 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
     for (const t of c.tables) needed.add(t);
     (c.aggregate ? having : where).push(c.sql);
   }
+
+  model.assertUnambiguous(root, needed);
 
   const select: string[] = [];
   const groupBy: string[] = [];
@@ -112,6 +130,17 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
 
 function defaultSort(dims: ResolvedField[], _measures: ResolvedField[]): { key: string; dir: 'asc' | 'desc' }[] {
   return dims.map((_, i) => ({ key: 'd' + i, dir: 'asc' as const }));
+}
+
+/** Tables a filter reads (empty when its fields do not resolve). */
+function filterTables(model: Model, f: Filter): Set<string> {
+  try {
+    if (f.op === 'sql') return model.tablesIn(model.expandRefs(f.sql ?? '1', '', new Set()));
+    const refs = f.op === 'tuples' ? (f.fields ?? []) : f.field ? [f.field] : [];
+    return new Set(refs.flatMap((r) => [...model.resolve(r, model.kindOf(r) === 'measure' ? 'measure' : 'dimension').tables]));
+  } catch {
+    return new Set();
+  }
 }
 
 interface CompiledFilter {

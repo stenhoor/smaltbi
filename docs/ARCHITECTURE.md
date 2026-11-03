@@ -52,6 +52,12 @@ A visual has data **roles** (axis, legend, values, …), each declared by its `V
    - gathers the tables every field and filter reads (from `table.` references in the SQL);
    - picks the **root** (the fact table): the first measure table from which every needed table can be
      reached along many-to-one relationships (BFS), else any such table;
+   - for a **dimension-only** query (a slicer, a list of values), picks a root that also reaches the
+     filtered tables, normally the fact table, so other selections narrow it to values that have data
+     ("relevant values", ADR 0004 decision 10); with no filters on other tables it lists every value;
+   - refuses an **ambiguous** model: if a needed table can be reached from the root by more than one
+     active path, it raises an error naming the path instead of picking one (ADR 0004 decision 9);
+     the fix is to mark a relationship inactive, and the model view flags such paths;
    - emits `LEFT JOIN`s along the paths found, `WHERE` for column filters, `GROUP BY` the dimensions,
      `HAVING` for measure filters, `ORDER BY`, `LIMIT`;
    - reports filters on tables it cannot reach (they are ignored, like a single-direction relationship).
