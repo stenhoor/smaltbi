@@ -26,6 +26,6 @@
   },
   "dependencies": {
     "smaltdb": "^0.8.3",
-    "smaltkit": "github:stenhoor/smaltkit#85c94e80fb3fb5385c9c6512cdb4258fed2de0ed"
+    "smaltkit": "github:stenhoor/smaltkit#d760b284a9ea13797836300436b929b9c12454c8"
   }
 }
