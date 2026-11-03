@@ -3,6 +3,7 @@
 import type { ViewState } from '../core/types.js';
 import { h, showMenu } from 'smaltkit/dom';
 import type { ReportView } from './view.js';
+import { MODE_ICONS } from '../visuals/icons.js';
 
 export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[] } = {}): HTMLElement & { renderTabs(): void } {
   const report = view.report;
@@ -20,12 +21,14 @@ export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[] } = {}
   try {
     mode = Math.max(0, modes.indexOf((localStorage.getItem('smaltbi.mode') as 'auto') ?? 'auto'));
   } catch {}
-  const modeBtn = h('button.sbv-btn', { title: 'Light / dark' });
+  const modeBtn = h('button.sbv-btn.sbv-mode', { title: 'Light, dark or automatic' });
   const applyMode = () => {
     view.setColorMode(modes[mode]!);
     document.body.dataset.mode = modes[mode] === 'auto' ? '' : modes[mode]!;
     if (modes[mode] === 'auto') document.body.removeAttribute('data-mode');
-    modeBtn.textContent = { auto: '◐ Auto', light: '☀ Light', dark: '☾ Dark' }[modes[mode]!];
+    const m = modes[mode]!;
+    modeBtn.innerHTML = `${MODE_ICONS[m]}<span>${{ auto: 'Auto', light: 'Light', dark: 'Dark' }[m]}</span>`;
+    modeBtn.setAttribute('aria-label', `Colour mode: ${m} (click to change)`);
   };
   // Another page of the site (the landing page around an embedded report) changed the setting.
   addEventListener('storage', (e) => {
@@ -46,7 +49,7 @@ export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[] } = {}
   const bar = h(
     'header.sbv-bar',
     {},
-    h('div.sbv-title', {}, h('span.sbv-name', {}, report.name)),
+    h('div.sbv-title', {}, brandMark(report), h('span.sbv-name', {}, report.name)),
     tabs,
     h(
       'div.sbv-actions',
@@ -73,6 +76,20 @@ export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[] } = {}
     ),
   );
   return Object.assign(bar, { renderTabs });
+}
+
+/**
+ * The smaltbi Scatter mark before the report name (smalt-brand logos/smaltbi). Hidden with the badge
+ * when a report turns branding off (`branding.poweredBy: false`).
+ */
+function brandMark(report: { branding?: { poweredBy?: boolean } }): HTMLElement | null {
+  if (report.branding?.poweredBy === false) return null;
+  return h(
+    'span.sbv-mark',
+    { title: 'smaltbi' },
+    h('img.sbv-mark-light', { src: 'brand/scatter-mark.svg', alt: '', width: 22, height: 22 }),
+    h('img.sbv-mark-dark', { src: 'brand/scatter-mark-on-dark.svg', alt: '', width: 22, height: 22 }),
+  );
 }
 
 /** Link of the "Powered by smaltbi" badge (smalt-brand badges/README.md). */

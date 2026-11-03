@@ -2,6 +2,7 @@
 // Fields are dragged onto the canvas or the field wells, or clicked to add to the selected visual.
 import type { Model } from '../core/model.js';
 import { h, showMenu, type MenuItem } from 'smaltkit/dom';
+import { typeIcon } from '../visuals/icons.js';
 
 export const FIELD_MIME = 'application/x-smaltbi-field';
 
@@ -14,7 +15,6 @@ export interface FieldsPaneHandlers {
   filter(ref: string): void;
 }
 
-const TYPE_ICON: Record<string, string> = { number: '#', text: 'Aa', date: '◷', datetime: '◷', bool: '◐', any: '·' };
 
 export function fieldsPane(model: Model, handlers: FieldsPaneHandlers, collapsed: Set<string>): HTMLElement {
   const search = h('input.sbd-search', { type: 'search', placeholder: 'Search fields' }) as HTMLInputElement;
@@ -44,7 +44,7 @@ export function fieldsPane(model: Model, handlers: FieldsPaneHandlers, collapsed
               showMenu(me.clientX, me.clientY, [{ label: 'Add to visual', action: () => handlers.add(ref) }, { label: 'Add as filter', action: () => handlers.filter(ref) }, ...menu]);
             },
           },
-          h('span.sbd-ficon', {}, icon),
+          h('span.sbd-ficon', { html: icon }),
           h('span.sbd-flabel', {}, label),
         );
         items.push(el);
@@ -54,7 +54,7 @@ export function fieldsPane(model: Model, handlers: FieldsPaneHandlers, collapsed
       for (const hi of t.hierarchies.values()) item(`${t.name}.${hi.name}`, hi.name, '⋮', '.sbd-hier', [], hi.levels.join(' › '));
       for (const c of t.columns.values()) {
         if (c.hidden && !q) continue;
-        item(`${t.name}.${c.name}`, c.label, TYPE_ICON[c.type] ?? '·', c.calc ? '.sbd-calc' : '', c.calc ? [{ label: 'Edit column…', action: () => handlers.editColumn(t.name, c.name) }] : [], c.calc ? c.sql : `${c.name} (${c.type})`);
+        item(`${t.name}.${c.name}`, c.label, typeIcon(c.type), c.calc ? '.sbd-calc' : '', c.calc ? [{ label: 'Edit column…', action: () => handlers.editColumn(t.name, c.name) }] : [], c.calc ? c.sql : `${c.name} (${c.type})`);
       }
       if (q && !items.length) continue;
       const open = !collapsed.has(t.name) || !!q;

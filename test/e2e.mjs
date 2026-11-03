@@ -112,6 +112,10 @@ try {
   await until(page, ([n]) => document.querySelectorAll('.sb-page > .sb-visual').length === n, [before + 1]);
   check((await count()) === before + 1, 'clicking a measure adds a card');
   const cardText = await page.locator('.sb-visual.sb-selected .sk-kpi-value').textContent();
+  // Visual-type icons are drawn in the Chevron style: solid shapes and one product-colour chip.
+  await page.waitForSelector('.sbd-vtype svg');
+  const icons = await page.evaluate(() => [...document.querySelectorAll('.sbd-vtype svg')].map((s) => ({ k: s.querySelectorAll('.k').length, strokes: s.querySelectorAll('[stroke]').length })));
+  check(icons.length >= 19 && icons.every((i) => i.k <= 1 && i.strokes === 0), `visual gallery shows Chevron-style icons (${icons.length})`);
   check(/\d/.test(cardText ?? ''), `new card shows a value (${cardText})`);
 
   // Change it into a column chart and add a dimension.
@@ -221,6 +225,12 @@ try {
   // Brand (stenhoor/smalt-brand copies in brand/): the designer logo and favicon load.
   const logo = await page.evaluate(() => [...document.querySelectorAll('.sbd-logo img')].map((i) => i.complete && i.naturalWidth > 0));
   check(logo.length === 4 && logo.every(Boolean), `designer logo images load (${logo})`);
+  // The designer chrome takes its colours from the brand tokens (brand/tokens.css).
+  const tokens = await page.evaluate(() => {
+    const cs = getComputedStyle(document.documentElement);
+    return { primary: cs.getPropertyValue('--primary').trim(), accent: getComputedStyle(document.querySelector('.sbd-tbtn.sbd-primary')).backgroundColor };
+  });
+  check(tokens.primary !== '' && tokens.accent === 'rgb(0, 51, 153)', `designer uses the brand tokens (${JSON.stringify(tokens)})`);
   check((await page.getAttribute('link[rel=icon]', 'href')) === 'brand/favicon-32.svg', 'designer has the smaltbi favicon');
 
   // The "Powered by" badge can be switched off per report in the Publish dialog.
@@ -256,6 +266,21 @@ try {
   await until(viewer, (sel) => document.querySelectorAll(sel).length >= 4, '.sk-kpi-value');
   const units = await viewer.locator('.sk-kpi-value').count();
   check(units >= 4, `published report has its cards (${units})`);
+  // The header carries the smaltbi mark, and the colour-mode button an SVG icon instead of a glyph.
+  const header = await viewer.evaluate(() => {
+    const img = [...document.querySelectorAll('.sbv-mark img')].find((i) => getComputedStyle(i).display !== 'none');
+    const btn = document.querySelector('.sbv-mode');
+    return { mark: !!img && img.complete && img.naturalWidth > 0, icon: !!btn?.querySelector('svg'), text: btn?.textContent };
+  });
+  check(header.mark && header.icon && header.text === "Auto", `published report header shows the smaltbi mark and the mode icon (${JSON.stringify(header)})`);
+  await viewer.click('.sbv-mode');
+  await viewer.click('.sbv-mode');
+  const darkHead = await viewer.evaluate(() => {
+    const img = [...document.querySelectorAll('.sbv-mark img')].find((i) => getComputedStyle(i).display !== 'none');
+    return { src: img?.getAttribute('src'), text: document.querySelector('.sbv-mode')?.textContent };
+  });
+  check(darkHead.src === 'brand/scatter-mark-on-dark.svg' && darkHead.text === 'Dark', `dark mode switches to the on-dark mark (${JSON.stringify(darkHead)})`);
+  await viewer.click('.sbv-mode'); // back to auto
   // The published site carries the brand files: the badge links to smaltbi and its image loads.
   const badge = await viewer.evaluate(() => {
     const a = document.querySelector('.sbv-badge');

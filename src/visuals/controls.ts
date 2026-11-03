@@ -1,9 +1,9 @@
 // Slicers (list, dropdown, buttons, range, search), text boxes and images.
 import type { Filter, SqlValue } from '../core/types.js';
 import { type RenderContext, registerVisual } from './api.js';
+import { ICONS } from './icons.js';
 import { esc } from 'smaltkit/svg';
 
-const ico = (d: string) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
 
 function selectedValues(ctx: RenderContext): SqlValue[] | null {
   const f = ctx.api.filters().find((x) => x.op === 'in');
@@ -16,7 +16,7 @@ registerVisual({
   type: 'slicer',
   label: 'Slicer',
   group: 'core',
-  icon: ico('M4 5h16v2H4zM4 11h16v2H4zM4 17h10v2H4zM2 4.5h1.5v3H2zM2 10.5h1.5v3H2z'),
+  icon: ICONS.slicer!,
   roles: [{ name: 'field', label: 'Field', kind: 'dimension', max: 1 }],
   options: [
     { key: 'style', label: 'Style', type: 'select', choices: [['list', 'List'], ['dropdown', 'Dropdown'], ['buttons', 'Buttons'], ['range', 'Range (between)'], ['search', 'Search (contains)']], default: 'list' },
@@ -141,7 +141,7 @@ registerVisual({
   type: 'text',
   label: 'Text box',
   group: 'core',
-  icon: ico('M4 4h16v3h-1.5l-.5-1.5h-5V18l2 .5V20H9v-1.5l2-.5V5.5H6L5.5 7H4z'),
+  icon: ICONS.text!,
   roles: [{ name: 'values', label: 'Values for {0}, {1}, …', kind: 'measure' }],
   options: [
     { key: 'text', label: 'Text (markdown)', type: 'textarea', default: '## Title\nWrite here. Use {0} to show the first value.' },
@@ -163,7 +163,7 @@ registerVisual({
   type: 'image',
   label: 'Image',
   group: 'core',
-  icon: ico('M3 5h18v14H3zm2 2v8l4-4 3 3 3-4 4 5V7zM8 8.5a1.5 1.5 0 1 0 0 .1z'),
+  icon: ICONS.image!,
   roles: [],
   options: [
     { key: 'url', label: 'Image URL', type: 'text', default: '' },

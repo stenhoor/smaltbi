@@ -9,6 +9,7 @@ import type { Relationship, Report } from '../core/types.js';
 import type { Model, TableInfo } from '../core/model.js';
 import { splitRef } from '../core/sql.js';
 import { h, toast } from 'smaltkit/dom';
+import { typeIcon } from '../visuals/icons.js';
 import type { DocStore } from './store.js';
 import type { ReportSession } from '../report/session.js';
 
@@ -27,7 +28,6 @@ const ROW_H = 22;
 const MAX_ROWS = 14;
 const GAP_X = 96;
 const GAP_Y = 36;
-const TYPE_ICON: Record<string, string> = { number: '#', text: 'Aa', date: '◷', datetime: '◷', bool: '◐', any: '·' };
 
 interface Pos {
   x: number;
@@ -206,7 +206,7 @@ export class ModelView {
       const row = h(
         'div.sbd-mv-col' + (c.hidden ? '.sbd-mv-hidden' : '') + (c.calc ? '.sbd-mv-calc' : ''),
         { 'data-col': c.name, title: c.calc ? `${c.name} = ${c.sql}` : `${c.name} (${c.type}). Drag onto a column of another table to create a relationship.` },
-        h('span.sbd-mv-icon', {}, TYPE_ICON[c.type] ?? '·'),
+        h('span.sbd-mv-icon', { html: typeIcon(c.type) }),
         h('span.sbd-mv-name', {}, c.label),
         badge,
       );

@@ -1,43 +1,30 @@
 /* smaltbi designer chrome. The report canvas itself is styled by report.css + the theme. */
 :root {
-  /* The Kiln palette from stenhoor/smalt-brand (brand/tokens.json). */
-  --d-bg: #f5f6f8;
-  --d-surface: #ffffff;
-  --d-text: #151922;
-  --d-text-2: #3f4656;
-  --d-muted: #5c6375;
-  --d-border: #d6dbe4;
-  --d-accent: #003399;
-  --d-on-accent: #ffffff;
-  --d-accent-soft: #e6ecf8;
-  --d-measure: #6141ae;
-  --d-danger: #a3195b;
-  --d-focus: #003399;
-  --d-font: Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --d-font-brand: 'Martian Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  --d-font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* The smalt brand tokens (brand/tokens.css, from stenhoor/smalt-brand; loaded first by designer.html).
+     tokens.css switches them for dark mode (system setting, or data-theme on <html>). */
+  --d-bg: var(--bg);
+  --d-surface: var(--surface);
+  --d-text: var(--text);
+  --d-text-2: var(--text-2);
+  --d-muted: var(--text-3);
+  --d-border: var(--border);
+  --d-accent: var(--primary);
+  --d-on-accent: var(--on-primary);
+  --d-accent-soft: color-mix(in oklab, var(--primary) 12%, var(--surface));
+  --d-measure: var(--product-bi-text);
+  --d-product: var(--product-bi);
+  --d-danger: var(--danger);
+  --d-focus: var(--focus);
+  --d-font: var(--font-sans);
+  --d-font-brand: var(--font-brand);
+  --d-font-mono: var(--font-mono);
   --sk-surface: var(--d-surface);
   --sk-text: var(--d-text);
   --sk-border: var(--d-border);
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --d-bg: #14171f;
-    --d-surface: #1b1f29;
-    --d-text: #e9ebf0;
-    --d-text-2: #b9bec9;
-    --d-muted: #9096a3;
-    --d-border: #2c3240;
-    --d-accent: #9db4f5;
-    --d-on-accent: #14171f;
-    --d-accent-soft: #1e2638;
-    --d-measure: #b8a1f2;
-    --d-danger: #ff9ec4;
-    --d-focus: #ff8a5c;
-    color-scheme: dark;
-  }
-}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; } }
+:root[data-theme="dark"] { color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body { font: 13px/1.45 var(--d-font); color: var(--d-text); background: var(--d-bg); -webkit-font-smoothing: antialiased; }
@@ -89,6 +76,8 @@ button { font: inherit; color: inherit; }
 .sbd-field { display: flex; align-items: center; gap: 7px; padding: 3px 6px; border-radius: 5px; cursor: grab; user-select: none; white-space: nowrap; overflow: hidden; }
 .sbd-field:hover { background: var(--d-accent-soft); }
 .sbd-ficon { width: 18px; text-align: center; color: var(--d-muted); font-size: 11px; font-weight: 600; flex: none; }
+.sbd-ficon svg, .sbd-mv-icon svg { width: 12px; height: 12px; vertical-align: -1px; fill: currentColor; }
+.sbd-ficon svg .k, .sbd-mv-icon svg .k { fill: var(--d-product); }
 .sbd-flabel { overflow: hidden; text-overflow: ellipsis; }
 .sbd-measure .sbd-ficon { color: var(--d-measure); font-style: italic; }
 .sbd-hier .sbd-ficon { color: var(--d-accent); }
@@ -134,6 +123,7 @@ button { font: inherit; color: inherit; }
 .sbd-vtype svg { width: 20px; height: 20px; fill: var(--d-muted); }
 .sbd-vtype:hover { border-color: var(--d-accent); }
 .sbd-vtype:hover svg, .sbd-vtype.sbd-on svg { fill: var(--d-accent); }
+.sbd-vtype svg .k { fill: var(--d-product); }
 .sbd-vtype.sbd-on { background: var(--d-accent-soft); border-color: var(--d-accent); }
 .sbd-well { border: 1px solid var(--d-border); border-radius: 8px; padding: 6px; margin-bottom: 8px; transition: border-color 0.12s, background 0.12s; }
 .sbd-well.sbd-over, .sbd-drop.sbd-over { border-color: var(--d-accent); background: var(--d-accent-soft); }
@@ -188,8 +178,8 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-step code { color: var(--d-muted); font-size: 11px; }
 .sbd-test { font: 12px var(--d-font-mono); white-space: pre-wrap; padding: 6px 8px; border-radius: 6px; }
 .sbd-test:empty { display: none; }
-.sbd-ok { background: color-mix(in oklab, #1d6b3a 12%, transparent); color: #1d6b3a; }
-.sbd-bad { background: color-mix(in oklab, #a3195b 12%, transparent); color: #a3195b; }
+.sbd-ok { background: color-mix(in oklab, var(--success) 12%, transparent); color: var(--success); }
+.sbd-bad { background: color-mix(in oklab, var(--danger) 12%, transparent); color: var(--danger); }
 .sbd-theme-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .sbd-theme-card { position: relative; text-align: left; border: 1px solid var(--d-border); border-radius: 9px; padding: 10px; background: var(--d-surface); cursor: pointer; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
 .sbd-theme-card:hover { border-color: var(--d-accent); }
@@ -219,7 +209,7 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-mv-toolbar .sbd-btn { padding: 4px 10px; }
 .sbd-mv-zoom { display: inline-flex; gap: 2px; }
 .sbd-mv-zoom .sbd-btn { min-width: 30px; }
-.sbd-mv-warn { color: #9a5b00; background: #fff4dc; border: 1px solid #f1d59a; border-radius: 6px; padding: 3px 8px; font-size: 12px; }
+.sbd-mv-warn { color: var(--warning); background: color-mix(in oklab, var(--warning) 10%, var(--surface)); border: 1px solid color-mix(in oklab, var(--warning) 35%, var(--surface)); border-radius: 6px; padding: 3px 8px; font-size: 12px; }
 .sbd-mv-legend { margin-left: auto; color: var(--d-muted); font-size: 12px; }
 .sbd-mv-scroll { flex: 1; overflow: auto; position: relative;
   background-image: radial-gradient(color-mix(in oklab, var(--d-muted) 22%, transparent) 1px, transparent 1px); background-size: 18px 18px; }
@@ -254,7 +244,7 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-mv-icon { width: 16px; text-align: center; color: var(--d-muted); font-size: 10px; font-weight: 600; flex: none; }
 .sbd-mv-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sbd-mv-key, .sbd-mv-fk { font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.03em; }
-.sbd-mv-key { background: color-mix(in oklab, #d4a72c 25%, transparent); color: #8a6400; }
+.sbd-mv-key { background: color-mix(in oklab, var(--warning) 18%, transparent); color: var(--warning); }
 .sbd-mv-fk { background: var(--d-accent-soft); color: var(--d-accent); }
 .sbd-mv-foot { display: flex; gap: 12px; padding: 5px 12px 7px; border-top: 1px solid var(--d-border); font-size: 11px; color: var(--d-measure); }
 .sbd-mv-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -266,4 +256,3 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-mv-link:hover { border-color: var(--d-accent); }
 .sbd-mv-relcard { border: 1px solid var(--d-border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; background: var(--d-bg); }
 .sbd-mv-relcard code { font-size: 12px; }
-@media (prefers-color-scheme: dark) { .sbd-mv-warn { background: #3a2c10; border-color: #6b5220; color: #f0c56b; } .sbd-mv-key { color: #e8c25a; } }

@@ -145,7 +145,8 @@ the plugin policy in [docs/PLUGINS.md](docs/PLUGINS.md).
 Logos, the "Powered by" badges, colours and type come from
 [stenhoor/smalt-brand](https://github.com/stenhoor/smalt-brand/blob/main/BRAND.md). `brand/` holds
 copies of smaltbi's assets (synced with `scripts/sync-brand.mjs`, never edited by hand), and the default
-**Smalt** theme uses the brand's Kiln palette and Geist type. Published reports show the
+**Smalt** theme uses the brand's Kiln palette and Geist type. The designer reads the brand's `tokens.css`, and
+the icons follow its Chevron style (`src/visuals/icons.ts`). Published reports show the
 "Powered by smaltbi" badge; turn it off per report in the Publish dialog (`branding.poweredBy: false`).
 
 ## License

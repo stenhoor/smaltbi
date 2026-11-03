@@ -27,6 +27,8 @@ html[data-theme='dark'] .logo-dark { display: inline; }
 .site-nav > a:not(.btn):hover { color: var(--text); }
 .icon-btn { display: inline-flex; align-items: center; gap: 6px; font: 13px var(--font-brand); color: var(--text-2); background: none; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 5px 9px; cursor: pointer; }
 .icon-btn:hover { color: var(--text); }
+.icon-btn svg { fill: currentColor; }
+.icon-btn svg[hidden] { display: none; }
 .btn { display: inline-block; font: 500 15px var(--font-sans); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 8px 14px; text-decoration: none; white-space: nowrap; }
 .btn:hover { border-color: var(--primary); }
 .btn.primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
