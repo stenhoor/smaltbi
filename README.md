@@ -24,7 +24,9 @@ site that runs entirely in each visitor's browser. There is no server.
 
 ## Try it
 
-Every push to `main` deploys to GitHub Pages:
+Every push to `main` deploys to GitHub Pages. This needs **Settings → Pages → Source: GitHub
+Actions**; with "Deploy from a branch", GitHub also publishes the raw branch, which has no built app
+(the deploy workflow checks this setting and fails if it is wrong):
 
 - <https://stenhoor.github.io/smaltbi/>: the designer, with the sample report.
 - <https://stenhoor.github.io/smaltbi/sample/>: the sample report, published as a standalone static site.

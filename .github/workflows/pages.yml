@@ -31,6 +31,18 @@ jobs:
       - uses: actions/configure-pages@v5
         with:
           enablement: true
+      # With Settings → Pages → Source set to "Deploy from a branch", GitHub also publishes the raw
+      # branch (no dist/ or vendor/: a blank site), racing this workflow's deploy (issue #6).
+      - name: Check that Pages publishes from GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          type=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type)
+          echo "Pages build_type: $type"
+          if [ "$type" != "workflow" ]; then
+            echo "::error title=Pages source::Pages publishes from a branch (build_type=$type), which serves the raw repo without dist/ and races this deploy. Set Settings → Pages → Build and deployment → Source to 'GitHub Actions'."
+            exit 1
+          fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
@@ -43,3 +55,24 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+      # The deploy can be green while the site is broken (issue #6): check the files the app needs.
+      - name: Smoke test the live site
+        env:
+          BASE: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          check() {
+            for f in "" dist/designer.js dist/viewer.js dist/app.css dist/report.css vendor/smaltdb/smaltdb.js vendor/smaltdb/smaltdb-worker.js examples/sales/report.json sample/ sample/viewer.js; do
+              code=000
+              for i in $(seq 1 12); do
+                code=$(curl -s -o /dev/null -w '%{http_code}' "${BASE}${f}?smoke=${GITHUB_RUN_ID}")
+                [ "$code" = 200 ] && break
+                sleep 5
+              done
+              echo "$code ${BASE}${f}"
+              if [ "$code" != 200 ]; then echo "::error title=Live site::${BASE}${f} returned $code"; exit 1; fi
+            done
+          }
+          check
+          # Check again a little later: a competing deployment would have replaced the site by now.
+          sleep 60
+          check
