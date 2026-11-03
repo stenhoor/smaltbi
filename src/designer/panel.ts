@@ -3,7 +3,7 @@ import type { Aggregation, FieldRef, Filter, FilterOp, Page, SqlValue, Visual } 
 import { aggLabel, refName } from '../core/model.js';
 import { quoteIdent } from '../core/sql.js';
 import { type OptionDef, type VisualDef, visualDef, visualDefs } from '../visuals/index.js';
-import { h, showMenu, toast } from '../kit/dom.js';
+import { h, showMenu, toast } from 'smaltkit/dom';
 import { FIELD_MIME } from './fields.js';
 import type { DocStore } from './store.js';
 import type { ReportSession } from '../report/session.js';

@@ -25,6 +25,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "smaltdb": "^0.8.3"
+    "smaltdb": "^0.8.3",
+    "smaltkit": "github:stenhoor/smaltkit#85c94e80fb3fb5385c9c6512cdb4258fed2de0ed"
   }
 }

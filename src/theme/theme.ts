@@ -72,7 +72,7 @@ function colorVars(t: Pick<Theme, 'colors' | 'palette' | 'sequential' | 'divergi
   for (const [k, v] of Object.entries(map)) if (v) out.push(`--sb-${k}:${v}`);
   (t.palette ?? []).forEach((v, i) => out.push(`--sb-c${i}:${v}`));
   if (t.palette?.length) {
-    // Fill 12 slots by cycling, so `.sb-c0` … `.sb-c11` always resolve.
+    // Fill 12 slots by cycling, so `--sb-c0` … `--sb-c11` (and the kit's `.sk-c0` … `.sk-c11`) always resolve.
     for (let i = t.palette.length; i < 12; i++) out.push(`--sb-c${i}:${t.palette[i % t.palette.length]}`);
   }
   const seq = t.sequential;

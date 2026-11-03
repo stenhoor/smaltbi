@@ -8,7 +8,7 @@ import { ReportView } from '../report/view.js';
 import { poweredByBadge, viewerBar } from '../report/chrome.js';
 import { pageLayout } from '../theme/theme.js';
 import { type Engine, loadEngine } from '../kit/engine.js';
-import { dialog, download, fileName, h, pickFile, showMenu, toast } from '../kit/dom.js';
+import { dialog, download, fileName, h, pickFile, showMenu, toast } from 'smaltkit/dom';
 import { localFiles } from '../kit/files.js';
 import { corsHint } from '../kit/urls.js';
 import { DocStore, emptyReport, freeSpot, newId, type ChangeKind } from './store.js';
@@ -212,7 +212,7 @@ class Designer {
   }
 
   save(): void {
-    download(fileName(this.store.report.name) + '.smaltbi.json', JSON.stringify(this.store.report, null, 2) + '\n', 'application/json');
+    download(fileName(this.store.report.name, 'report') + '.smaltbi.json', JSON.stringify(this.store.report, null, 2) + '\n', 'application/json');
   }
 
   async openFile(): Promise<void> {

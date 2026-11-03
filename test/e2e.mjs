@@ -79,7 +79,7 @@ try {
   // The embedded live report renders inside the page.
   await landing.locator('#demoFrame').scrollIntoViewIfNeeded();
   const frame = landing.frameLocator('#demoFrame');
-  await frame.locator('.sb-visual[data-id=c-cat] .sb-bar').first().waitFor({ timeout: 20000 });
+  await frame.locator('.sb-visual[data-id=c-cat] .sk-bar').first().waitFor({ timeout: 20000 });
   check(true, 'landing page embeds a live report');
   // The theme toggle switches the page and the embedded report (shared setting, storage event).
   await landing.click('#themeBtn'); // auto → light
@@ -101,7 +101,7 @@ try {
   await page.goto(`http://localhost:${port}/designer.html`);
   await page.evaluate(() => localStorage.clear());
   await page.goto(`http://localhost:${port}/designer.html?report=examples/sales/report.json`);
-  await page.waitForSelector('.sb-visual[data-id=c-cat] .sb-bar', { timeout: 20000 });
+  await page.waitForSelector('.sb-visual[data-id=c-cat] .sk-bar', { timeout: 20000 });
   check(true, 'designer opens the sample report');
   const count = () => page.locator('.sb-page > .sb-visual').count();
   const before = await count();
@@ -111,14 +111,14 @@ try {
   await page.click('.sbd-field:has-text("Units")');
   await until(page, ([n]) => document.querySelectorAll('.sb-page > .sb-visual').length === n, [before + 1]);
   check((await count()) === before + 1, 'clicking a measure adds a card');
-  const cardText = await page.locator('.sb-visual.sb-selected .sb-kpi-value').textContent();
+  const cardText = await page.locator('.sb-visual.sb-selected .sk-kpi-value').textContent();
   check(/\d/.test(cardText ?? ''), `new card shows a value (${cardText})`);
 
   // Change it into a column chart and add a dimension.
   await page.click('.sbd-vtype[title^="Column chart"]');
   await page.click('.sbd-field:has-text("segment")');
-  await until(page, () => document.querySelectorAll('.sb-visual.sb-selected .sb-bar').length === 3);
-  const bars = await page.locator('.sb-visual.sb-selected .sb-bar').count();
+  await until(page, () => document.querySelectorAll('.sb-visual.sb-selected .sk-bar').length === 3);
+  const bars = await page.locator('.sb-visual.sb-selected .sk-bar').count();
   check(bars === 3, `changed to a column chart by segment (${bars} bars)`);
 
   // SQL tab shows the generated SQL.
@@ -129,7 +129,7 @@ try {
   // Undo removes the dimension again.
   // Without the segment axis, the column chart shows a single bar again.
   await page.keyboard.press('Control+z');
-  const undone = await until(page, () => document.querySelectorAll('.sb-visual.sb-selected .sb-bar').length === 1);
+  const undone = await until(page, () => document.querySelectorAll('.sb-visual.sb-selected .sk-bar').length === 1);
   check(undone, 'undo removes the added field');
 
   // Model view: the ER diagram of tables and relationships.
@@ -181,7 +181,7 @@ try {
   const ambiguous = await until(page, () => /more than one relationship path/.test(document.querySelector('.sb-visual[data-id=cu-country] .sb-visual-body')?.textContent ?? ''));
   check(ambiguous, 'a visual over an ambiguous path explains the problem instead of guessing');
   await page.keyboard.press('Control+z');
-  const restored = await until(page, () => document.querySelectorAll('.sb-visual[data-id=cu-country] .sb-bar').length > 0);
+  const restored = await until(page, () => document.querySelectorAll('.sb-visual[data-id=cu-country] .sk-bar').length > 0);
   check(restored, 'undoing the extra relationship restores the visual');
   await page.click('.sbd-page-tab:has-text("Overview")');
   await page.click('.sbd-seg-btn:has-text("Model")');
@@ -207,8 +207,8 @@ try {
 
   // Back to the report: visuals still query through the relationships.
   await page.click('.sbd-seg-btn:has-text("Report")');
-  await until(page, () => document.querySelectorAll('.sb-visual[data-id=c-cat] .sb-bar').length === 4);
-  check((await page.locator('.sb-visual[data-id=c-cat] .sb-bar').count()) === 4, 'report renders again after editing the model');
+  await until(page, () => document.querySelectorAll('.sb-visual[data-id=c-cat] .sk-bar').length === 4);
+  check((await page.locator('.sb-visual[data-id=c-cat] .sk-bar').count()) === 4, 'report renders again after editing the model');
 
   // Theme: switch to Midnight.
   await page.click('.sbd-tbtn:has-text("Theme")');
@@ -250,11 +250,11 @@ try {
   viewer.on('pageerror', (e) => errors.push('viewer: ' + e.message));
   viewer.on('console', (m) => m.type() === 'error' && errors.push('viewer: ' + m.text()));
   await viewer.goto(`http://localhost:${port2}/`);
-  await viewer.waitForSelector('.sb-visual[data-id=c-cat] .sb-bar', { timeout: 20000 });
+  await viewer.waitForSelector('.sb-visual[data-id=c-cat] .sk-bar', { timeout: 20000 });
   check(true, 'the published site renders on its own');
   // count() does not wait: wait for the cards to render first (issue #4).
-  await until(viewer, (sel) => document.querySelectorAll(sel).length >= 4, '.sb-kpi-value');
-  const units = await viewer.locator('.sb-kpi-value').count();
+  await until(viewer, (sel) => document.querySelectorAll(sel).length >= 4, '.sk-kpi-value');
+  const units = await viewer.locator('.sk-kpi-value').count();
   check(units >= 4, `published report has its cards (${units})`);
   // The published site carries the brand files: the badge links to smaltbi and its image loads.
   const badge = await viewer.evaluate(() => {
@@ -267,10 +267,10 @@ try {
   check(favicon === 200, `published site serves its favicon (${favicon})`);
 
   // Cross-filter: click the "Europe" slicer button, the Orders card changes.
-  const orders = () => viewer.locator('.sb-visual[data-id=k-orders] .sb-kpi-value').textContent();
+  const orders = () => viewer.locator('.sb-visual[data-id=k-orders] .sk-kpi-value').textContent();
   const o1 = await orders();
   await viewer.click('.sb-chip:has-text("Europe")');
-  await until(viewer, (before) => document.querySelector('.sb-visual[data-id=k-orders] .sb-kpi-value')?.textContent !== before, o1);
+  await until(viewer, (before) => document.querySelector('.sb-visual[data-id=k-orders] .sk-kpi-value')?.textContent !== before, o1);
   const o2 = await orders();
   check(o1 !== o2, `slicer filters other visuals (${o1} → ${o2})`);
   check(viewer.url().includes('#s='), 'view state is in the URL');
@@ -278,16 +278,16 @@ try {
   // Drill down on the date column chart, once the slicer's refreshes have finished (a redraw
   // between the two clicks of a double-click would swallow it).
   await until(viewer, () => !document.querySelector('.sb-loading'));
-  await viewer.dblclick('.sb-visual[data-id=c-date] .sb-bar >> nth=0');
+  await viewer.dblclick('.sb-visual[data-id=c-date] .sk-bar >> nth=0');
   await until(viewer, () => document.querySelector('.sb-visual[data-id=c-date] .sb-drill-level')?.textContent === 'Quarter');
   const level = await viewer.locator('.sb-visual[data-id=c-date] .sb-drill-level').textContent();
   check(level === 'Quarter', `drill down to ${level}`);
 
   // Drill-through.
   await viewer.click('.sbv-tab:has-text("Customers")');
-  await viewer.waitForSelector('.sb-visual[data-id=cu-country] .sb-bar');
+  await viewer.waitForSelector('.sb-visual[data-id=cu-country] .sk-bar');
   await until(viewer, () => !document.querySelector('.sb-loading'));
-  await viewer.click('.sb-visual[data-id=cu-country] .sb-bar >> nth=0', { button: 'right' });
+  await viewer.click('.sb-visual[data-id=cu-country] .sk-bar >> nth=0', { button: 'right' });
   await viewer.click('.sk-menu-item:has-text("Drill through")');
   await viewer.waitForSelector('.sb-drillbar');
   check(true, 'drill-through opens the detail page');
@@ -295,13 +295,13 @@ try {
   // Leaving a page while its visuals are still querying must not draw them off screen (a
   // detached donut used to render with a negative height). Errors surface in 'no page errors'.
   await viewer.click('.sbv-tab:has-text("Overview")');
-  await viewer.waitForSelector('.sb-visual[data-id=c-channel] .sb-slice');
+  await viewer.waitForSelector('.sb-visual[data-id=c-channel] .sk-slice');
   for (let i = 0; i < 15; i++) {
     await viewer.click(`.sb-chip >> nth=${i % 4}`);
     await viewer.click('.sbv-tab:has-text("Products")');
     await viewer.click('.sbv-tab:has-text("Overview")');
   }
-  await until(viewer, () => !document.querySelector('.sb-loading') && !!document.querySelector('.sb-visual[data-id=c-channel] .sb-slice'));
+  await until(viewer, () => !document.querySelector('.sb-loading') && !!document.querySelector('.sb-visual[data-id=c-channel] .sk-slice'));
   check(true, 'switching pages while visuals load');
 
   check(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);

@@ -69,7 +69,8 @@ example `{ "surface": "#fff8e6", "text": "#3b2f00" }`.
 ## Custom CSS
 
 `css` is appended after the variables. Useful hooks: `.sb-visual[data-type=card]`,
-`.sb-visual[data-id=…]`, `.sb-kpi-value`, `.sb-visual-title`, `.sb-table th`, `.sb-legend`.
+`.sb-visual[data-id=…]`, `.sb-visual-title`, and the chart classes from smaltkit: `.sk-kpi-value`,
+`.sk-table th`, `.sk-legend`, `.sk-bar`, `.sk-c0` … `.sk-c11`.
 
 ## Built-in themes
 

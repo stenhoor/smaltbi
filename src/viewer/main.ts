@@ -7,7 +7,7 @@ import { ReportView } from '../report/view.js';
 import { poweredByBadge, viewerBar } from '../report/chrome.js';
 import { stateFromHash, writeHash } from '../report/state.js';
 import { applyTheme } from '../theme/theme.js';
-import { h } from '../kit/dom.js';
+import { h } from 'smaltkit/dom';
 import { corsHint } from '../kit/urls.js';
 
 async function main(): Promise<void> {

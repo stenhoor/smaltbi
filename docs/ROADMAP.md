@@ -32,7 +32,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
   with data under the other selections).
 - Fixed page sizes per page (16:9, 4:3, Letter, A4), scaled to fit; responsive stays the default.
 - Extract the shared kit into the `smaltkit` repository and package, used by smaltui and smaltbi
-  ([ADR 0005](adr/0005-smaltkit-and-smalt-brand.md)).
+  ([ADR 0005](adr/0005-smaltkit-and-smalt-brand.md)): the charts, tables, formatting and DOM helpers have moved;
+  the engine loader, data steps and dev scripts are next.
 - Measure editor with completion and syntax highlighting (shared editor kit from smaltui).
 - Field wells: drag to reorder, drag between wells, multi-select; field search with keyboard.
 - Conditional formatting rules (by value, by measure, icons) for tables, matrices and cards.

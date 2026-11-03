@@ -1,5 +1,5 @@
-export { niceTicks } from '../src/visuals/svg.js';
-import { squarify } from '../src/visuals/parts.js';
+export { niceTicks } from 'smaltkit/svg';
+import { squarify } from 'smaltkit/charts';
 
 export function squarifyCheck(): boolean {
   const rects = squarify([{ i: 0, v: 6 }, { i: 1, v: 6 }, { i: 2, v: 4 }, { i: 3, v: 3 }, { i: 4, v: 2 }, { i: 5, v: 2 }, { i: 6, v: 1 }], { x: 0, y: 0, w: 600, h: 400 });

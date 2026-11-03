@@ -2,7 +2,7 @@
 // measures, calculated columns, hierarchies) or the selected relationship (columns, active, delete).
 import type { Hierarchy } from '../core/types.js';
 import { splitRef } from '../core/sql.js';
-import { h, toast } from '../kit/dom.js';
+import { h, toast } from 'smaltkit/dom';
 import { checkbox, field, textInput } from './panel.js';
 import { ambiguousPaths, type ModelSelection, type ModelView } from './modelview.js';
 import type { DocStore } from './store.js';

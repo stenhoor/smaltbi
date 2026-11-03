@@ -1,7 +1,7 @@
 // Slicers (list, dropdown, buttons, range, search), text boxes and images.
 import type { Filter, SqlValue } from '../core/types.js';
 import { type RenderContext, registerVisual } from './api.js';
-import { esc } from './svg.js';
+import { esc } from 'smaltkit/svg';
 
 const ico = (d: string) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
 

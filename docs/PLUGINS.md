@@ -36,9 +36,9 @@ const bullet: VisualDef = {
   render(ctx) {
     const cat = ctx.data.role('category')[0];
     const val = ctx.data.role('values')[0];
-    // … build an SVG string using ctx.width / ctx.height; marks get class "sb-mark sb-c0"
+    // … build an SVG string using ctx.width / ctx.height; marks get class "sk-mark sk-c0"
     // and data-row="<row index>" to take part in cross-filtering, tooltips and drill.
-    ctx.el.innerHTML = '<svg class="sb-svg" …>…</svg>';
+    ctx.el.innerHTML = '<svg class="sk-svg" …>…</svg>';
   },
 };
 registerVisual(bullet);
@@ -52,7 +52,7 @@ What a visual gets in `render(ctx)`:
 | `data` | Columnar result: `data.role(name)` → columns with `values`, `label`, `fmt` (formatter), `field` |
 | `extra` | Results of additional queries from `plan()` |
 | `options` | The visual's options merged with defaults |
-| `palette` | Number of palette colors (use classes `sb-c0` … `sb-c{n-1}`) |
+| `palette` | Number of palette colors (use classes `sk-c0` … `sk-c{n-1}`) |
 | `selected(row)` | `null` when nothing in this visual is selected, else whether the row is |
 | `api.select(row, additive)` | Cross-filter (usually not needed: clicks on `[data-row]` are handled) |
 | `api.setFilters(filters)` | For slicer-like visuals: replace this visual's filters on the page |
@@ -63,8 +63,10 @@ Optional `plan(ctx)` returns `{ main, extra }` query specs built from `ctx.field
 role), `ctx.pick(...roles)`, and `ctx.aggregate(field, agg)`. Without it, the default plan groups by
 all dimension roles and aggregates all measure roles.
 
-Style marks with the theme's variables (`var(--c)` is the series color on `sb-cN` elements, plus
-`--sb-text`, `--sb-muted`, `--sb-grid`, …) so the visual follows every theme and dark mode.
+Style marks with the theme's variables (`var(--c)` is the series color on `sk-cN` elements, plus
+`--sk-text`, `--sk-muted`, `--sk-grid`, …) so the visual follows every theme and dark mode. A visual can
+also reuse a smaltkit renderer: `render: (ctx) => columnChart(chartContext(ctx))` with `columnChart`
+from `smaltkit/charts` and `chartContext` from the plugin API.
 
 ### Loading plugins (planned for 0.3)
 

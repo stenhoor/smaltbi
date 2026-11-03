@@ -4,7 +4,7 @@
 //   node scripts/build.mjs --watch    rebuild on change
 //   node scripts/build.mjs --tests    bundle test/*.test.ts for node --test into dist-test/
 import { build, context } from 'esbuild';
-import { cpSync, mkdirSync, readdirSync, rmSync, writeFileSync, statSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -35,7 +35,10 @@ const opts = {
 
 function copyStatic() {
   mkdirSync(join(root, 'dist'), { recursive: true });
-  for (const f of ['report.css', 'app.css', 'site.css']) cpSync(join(root, 'styles', f), join(root, 'dist', f));
+  for (const f of ['app.css', 'site.css']) cpSync(join(root, 'styles', f), join(root, 'dist', f));
+  // report.css: smaltkit's ui.css (charts, tables, menus, dialogs, toasts) followed by smaltbi's report styles.
+  const kitCss = readFileSync(join(root, 'node_modules/smaltkit/dist/ui.css'), 'utf8');
+  writeFileSync(join(root, 'dist/report.css'), kitCss + '\n' + readFileSync(join(root, 'styles/report.css'), 'utf8'));
   // What a published report needs, for the in-browser publisher.
   const vendor = join(root, 'vendor/smaltdb');
   const files = [];

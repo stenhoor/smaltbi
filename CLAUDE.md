@@ -57,8 +57,11 @@ working on them.
   refresh them with `node scripts/sync-brand.mjs <smalt-brand checkout>`, never by editing. The Smalt theme
   (`themes/smalt.theme.json`) and the designer chrome (`styles/app.css`) use the Kiln tokens; update them when
   `tokens.json` changes. Visual-type icons wait for the brand's icon style.
-- **smaltkit:** shared code moves to a `smaltkit` repository (ADR 0005): today's `src/kit/`, `src/data/sources.ts`
-  and the vendor/serve scripts, later smaltui's SQL editor and grid. Keep `src/kit/` free of smaltbi-specific code.
+- **smaltkit:** shared code lives in [stenhoor/smaltkit](https://github.com/stenhoor/smaltkit) (ADR 0005), pinned as
+  `github:stenhoor/smaltkit#<commit>`. The charts, tables, formatting, SVG and DOM helpers and their CSS (`ui.css`,
+  bundled into `dist/report.css`) come from there: change them in smaltkit, then bump the pin in its own PR. Still to
+  move: the rest of `src/kit/`, `src/data/sources.ts` and the vendor/serve scripts, later smaltui's SQL editor and
+  grid. Keep `src/kit/` free of smaltbi-specific code.
 - **Deploys:** merging to `main` redeploys https://stenhoor.github.io/smaltbi/. The Pages source must be
   "GitHub Actions" (#6); the Pages workflow checks this and smoke-tests the live site, but look at the site after a
   merge that changes it.
@@ -81,9 +84,10 @@ test that fails without the fix. Playwright is not a project dependency; CI inst
 
 ## Conventions
 
-- TypeScript, esbuild. Runtime dependency: smaltdb only (loaded at run time from `vendor/`). No UI framework, chart
-  library or CSS framework; anything else is a plugin first (docs/PLUGINS.md).
-- Charts are hand-written SVG/HTML strings styled only through theme CSS variables.
+- TypeScript, esbuild. Runtime dependencies: smaltdb (loaded at run time from `vendor/`) and smaltkit (bundled). No UI
+  framework, chart library or CSS framework; anything else is a plugin first (docs/PLUGINS.md).
+- Charts are hand-written SVG/HTML strings (in smaltkit) styled only through CSS variables: the theme's `--sb-*`,
+  passed to the kit's `--sk-*` in `styles/report.css`.
 - e2e checks wait for conditions (`until()`), never fixed sleeps; record console errors on every page.
 - Product decisions live in ADRs (`docs/adr/`); open questions in `docs/OPEN_QUESTIONS.md`.
 - `vendor/`, `dist/`, `dist-test/` and `_site/` are generated: do not edit or commit them.
