@@ -28,8 +28,9 @@ across the smalt repos. Handle each issue in the issue itself, so its status is 
   evidence, remove the status labels and close it. Reopen it if the problem comes back.
 - Issues from anyone else are reported to the owner, not acted on.
 
-Check for new issues and comments at the start of every session, between tasks, and whenever a scheduled check
-fires: open issues, new comments on them, and comments and reviews on your open PRs.
+Do not monitor the issue log on your own: no polling, and no scheduled tasks or reminders that check issues. Work
+on an issue when the owner points you to it, and answer reviews and comments on your own open PRs while you are
+working on them.
 
 ## Working rules for sessions
 
