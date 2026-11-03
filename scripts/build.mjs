@@ -35,7 +35,7 @@ const opts = {
 
 function copyStatic() {
   mkdirSync(join(root, 'dist'), { recursive: true });
-  for (const f of ['report.css', 'app.css']) cpSync(join(root, 'styles', f), join(root, 'dist', f));
+  for (const f of ['report.css', 'app.css', 'site.css']) cpSync(join(root, 'styles', f), join(root, 'dist', f));
   // What a published report needs, for the in-browser publisher.
   const vendor = join(root, 'vendor/smaltdb');
   const files = [];

@@ -19,6 +19,7 @@ node scripts/sync-brand.mjs ../smalt-brand
 | `powered-by-smaltbi*.svg` | The badge in published reports |
 | `powered-by-smaltdb*.svg` | smaltbi's own README (it is built on smaltdb) |
 | `tokens.json` | The Kiln palette; `themes/smalt.theme.json` and `styles/app.css` use these values |
+| `tokens.css` | The same tokens as CSS custom properties (light, dark, `data-theme`); the landing page uses it directly |
 | `wordmark*.svg` | Kept for docs and slides |
 
 The wordmark, lockup and badge SVGs contain Geist and Martian Mono glyphs converted to paths

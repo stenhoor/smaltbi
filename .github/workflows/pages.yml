@@ -61,7 +61,7 @@ jobs:
           BASE: ${{ steps.deployment.outputs.page_url }}
         run: |
           check() {
-            for f in "" dist/designer.js dist/viewer.js dist/app.css dist/report.css vendor/smaltdb/smaltdb.js vendor/smaltdb/smaltdb-worker.js examples/sales/report.json sample/ sample/viewer.js; do
+            for f in "" designer.html viewer.html dist/site.css brand/tokens.css brand/lockup.svg dist/designer.js dist/viewer.js dist/app.css dist/report.css vendor/smaltdb/smaltdb.js vendor/smaltdb/smaltdb-worker.js examples/sales/report.json sample/ sample/viewer.js; do
               code=000
               for i in $(seq 1 12); do
                 code=$(curl -s -o /dev/null -w '%{http_code}' "${BASE}${f}?smoke=${GITHUB_RUN_ID}")

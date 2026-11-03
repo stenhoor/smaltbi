@@ -27,6 +27,13 @@ export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[] } = {}
     if (modes[mode] === 'auto') document.body.removeAttribute('data-mode');
     modeBtn.textContent = { auto: '◐ Auto', light: '☀ Light', dark: '☾ Dark' }[modes[mode]!];
   };
+  // Another page of the site (the landing page around an embedded report) changed the setting.
+  addEventListener('storage', (e) => {
+    if (e.key !== 'smaltbi.mode') return;
+    const i = modes.indexOf((e.newValue as 'auto') ?? 'auto');
+    mode = i < 0 ? 0 : i;
+    applyMode();
+  });
   modeBtn.addEventListener('click', () => {
     mode = (mode + 1) % 3;
     try {

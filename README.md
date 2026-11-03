@@ -42,7 +42,8 @@ Every push to `main` deploys to GitHub Pages. This needs **Settings â†’ Pages â†
 Actions**; with "Deploy from a branch", GitHub also publishes the raw branch, which has no built app
 (the deploy workflow checks this setting and fails if it is wrong):
 
-- <https://stenhoor.github.io/smaltbi/>: the designer, with the sample report.
+- <https://stenhoor.github.io/smaltbi/>: the landing page, with a live sample report.
+- <https://stenhoor.github.io/smaltbi/designer.html?report=examples/sales/report.json>: the designer, with the sample.
 - <https://stenhoor.github.io/smaltbi/sample/>: the sample report, published as a standalone static site.
 - <https://stenhoor.github.io/smaltbi/viewer.html?report=examples/sales/report.json>: the viewer.
 
@@ -54,7 +55,8 @@ npm run build      # bundles the designer and viewer into dist/
 npm run serve      # http://localhost:8080
 ```
 
-- `http://localhost:8080/`: the designer, with the sample report (a small coffee & tea retailer).
+- `http://localhost:8080/`: the landing page (`index.html`).
+- `http://localhost:8080/designer.html`: the designer, with the sample report (a small coffee & tea retailer).
 - `http://localhost:8080/viewer.html?report=examples/sales/report.json`: the same report as a viewer sees it.
 
 `npm run dev` rebuilds on change. `npm run check` type-checks and runs the unit tests (compiled SQL
