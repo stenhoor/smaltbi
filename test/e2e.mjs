@@ -126,6 +126,30 @@ try {
   await page.mouse.up();
   const layout = await page.evaluate(() => window.smaltbi.store.report.model.layout?.products);
   check(!!layout, `moving a table saves its position (${JSON.stringify(layout)})`);
+  // Row counts are cached per data load: a re-render (clicking a line) shows them at once
+  // instead of blanking every card and counting again.
+  await until(page, () => [...document.querySelectorAll('.sbd-mv-count')].every((c) => /rows/.test(c.textContent)));
+  const countsAfterClick = await page.evaluate(() => {
+    document.querySelector('.sbd-mv-rel[data-rel="0"]').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    return [...document.querySelectorAll('.sbd-mv-count')].map((c) => c.textContent);
+  });
+  check(countsAfterClick.length === 4 && countsAfterClick.every((t) => /rows/.test(t)), `row counts stay visible when the diagram re-renders (${countsAfterClick})`);
+
+  // An ambiguous model is an error, not a guess (ADR 0004, decision 9): add a second path
+  // sales → stores → customers, look at a visual that crosses it, then undo.
+  await page.evaluate(() => window.smaltbi.store.change('model', (r) => r.model.relationships.push({ from: 'stores.id', to: 'customers.id' })));
+  await until(page, () => /ambiguous path/.test(document.querySelector('.sbd-mv-warn')?.textContent ?? ''));
+  await page.click('.sbd-seg-btn:has-text("Report")');
+  await page.click('.sbd-page-tab:has-text("Customers")');
+  const ambiguous = await until(page, () => /more than one relationship path/.test(document.querySelector('.sb-visual[data-id=cu-country] .sb-visual-body')?.textContent ?? ''));
+  check(ambiguous, 'a visual over an ambiguous path explains the problem instead of guessing');
+  await page.keyboard.press('Control+z');
+  const restored = await until(page, () => document.querySelectorAll('.sb-visual[data-id=cu-country] .sb-bar').length > 0);
+  check(restored, 'undoing the extra relationship restores the visual');
+  await page.click('.sbd-page-tab:has-text("Overview")');
+  await page.click('.sbd-seg-btn:has-text("Model")');
+  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4);
+
   // Preview from Model view (review on #5): Delete must not remove the relationship that was
   // selected in the hidden diagram, and returning must bring back the diagram and both side panes.
   const relsBefore = (await rels()).length;

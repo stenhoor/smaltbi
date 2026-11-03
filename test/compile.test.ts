@@ -90,10 +90,18 @@ test('top N filter keeps the N best values under the other filters', async () =>
   assert.equal(f.length, 3);
 });
 
-test('filters on unrelated tables are reported, not applied', () => {
-  const q = compileQuery(model, { dims: [R('customers.segment')], measures: [], filters: [{ field: 'products.category', op: 'eq', values: ['Tea'] }] });
-  assert.equal(q.root, 'customers');
+test('a measure query reports filters on tables it cannot reach, instead of applying them', () => {
+  // stores is a dimension of sales; from the products table (a measure on products), stores is unreachable.
+  const m = new Model(s.schema, { ...s.report.model, measures: [...(s.report.model.measures ?? []), { table: 'products', name: 'Product Count', sql: 'COUNT(*)' }] });
+  const q = compileQuery(m, { dims: [m.resolve('products.category')], measures: [m.resolve('products.Product Count')], filters: [{ field: 'stores.region', op: 'eq', values: ['Europe'] }] });
+  assert.equal(q.root, 'products');
   assert.equal(q.ignored.length, 1);
+});
+
+test('a dimension-only query applies filters on other dimensions through the fact table (ADR 0004, decision 10)', () => {
+  const q = compileQuery(model, { dims: [R('customers.segment')], measures: [], filters: [{ field: 'products.category', op: 'eq', values: ['Tea'] }] });
+  assert.equal(q.root, 'sales');
+  assert.equal(q.ignored.length, 0);
 });
 
 test('dimension-only queries across dimensions go through the fact table', async () => {

@@ -104,25 +104,7 @@ export function autoLayout(model: Model): Record<string, Pos> {
 
 /** Pairs of tables connected by more than one active path (an ambiguous model). */
 export function ambiguousPaths(model: Model): [string, string][] {
-  const out: [string, string][] = [];
-  const adj = new Map<string, string[]>();
-  for (const e of model.edges) {
-    if (!adj.has(e.from.table)) adj.set(e.from.table, []);
-    adj.get(e.from.table)!.push(e.to.table);
-  }
-  for (const start of adj.keys()) {
-    const count = new Map<string, number>();
-    const walk = (t: string, seen: Set<string>) => {
-      for (const n of adj.get(t) ?? []) {
-        if (seen.has(n)) continue;
-        count.set(n, (count.get(n) ?? 0) + 1);
-        walk(n, new Set([...seen, n]));
-      }
-    };
-    walk(start, new Set([start]));
-    for (const [t, n] of count) if (n > 1) out.push([start, t]);
-  }
-  return out;
+  return model.ambiguousPaths();
 }
 
 export class ModelView {
@@ -256,14 +238,13 @@ export class ModelView {
     return card;
   }
 
-  private async countRows(table: string, el: Element): Promise<void> {
-    try {
-      const f = await this.ctx.session.runner.run(`SELECT count(*) AS n FROM "${table.replace(/"/g, '""')}"`);
-      const n = Number((f.data.n as ArrayLike<number>)[0] ?? 0);
-      el.textContent = new Intl.NumberFormat(undefined, { notation: 'compact' }).format(n) + ' rows';
-    } catch {
-      // external sources may be unreachable: no count
-    }
+  /** Row counts come from the session's per-load cache: re-renders (clicks, moves, model edits)
+   * show a known count at once instead of blanking it and counting again. */
+  private countRows(table: string, el: Element): void {
+    const show = (n: number | null) => (el.textContent = n === null ? '' : new Intl.NumberFormat(undefined, { notation: 'compact' }).format(n) + ' rows');
+    const session = this.ctx.session;
+    if (session.knownRowCounts.has(table)) show(session.knownRowCounts.get(table)!);
+    else void session.rowCount(table).then(show);
   }
 
   // ---------------------------------------------------------------- lines

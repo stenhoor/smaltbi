@@ -20,6 +20,10 @@ export class ReportSession {
   model!: Model;
   theme!: Theme;
   runner!: QueryRunner;
+  /** Row counts by table (model view). They change only when the data reloads, not with the model. */
+  private rowCounts = new Map<string, Promise<number | null>>();
+  /** Settled row counts, for showing a count without waiting (null: the source can't be read). */
+  readonly knownRowCounts = new Map<string, number | null>();
 
   private constructor(
     public report: Report,
@@ -60,8 +64,24 @@ export class ReportSession {
   async reloadData(): Promise<void> {
     await this.db.close().catch(() => {});
     this.db = await openDatabase(this.engine, this.report, this.base, { ...this.opts, force: true });
+    this.rowCounts.clear();
+    this.knownRowCounts.clear();
     this.runner = new QueryRunner(this.db);
     await this.refreshSchema();
+  }
+
+  /** A table's row count, counted once per data load (null when the source can't be read). */
+  rowCount(table: string): Promise<number | null> {
+    let p = this.rowCounts.get(table);
+    if (!p) {
+      p = this.db
+        .query(`SELECT count(*) AS n FROM "${table.replace(/"/g, '""')}"`)
+        .then((rows) => Number((rows as { n: number }[])[0]?.n ?? 0))
+        .catch(() => null)
+        .then((n) => (this.knownRowCounts.set(table, n), n));
+      this.rowCounts.set(table, p);
+    }
+    return p;
   }
 
   /** Run extra SQL against the report database (designer: add a step and apply it). */
