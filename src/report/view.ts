@@ -6,9 +6,9 @@ import { type ResolvedField, ModelError, refName } from '../core/model.js';
 import { compileQuery, type CompiledQuery, type QuerySpec, wrapCustomSql } from '../core/compile.js';
 import { formatter } from '../core/format.js';
 import { pageLayout, paletteSize, themeCss } from '../theme/theme.js';
-import { type DataColumn, type Plan, type PlanContext, type VisualData, type VisualDef, optionsOf, visualDef } from '../visuals/index.js';
+import { type DataColumn, dataColumn, type Plan, type PlanContext, type VisualData, type VisualDef, optionsOf, visualDef } from '../visuals/index.js';
 import type { Frame } from '../data/runner.js';
-import { download, esc, h, showMenu, type MenuItem } from '../kit/dom.js';
+import { download, esc, h, showMenu, type MenuItem } from 'smaltkit/dom';
 import type { ReportSession } from './session.js';
 
 export interface ViewOptions {
@@ -398,7 +398,7 @@ export class ReportView {
         ? { ...f, label: name }
         : { ref: name, kind: i > 0 && numeric ? 'measure' : 'column', table: '', name, label: name, expr: name, type: numeric ? 'number' : 'any', tables: new Set() };
       const role = f ? (roleOf.get(f) ?? '') : field.kind === 'measure' ? 'values' : 'category';
-      return { key: name, role, label: name, field, values, fmt: formatter(field.format, field.type) };
+      return dataColumn(name, role, name, field, values, formatter(field.format, field.type));
     });
     return { data: makeData(columns, frame.length), sql };
   }
@@ -460,8 +460,8 @@ export class ReportView {
     rt.body.querySelectorAll('[data-row]').forEach((el) => {
       const row = Number(el.getAttribute('data-row'));
       const on = keys ? keys.has(JSON.stringify(this.rowTuple(data, row).map(norm))) : null;
-      el.classList.toggle('sb-dim', on === false);
-      el.classList.toggle('sb-on', on === true);
+      el.classList.toggle('sk-dim', on === false);
+      el.classList.toggle('sk-on', on === true);
     });
   }
 
@@ -546,7 +546,7 @@ export class ReportView {
       const def = visualDef(m.v.type);
       if (def?.selfInteractive) return;
       if (m.row !== null && Number.isFinite(m.row)) this.select(m.v, m.row, e.ctrlKey || e.metaKey || e.shiftKey);
-      else if ((e.target as Element).closest('.sb-visual-body') && this.state.selections?.[m.v.id] && !(e.target as Element).closest('.sb-table-wrap')) this.setSelection(m.v, []);
+      else if ((e.target as Element).closest('.sb-visual-body') && this.state.selections?.[m.v.id] && !(e.target as Element).closest('.sk-table-wrap')) this.setSelection(m.v, []);
     });
     this.root.addEventListener('dblclick', (e) => {
       const m = markOf(e);
@@ -630,10 +630,10 @@ export class ReportView {
     const rt = this.runtimes.get(v.id);
     if (!rt?.data) return;
     const d = rt.data;
-    let html = '<table class="sb-table"><thead><tr>' + d.columns.map((c) => `<th>${esc(c.label)}</th>`).join('') + '</tr></thead><tbody>';
-    for (let i = 0; i < d.rows; i++) html += '<tr>' + d.columns.map((c) => `<td class="${c.field.kind === 'measure' ? 'sb-num' : ''}">${esc(c.fmt(c.values[i] ?? null))}</td>`).join('') + '</tr>';
+    let html = '<table class="sk-table"><thead><tr>' + d.columns.map((c) => `<th>${esc(c.label)}</th>`).join('') + '</tr></thead><tbody>';
+    for (let i = 0; i < d.rows; i++) html += '<tr>' + d.columns.map((c) => `<td class="${c.kind === 'measure' ? 'sk-num' : ''}">${esc(c.fmt(c.values[i] ?? null))}</td>`).join('') + '</tr>';
     html += '</tbody></table>';
-    const overlay = h('div.sb-overlay', {}, h('div.sb-overlay-head', {}, h('b', {}, v.title || 'Data'), h('button', { onclick: () => overlay.remove() }, 'Close')), h('div.sb-table-wrap', { html }));
+    const overlay = h('div.sb-overlay', {}, h('div.sb-overlay-head', {}, h('b', {}, v.title || 'Data'), h('button', { onclick: () => overlay.remove() }, 'Close')), h('div.sk-table-wrap', { html }));
     this.root.append(overlay);
   }
 
@@ -710,8 +710,8 @@ export function makeData(columns: DataColumn[], rows: number): VisualData {
   return {
     rows,
     columns,
-    dims: columns.filter((c) => c.field.kind === 'column'),
-    measures: columns.filter((c) => c.field.kind === 'measure'),
+    dims: columns.filter((c) => c.kind === 'dimension'),
+    measures: columns.filter((c) => c.kind === 'measure'),
     role: (name) => columns.filter((c) => c.role === name),
   };
 }
@@ -721,13 +721,6 @@ export function emptyData(): VisualData {
 }
 
 export function toVisualData(frame: Frame, q: CompiledQuery, roleOf: Map<ResolvedField, string>): VisualData {
-  const cols: DataColumn[] = q.columns.map((c) => ({
-    key: c.key,
-    role: roleOf.get(c.field) ?? '',
-    label: c.field.label,
-    field: c.field,
-    values: frame.data[c.key] ?? [],
-    fmt: formatter(c.field.format, c.field.type),
-  }));
+  const cols: DataColumn[] = q.columns.map((c) => dataColumn(c.key, roleOf.get(c.field) ?? '', c.field.label, c.field, frame.data[c.key] ?? [], formatter(c.field.format, c.field.type)));
   return makeData(cols, frame.length);
 }

@@ -108,11 +108,11 @@ static host. `node scripts/publish.mjs report.json out/` does the same from the 
 |---|---|
 | `src/core/` | Report types, the semantic model, the SQL compiler, formatting |
 | `src/data/` | Data steps, schema introspection, the cached query runner |
-| `src/visuals/` | The visual plugin API and every built-in visual |
+| `src/visuals/` | The visual plugin API and every built-in visual (drawn by smaltkit's charts and tables) |
 | `src/report/` | The report renderer (`ReportView`), interactions, URL state, viewer chrome |
 | `src/designer/` | The designer app |
 | `src/theme/` | Theme loading and compilation to CSS |
-| `src/kit/` | Small UI/infra kit shared with smaltui (engine loader, DOM helpers, zip, files) |
+| `src/kit/` | Helpers staged for smaltkit (engine loader, URLs, zip, files) |
 | `src/publish/` | Static-site publishing |
 | `styles/` | `report.css` (reports and viewer), `app.css` (designer) |
 | `themes/` | Built-in theme files |
@@ -134,8 +134,10 @@ static host. `node scripts/publish.mjs report.json out/` does the same from the 
 
 ## Dependencies
 
-Runtime: **smaltdb** only (loaded at run time from `vendor/smaltdb/`). Build: esbuild and TypeScript.
-The UI, charts and styles are plain HTML, CSS and SVG written for smaltbi. Anything else goes through
+Runtime: **smaltdb** (loaded at run time from `vendor/smaltdb/`) and
+[**smaltkit**](https://github.com/stenhoor/smaltkit), the smalt apps' shared browser code (charts, tables,
+formatting, DOM helpers), bundled at build time. Build: esbuild and TypeScript. The UI, charts and styles
+are plain HTML, CSS and SVG. Anything else goes through
 the plugin policy in [docs/PLUGINS.md](docs/PLUGINS.md).
 
 ## Brand

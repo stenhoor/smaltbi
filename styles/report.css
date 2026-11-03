@@ -66,79 +66,25 @@
 
 .sb-empty, .sb-error { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--sb-muted); font-size: var(--sb-fs-sub); text-align: center; padding: 8px; }
 .sb-error { color: var(--sb-neg); align-items: flex-start; justify-content: flex-start; white-space: pre-wrap; overflow: auto; font-family: ui-monospace, monospace; font-size: 11px; }
-.sb-note { font-size: var(--sb-fs-small); color: var(--sb-muted); padding: 6px 2px 0; }
 
-/* ---------------------------------------------------------------- series colors */
-.sb-c0 { --c: var(--sb-c0); } .sb-c1 { --c: var(--sb-c1); } .sb-c2 { --c: var(--sb-c2); } .sb-c3 { --c: var(--sb-c3); }
-.sb-c4 { --c: var(--sb-c4); } .sb-c5 { --c: var(--sb-c5); } .sb-c6 { --c: var(--sb-c6); } .sb-c7 { --c: var(--sb-c7); }
-.sb-c8 { --c: var(--sb-c8); } .sb-c9 { --c: var(--sb-c9); } .sb-c10 { --c: var(--sb-c10); } .sb-c11 { --c: var(--sb-c11); }
-.sb-pos { --c: var(--sb-pos); } .sb-neg { --c: var(--sb-neg); }
-
-/* ---------------------------------------------------------------- charts */
-.sb-chart { display: flex; flex-direction: column; height: 100%; }
-.sb-chart.sb-legend-right { flex-direction: row; align-items: center; }
-.sb-svg { display: block; overflow: visible; flex: 1; }
-.sb-svg text { font-family: var(--sb-font); }
-.sb-tick { font-size: var(--sb-fs-label); fill: var(--sb-muted); }
-.sb-axis-title { font-size: var(--sb-fs-label); fill: var(--sb-muted); font-weight: 600; }
-.sb-gridline { stroke: var(--sb-grid); stroke-width: 1; opacity: var(--sb-gridlines); shape-rendering: crispEdges; }
-.sb-axis { stroke: color-mix(in oklab, var(--sb-muted) 45%, transparent); stroke-width: 1; shape-rendering: crispEdges; }
-.sb-mark { cursor: pointer; transition: opacity 0.18s, filter 0.18s; }
-.sb-bar, .sb-tile, .sb-slice, .sb-dot { fill: var(--c); }
-.sb-bar { rx: calc(var(--sb-bar-radius) * 1px); }
-.sb-slice { stroke: var(--sb-surface); stroke-width: 1.5; }
-.sb-tile { rx: 3; }
-.sb-dot { fill-opacity: 0.72; stroke: var(--c); stroke-width: 1; }
-.sb-cell { rx: 2; }
-.sb-line { fill: none; stroke: var(--c); stroke-width: var(--sb-line-width); stroke-linejoin: round; stroke-linecap: round; }
-.sb-area { fill: var(--c); fill-opacity: 0.16; stroke: none; }
-.sb-hit { fill: transparent; stroke: none; }
-.sb-hit.sb-marker { fill: var(--sb-surface); stroke: var(--c); stroke-width: 2; }
-.sb-hit:hover { fill: var(--c); }
-.sb-connector { stroke: var(--sb-muted); stroke-dasharray: 2 2; opacity: 0.6; }
-.sb-label { font-size: var(--sb-fs-label); fill: var(--sb-text); font-family: var(--sb-font-num); }
-.sb-label.sb-on-mark { fill: var(--sb-on-mark, #fff); font-weight: 600; }
-.sb-label.sb-sub { font-weight: 400; opacity: 0.9; }
-.sb-mark:hover { filter: brightness(1.08) saturate(1.05); }
-.sb-mark.sb-dim { opacity: 0.25; }
-.sb-donut-total { font-size: calc(var(--sb-fs-kpi) * 0.6); font-weight: 650; fill: var(--sb-text); font-family: var(--sb-font-num); }
-.sb-donut-caption { font-size: var(--sb-fs-small); fill: var(--sb-muted); }
-.sb-gauge-track { fill: var(--sb-grid); }
-.sb-gauge-target { stroke: var(--sb-text); stroke-width: 2.5; }
-.sb-gauge-value { font-size: calc(var(--sb-fs-kpi) * 0.75); font-weight: 650; fill: var(--sb-text); font-family: var(--sb-font-num); }
-.sb-gauge-track + .sb-mark { fill: var(--c); }
-path.sb-mark.sb-c0:not(.sb-slice) { fill: var(--c); }
-
-.sb-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--sb-fs-label); color: var(--sb-muted); padding: 0 0 6px; max-height: 44px; overflow: hidden; }
-.sb-legend-right .sb-legend { flex-direction: column; flex-wrap: nowrap; max-height: none; overflow: auto; padding: 0 0 0 12px; max-width: 40%; }
-.sb-legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.sb-legend-item i { width: 9px; height: 9px; border-radius: 3px; background: var(--c); flex: none; }
-
-/* ---------------------------------------------------------------- KPI card */
-.sb-kpi { display: flex; flex-direction: column; justify-content: center; height: 100%; gap: 2px; position: relative; }
-.sb-kpi-value { font-family: var(--sb-font-num); font-size: var(--sb-fs-kpi); font-weight: 650; letter-spacing: -0.02em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sb-kpi-caption { color: var(--sb-muted); font-size: var(--sb-fs-sub); }
-.sb-kpi-cmp { font-size: var(--sb-fs-label); font-weight: 600; margin-top: 2px; }
-.sb-good { color: var(--sb-pos); } .sb-bad { color: var(--sb-neg); }
-.sb-spark { display: block; width: 100%; margin-top: auto; }
-.sb-spark .sb-line { stroke-width: 1.5; }
-
-/* ---------------------------------------------------------------- tables */
-.sb-table-wrap { height: 100%; overflow: auto; scrollbar-width: thin; }
-.sb-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--sb-fs-sub); font-variant-numeric: tabular-nums; }
-.sb-table th { position: sticky; top: 0; z-index: 1; background: var(--sb-surface); text-align: left; font-weight: 600; color: var(--sb-muted); font-size: var(--sb-fs-label); text-transform: uppercase; letter-spacing: 0.03em; padding: 6px 10px; border-bottom: 1px solid var(--sb-border); cursor: default; white-space: nowrap; }
-.sb-table thead th[data-col] { cursor: pointer; }
-.sb-table td { padding: 6px 10px; border-bottom: 1px solid var(--sb-grid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
-.sb-density-compact td { padding: 3px 8px; } .sb-density-relaxed td { padding: 10px 12px; }
-.sb-table .sb-num { text-align: right; font-family: var(--sb-font-num); }
-.sb-table tbody tr.sb-mark:hover td, .sb-table td.sb-mark:hover { background: color-mix(in oklab, var(--sb-accent) 7%, transparent); }
-.sb-table tr.sb-on td, .sb-table td.sb-on { background: color-mix(in oklab, var(--sb-sel) 14%, transparent); }
-.sb-table tfoot td, .sb-table tfoot th { position: sticky; bottom: 0; background: var(--sb-surface); font-weight: 650; border-top: 1px solid var(--sb-border); border-bottom: 0; color: var(--sb-text); text-transform: none; letter-spacing: 0; font-size: var(--sb-fs-sub); }
-.sb-table td[data-bar] { background-image: linear-gradient(90deg, color-mix(in oklab, var(--sb-accent) 22%, transparent) var(--bar), transparent var(--bar)); background-repeat: no-repeat; }
-.sb-matrix th.sb-rowhead { position: static; text-transform: none; letter-spacing: 0; font-size: var(--sb-fs-sub); color: var(--sb-text); border-bottom-color: var(--sb-grid); font-weight: 500; }
-.sb-matrix th.sb-colhead { text-align: right; }
-.sb-matrix .sb-total { font-weight: 650; background: color-mix(in oklab, var(--sb-text) 3%, var(--sb-surface)); }
-.sb-matrix tbody .sb-mark { cursor: pointer; }
+/* ---------------------------------------------------------------- charts and tables (smaltkit)
+   Charts, tables, the KPI card and their legends are drawn by smaltkit and styled by its ui.css, which
+   the build puts in front of this file in dist/report.css. Its --sk-* properties take the theme's values
+   here; on .sb-visual too, so per-visual style overrides (--sb-* on the frame) reach the chart. */
+.sb-themed, .sb-visual {
+  --sk-font: var(--sb-font); --sk-font-num: var(--sb-font-num); --sk-fs-label: var(--sb-fs-label);
+  --sk-fs-sub: var(--sb-fs-sub); --sk-fs-small: var(--sb-fs-small); --sk-fs-kpi: var(--sb-fs-kpi);
+  --sk-text: var(--sb-text); --sk-muted: var(--sb-muted); --sk-surface: var(--sb-surface);
+  --sk-border: var(--sb-border); --sk-grid: var(--sb-grid); --sk-gridlines: var(--sb-gridlines);
+  --sk-accent: var(--sb-accent); --sk-sel: var(--sb-sel); --sk-pos: var(--sb-pos);
+  --sk-neg: var(--sb-neg); --sk-bar-radius: var(--sb-bar-radius); --sk-line-width: var(--sb-line-width);
+  --sk-seq-lo: var(--sb-seq-lo); --sk-seq-hi: var(--sb-seq-hi); --sk-div-lo: var(--sb-div-lo);
+  --sk-div-mid: var(--sb-div-mid); --sk-div-hi: var(--sb-div-hi); --sk-c0: var(--sb-c0);
+  --sk-c1: var(--sb-c1); --sk-c2: var(--sb-c2); --sk-c3: var(--sb-c3); --sk-c4: var(--sb-c4);
+  --sk-c5: var(--sb-c5); --sk-c6: var(--sb-c6); --sk-c7: var(--sb-c7); --sk-c8: var(--sb-c8);
+  --sk-c9: var(--sb-c9); --sk-c10: var(--sb-c10); --sk-c11: var(--sb-c11);
+  --sk-on-mark: var(--sb-on-mark, #fff); --sk-on-accent: var(--sb-surface);
+}
 
 /* ---------------------------------------------------------------- slicers and text */
 .sb-slicer { font-size: var(--sb-fs-sub); }
@@ -195,7 +141,7 @@ path.sb-mark.sb-c0:not(.sb-slice) { fill: var(--c); }
   .sb-visual-tools, .sb-tooltip { display: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sb-mark, .sb-visual, .sb-chip { transition: none; }
+  .sb-visual, .sb-chip { transition: none; }
   .sb-visual.sb-loading::after { animation: none; }
 }
 
@@ -217,16 +163,7 @@ path.sb-mark.sb-c0:not(.sb-slice) { fill: var(--c); }
 @keyframes sbv-spin { to { transform: rotate(360deg); } }
 @media (max-width: 720px) { .sbv-bar { flex-wrap: wrap; padding: 8px 12px; } .sbv-tabs { order: 3; flex-basis: 100%; } .sbv-title { max-width: 60vw; } }
 
-/* ---------------------------------------------------------------- menus, dialogs, toasts (kit) */
-.sk-menu { position: fixed; z-index: 1000; min-width: 180px; background: var(--sk-surface, #fff); color: var(--sk-text, #151922); border: 1px solid var(--sk-border, #d6dbe4); border-radius: 9px; padding: 4px; box-shadow: 0 12px 32px rgba(16, 24, 40, 0.16); font: 13px Geist, system-ui, sans-serif; }
-.sk-menu-item { display: flex; justify-content: space-between; gap: 18px; width: 100%; text-align: left; font: inherit; color: inherit; background: none; border: 0; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
-.sk-menu-item:hover:not(:disabled), .sk-menu-item:focus { background: rgba(0, 51, 153, 0.08); outline: none; }
-.sk-menu-item:disabled { opacity: 0.4; cursor: default; }
-.sk-menu-hint { opacity: 0.55; }
-.sk-menu-sep { height: 1px; background: var(--sk-border, #d6dbe4); margin: 4px 2px; }
-.sk-toasts { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 1100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-.sk-toast { background: #151922; color: #e9ebf0; font: 13px Geist, system-ui, sans-serif; padding: 9px 14px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); max-width: 80vw; }
-.sk-toast.sk-error { background: #a3195b; } .sk-toast.sk-ok { background: #1d6b3a; }
+/* Menus, dialogs and toasts come from smaltkit's ui.css too. */
 
 /* ---------------------------------------------------------------- "Powered by" badge (stenhoor/smalt-brand) */
 /* 28 px tall with at least 8 px of space around it; the dark variant on dark grounds only. */

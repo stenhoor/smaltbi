@@ -1,7 +1,7 @@
 // The bar above a report in view mode: title, page tabs, bookmarks, reset, color mode.
 // Used by the published viewer and the designer's preview.
 import type { ViewState } from '../core/types.js';
-import { h, showMenu } from '../kit/dom.js';
+import { h, showMenu } from 'smaltkit/dom';
 import type { ReportView } from './view.js';
 
 export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[] } = {}): HTMLElement & { renderTabs(): void } {

@@ -24,17 +24,17 @@ bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worke
 | `core/types.ts` | The report document: data steps, model spec, pages, visuals, filters, view state, theme. |
 | `core/model.ts` | `Model`: the schema (from introspection) overlaid with the spec. Resolves field references to SQL expressions, expands `[Measure]` / `[Column]` references, finds join paths. |
 | `core/compile.ts` | `compileQuery()`: dimensions + measures + filters → one SQL statement. `wrapCustomSql()` applies filters to custom SQL. |
-| `core/format.ts` | Display formats (presets, Intl options, small patterns, dates without time-zone shifts). |
+| `core/format.ts` | Display formats, re-exported from `smaltkit/format` (presets, Intl options, small patterns, dates without time-zone shifts). |
 | `data/sources.ts` | Data steps (smaltui environment manifest format): import, link, SQL, inline rows, connections. |
 | `data/introspect.ts` | Tables, columns and BI types (dates are detected from ISO strings), keys, foreign keys. |
 | `data/runner.ts` | Runs SQL in columnar mode with an LRU cache keyed by SQL text. |
 | `report/session.ts` | Opens the database, applies steps, builds the model, loads the theme. |
 | `report/view.ts` | `ReportView`: lays out a page, plans and runs each visual's queries, renders, and handles every interaction. Used by both the designer and the viewer. |
-| `visuals/` | The plugin API (`api.ts`) and the built-in visuals. |
+| `visuals/` | The plugin API (`api.ts`) and the built-in visuals: their roles, options and queries. The charts and tables are drawn by `smaltkit/charts` and `smaltkit/table`, and styled by its `ui.css`. |
 | `theme/theme.ts` | Theme merge (`extends`) and compilation to CSS custom properties. |
 | `designer/` | The designer: document store with undo/autosave, fields pane, panels, dialogs, canvas editing, and the model view (`modelview.ts`: the ER diagram; `modelpanel.ts`: table and relationship details). |
 | `publish/publish.ts` | Builds the static site file set and zips it (`kit/zip.ts`). |
-| `kit/` | Small framework-free helpers, staged for sharing with smaltui (see ADR 0003). |
+| `kit/` | Small framework-free helpers, staged for sharing with smaltui (see ADR 0003). The DOM helpers, formatting and charts have moved to [smaltkit](https://github.com/stenhoor/smaltkit). |
 
 ## From a visual to SQL
 
@@ -89,8 +89,9 @@ wrapped as `SELECT * FROM (…) WHERE …`.
 ## Rendering
 
 - **One string per render.** Visuals build an SVG/HTML string and assign it once. No virtual DOM.
-- **Theme by CSS variables.** Marks carry classes (`sb-bar sb-c3`); colors, fonts and sizes come from
-  variables the theme defines on `.sb-themed`. Sequential and diverging colors use CSS `color-mix()`
+- **Theme by CSS variables.** Marks carry smaltkit classes (`sk-bar sk-c3`); colors, fonts and sizes come
+  from variables the theme defines on `.sb-themed` (`--sb-*`), which `report.css` passes to the kit's
+  `--sk-*` properties. Sequential and diverging colors use CSS `color-mix()`
   between the theme's ramp ends, so heatmaps re-theme without re-rendering too.
 - **Resize** re-renders from the last data (ResizeObserver), without querying.
 - **Selection highlighting** toggles classes on existing marks, so hover and double-click survive.

@@ -3,7 +3,7 @@
 import type { Aggregation, Filter, SqlValue, Visual } from '../core/types.js';
 import type { ResolvedField } from '../core/model.js';
 import type { QuerySpec } from '../core/compile.js';
-import type { Formatter } from '../core/format.js';
+import type { ChartColumn, ChartContext } from 'smaltkit/charts';
 
 export interface RoleDef {
   name: string;
@@ -26,14 +26,13 @@ export interface OptionDef {
   when?: { key: string; equals: unknown };
 }
 
-/** One column of a query result, with its role and formatter. */
-export interface DataColumn {
-  key: string;
-  role: string;
-  label: string;
+/**
+ * One column of a query result, with its role and formatter. It is a smaltkit ChartColumn (kind, type,
+ * format and ref come from the field) plus the resolved model field.
+ */
+export interface DataColumn extends ChartColumn {
   field: ResolvedField;
   values: ArrayLike<SqlValue>;
-  fmt: Formatter;
 }
 
 export interface VisualData {
@@ -71,7 +70,7 @@ export interface RenderContext {
   options: Record<string, unknown>;
   data: VisualData;
   extra: Record<string, VisualData>;
-  /** Number of colors in the theme palette (series classes cycle sb-c0 … sb-c{n-1}). */
+  /** Number of colors in the theme palette (series classes cycle sk-c0 … sk-c{n-1}). */
   palette: number;
   locale?: string;
   /** null when nothing is selected in this visual, else whether row `i` is selected. */
@@ -152,11 +151,14 @@ export const LEGEND_OPTION: OptionDef = {
 
 export const LABELS_OPTION: OptionDef = { key: 'labels', label: 'Data labels', type: 'bool', default: false };
 
-/** Build a legend (HTML) for series names. */
-export function legendHtml(names: string[], palette: number, esc: (s: unknown) => string, offset = 0): string {
-  return (
-    '<div class="sb-legend">' +
-    names.map((n, i) => `<span class="sb-legend-item sb-c${(i + offset) % palette}"><i></i>${esc(n)}</span>`).join('') +
-    '</div>'
-  );
+export { legendHtml } from 'smaltkit/charts';
+
+/** The smaltkit chart context for a visual: the render context plus the visual's row limit. */
+export function chartContext(ctx: RenderContext): ChartContext {
+  return { ...ctx, limit: ctx.visual.limit };
+}
+
+/** A result column for a resolved field. */
+export function dataColumn(key: string, role: string, label: string, field: ResolvedField, values: ArrayLike<SqlValue>, fmt: DataColumn['fmt']): DataColumn {
+  return { key, role, label, field, values, fmt, kind: field.kind === 'measure' ? 'measure' : 'dimension', type: field.type, format: field.format, ref: field.ref };
 }

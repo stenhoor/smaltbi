@@ -8,7 +8,7 @@
 import type { Relationship, Report } from '../core/types.js';
 import type { Model, TableInfo } from '../core/model.js';
 import { splitRef } from '../core/sql.js';
-import { h, toast } from '../kit/dom.js';
+import { h, toast } from 'smaltkit/dom';
 import type { DocStore } from './store.js';
 import type { ReportSession } from '../report/session.js';
 

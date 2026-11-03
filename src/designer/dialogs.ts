@@ -6,7 +6,7 @@ import { compileQuery } from '../core/compile.js';
 import { Model } from '../core/model.js';
 import { BUILTIN_THEMES, mergeTheme } from '../theme/theme.js';
 import { formatFromName } from '../data/sources.js';
-import { dialog, download, esc, fileName, h, pickFile, toast } from '../kit/dom.js';
+import { dialog, download, esc, fileName, h, pickFile, toast } from 'smaltkit/dom';
 import { listOpfsDatabases } from '../kit/engine.js';
 import { localFiles } from '../kit/files.js';
 import { normalizeDataUrl } from '../kit/urls.js';
@@ -147,7 +147,7 @@ export async function dataDialog(ctx: DialogContext): Promise<boolean> {
   );
   const ok = await dialog('Data', body, [{ label: 'Cancel' }, { label: 'Apply', primary: true, value: () => true }], { wide: true });
   if (!ok) return false;
-  if (data.init !== 'none') data.database = { name: data.database?.name ?? fileName(ctx.store.report.name), storage: storage.value as 'memory' | 'opfs' };
+  if (data.init !== 'none') data.database = { name: data.database?.name ?? fileName(ctx.store.report.name, 'report'), storage: storage.value as 'memory' | 'opfs' };
   ctx.store.change('data', (r) => (r.data = data));
   return true;
 }
@@ -300,7 +300,7 @@ export async function themeDialog(ctx: DialogContext, apply: (t: Theme | string)
     h(
       'div.sbd-row',
       {},
-      h('button.sbd-btn', { onclick: () => download(fileName(current.name) + '.theme.json', JSON.stringify(current, null, 2) + '\n', 'application/json') }, 'Export theme…'),
+      h('button.sbd-btn', { onclick: () => download(fileName(current.name, 'report') + '.theme.json', JSON.stringify(current, null, 2) + '\n', 'application/json') }, 'Export theme…'),
       h('button.sbd-btn', {
         onclick: async () => {
           const f = await pickFile('.json');
@@ -350,14 +350,14 @@ export async function publishDialog(ctx: DialogContext): Promise<void> {
   );
   await dialog('Publish', body, [
     { label: 'Cancel' },
-    { label: 'Download report.json', value: () => (download(fileName(r.name) + '.smaltbi.json', JSON.stringify(r, null, 2) + '\n', 'application/json'), true) },
+    { label: 'Download report.json', value: () => (download(fileName(r.name, 'report') + '.smaltbi.json', JSON.stringify(r, null, 2) + '\n', 'application/json'), true) },
     {
       label: 'Download site (.zip)',
       primary: true,
       value: async () => {
         status.textContent = 'Building…';
         const blob = await publishZip(ctx.session, { appBase: ctx.appBase, snapshot: snapshot.checked, files: localFiles, log: (t) => (status.textContent = 'Adding ' + t + '…') });
-        download(fileName(r.name) + '-site.zip', blob, 'application/zip');
+        download(fileName(r.name, 'report') + '-site.zip', blob, 'application/zip');
         toast('Published: unzip onto any static host', 'ok');
         return true;
       },

@@ -1,7 +1,7 @@
 // The Fields pane: every table of the model with its measures, hierarchies and columns.
 // Fields are dragged onto the canvas or the field wells, or clicked to add to the selected visual.
 import type { Model } from '../core/model.js';
-import { h, showMenu, type MenuItem } from '../kit/dom.js';
+import { h, showMenu, type MenuItem } from 'smaltkit/dom';
 
 export const FIELD_MIME = 'application/x-smaltbi-field';
 
