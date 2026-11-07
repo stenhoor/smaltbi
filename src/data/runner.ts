@@ -1,7 +1,7 @@
 // Runs compiled queries with a result cache. Results are columnar (smaltdb's wire format), which
 // is what charts want: one array per column.
 import type { SqlValue } from '../core/types.js';
-import type { Database } from '../kit/engine.js';
+import type { Database } from '../report/engine.js';
 
 export interface Frame {
   columns: string[];

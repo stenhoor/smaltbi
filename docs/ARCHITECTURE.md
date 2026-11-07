@@ -27,7 +27,7 @@ bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worke
 | `core/model.ts` | `Model`: the schema (from introspection) overlaid with the spec. Resolves field references to SQL expressions, expands `[Measure]` / `[Column]` references, finds join paths. |
 | `core/compile.ts` | `compileQuery()`: dimensions + measures + filters → one SQL statement. `wrapCustomSql()` applies filters to custom SQL. |
 | `core/format.ts` | Display formats, re-exported from `smaltkit/format` (presets, Intl options, small patterns, dates without time-zone shifts). |
-| `data/sources.ts` | Data steps (smaltui environment manifest format): import, link, SQL, inline rows, connections. |
+| `smaltkit/manifest` | Data steps (the environment manifest format, shared with smaltui and smaltnb): import, link, SQL, inline rows, connections. |
 | `data/introspect.ts` | Tables, columns and BI types (dates are detected from ISO strings), keys, foreign keys. |
 | `data/runner.ts` | Runs SQL in columnar mode with an LRU cache keyed by SQL text. |
 | `report/session.ts` | Opens the database, applies steps, builds the model, loads the theme. |
@@ -36,7 +36,8 @@ bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worke
 | `theme/theme.ts` | Theme merge (`extends`) and compilation to CSS custom properties. |
 | `designer/` | The designer: document store with undo/autosave, fields pane, panels, dialogs, canvas editing, and the model view (`modelview.ts`: the ER diagram; `modelpanel.ts`: table and relationship details). |
 | `publish/publish.ts` | Builds the static site file set and zips it (`kit/zip.ts`). |
-| `kit/` | Small framework-free helpers, staged for sharing with smaltui (see ADR 0003). The DOM helpers, formatting and charts have moved to [smaltkit](https://github.com/stenhoor/smaltkit). |
+| `report/engine.ts` | smaltbi's settings for `smaltkit/engine`: loads `vendor/smaltdb/` (built from `engine/`), npm engines off. |
+| `kit/` | Small framework-free helpers, staged for sharing (see ADR 0003): zip and local files. The DOM helpers, formatting, charts, tables, controls, data steps, URLs and the engine loader are in [smaltkit](https://github.com/stenhoor/smaltkit). |
 
 ## From a visual to SQL
 

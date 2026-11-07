@@ -8,7 +8,7 @@ import { poweredByBadge, viewerBar } from '../report/chrome.js';
 import { stateFromHash, writeHash } from '../report/state.js';
 import { applyTheme } from '../theme/theme.js';
 import { h } from 'smaltkit/dom';
-import { corsHint } from '../kit/urls.js';
+import { corsHint } from 'smaltkit/urls';
 
 async function main(): Promise<void> {
   const app = document.getElementById('app')!;

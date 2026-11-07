@@ -3,15 +3,14 @@ import type { Filter, SqlValue } from '../core/types.js';
 import { type RenderContext, registerVisual } from './api.js';
 import { ICONS } from './icons.js';
 import { esc } from 'smaltkit/svg';
-
+import { choiceControl, rangeControl, searchControl } from 'smaltkit/controls';
 
 function selectedValues(ctx: RenderContext): SqlValue[] | null {
   const f = ctx.api.filters().find((x) => x.op === 'in');
   return f ? (f.values ?? []) : null;
 }
 
-const same = (a: SqlValue, b: SqlValue) => a === b || (typeof a === 'bigint' || typeof b === 'bigint' ? String(a) === String(b) : false);
-
+// The slicer: smaltkit's controls, with a selection that becomes this visual's filter on the page.
 registerVisual({
   type: 'slicer',
   label: 'Slicer',
@@ -37,73 +36,37 @@ registerVisual({
     const style = String(ctx.options.style ?? 'list');
     const fieldCol = ctx.data.role('field')[0];
     const ref = ctx.visual.fields.field?.[0];
-    const refName = typeof ref === 'string' ? ref : ref?.field;
-    if (!refName) {
+    const field = typeof ref === 'string' ? ref : ref?.field;
+    if (!field) {
       ctx.el.innerHTML = '<div class="sb-empty">Add a field</div>';
       return;
     }
     if (style === 'search') {
-      const cur = ctx.api.filters().find((x) => x.op === 'contains')?.values?.[0] ?? '';
-      ctx.el.innerHTML = `<div class="sb-slicer"><input class="sb-input" type="search" placeholder="Search…" value="${esc(cur)}"></div>`;
-      const input = ctx.el.querySelector('input')!;
-      let t: ReturnType<typeof setTimeout>;
-      input.addEventListener('input', () => {
-        clearTimeout(t);
-        t = setTimeout(() => ctx.api.setFilters(input.value ? [{ field: refName, op: 'contains', values: [input.value] }] : []), 250);
-      });
+      const value = String(ctx.api.filters().find((x) => x.op === 'contains')?.values?.[0] ?? '');
+      searchControl(ctx.el, { value, onChange: (text) => ctx.api.setFilters(text ? [{ field, op: 'contains', values: [text] }] : []) });
       return;
     }
     if (style === 'range') {
       const [mn, mx] = ctx.data.measures;
-      const cur = ctx.api.filters().find((x) => x.op === 'between')?.values ?? [];
-      const isNum = mn?.field.type === 'number';
-      const type = isNum ? 'number' : 'date';
-      const lo = mn ? mn.values[0] : null;
-      const hi = mx ? mx.values[0] : null;
-      const v = (x: SqlValue | undefined) => (x === null || x === undefined ? '' : esc(type === 'date' ? String(x).slice(0, 10) : x));
-      ctx.el.innerHTML = `<div class="sb-slicer sb-range"><input class="sb-input" type="${type}" data-i="0" value="${v(cur[0])}" placeholder="${v(lo)}" min="${v(lo)}" max="${v(hi)}"><span>–</span><input class="sb-input" type="${type}" data-i="1" value="${v(cur[1])}" placeholder="${v(hi)}" min="${v(lo)}" max="${v(hi)}"></div>`;
-      const inputs = [...ctx.el.querySelectorAll('input')];
-      for (const inp of inputs)
-        inp.addEventListener('change', () => {
-          const vals = inputs.map((i) => (i.value === '' ? null : isNum ? Number(i.value) : i.value));
-          ctx.api.setFilters(vals.every((x) => x === null) ? [] : [{ field: refName, op: 'between', values: vals }]);
-        });
+      const cur = ctx.api.filters().find((x) => x.op === 'between')?.values;
+      rangeControl(ctx.el, {
+        kind: mn?.field.type === 'number' ? 'number' : 'date',
+        min: mn ? mn.values[0]! : null,
+        max: mx ? mx.values[0]! : null,
+        value: cur ? [cur[0] ?? null, cur[1] ?? null] : null,
+        onChange: (range) => ctx.api.setFilters(range ? [{ field, op: 'between', values: range }] : []),
+      });
       return;
     }
     const values: SqlValue[] = [];
     if (fieldCol) for (let i = 0; i < ctx.data.rows; i++) values.push(fieldCol.values[i]!);
-    const sel = selectedValues(ctx);
-    // Keep selected values visible even when other filters removed them.
-    for (const s of sel ?? []) if (!values.some((v) => same(v, s))) values.push(s);
-    const fmt = fieldCol?.fmt ?? ((v: SqlValue) => String(v));
-    const isOn = (v: SqlValue) => !!sel?.some((s) => same(s, v));
-    const single = !!ctx.options.single;
-    const set = (vals: SqlValue[]) => ctx.api.setFilters(vals.length ? [{ field: refName, op: 'in', values: vals } as Filter] : []);
-    const toggle = (v: SqlValue, additive: boolean) => {
-      const cur = sel ?? [];
-      if (single || !additive) set(isOn(v) && cur.length === 1 ? [] : [v]);
-      else set(isOn(v) ? cur.filter((s) => !same(s, v)) : [...cur, v]);
-    };
-    let html = '';
-    if (style === 'buttons') {
-      html = `<div class="sb-slicer sb-chips">${values.map((v, i) => `<button class="sb-chip${isOn(v) ? ' sb-on' : ''}" data-i="${i}">${esc(fmt(v))}</button>`).join('')}</div>`;
-    } else if (style === 'dropdown') {
-      const label = sel?.length ? (sel.length === 1 ? fmt(sel[0]!) : `${sel.length} selected`) : 'All';
-      html = `<details class="sb-slicer sb-dropdown"><summary class="sb-input">${esc(label)}</summary><div class="sb-dropdown-list">${values
-        .map((v, i) => `<label><input type="checkbox" data-i="${i}"${isOn(v) ? ' checked' : ''}> ${esc(fmt(v))}</label>`)
-        .join('')}</div></details>`;
-    } else {
-      html = `<div class="sb-slicer sb-list">${values.map((v, i) => `<label><input type="${single ? 'radio' : 'checkbox'}" name="${esc(ctx.visual.id)}" data-i="${i}"${isOn(v) ? ' checked' : ''}> <span>${esc(fmt(v))}</span></label>`).join('')}</div>`;
-    }
-    if (sel?.length) html += `<button class="sb-clear" title="Clear selection">Clear</button>`;
-    const wasOpen = ctx.el.querySelector('details')?.open;
-    ctx.el.innerHTML = html;
-    if (wasOpen) ctx.el.querySelector('details')!.open = true;
-    ctx.el.querySelector('.sb-clear')?.addEventListener('click', () => set([]));
-    ctx.el.querySelectorAll<HTMLElement>('[data-i]').forEach((el) => {
-      const v = values[Number(el.dataset.i)]!;
-      if (el instanceof HTMLInputElement) el.addEventListener('change', () => toggle(v, style !== 'list' || !single ? true : false));
-      else el.addEventListener('click', (e) => toggle(v, e.ctrlKey || e.metaKey || !single));
+    choiceControl(ctx.el, style === 'buttons' || style === 'dropdown' ? style : 'list', {
+      values,
+      selected: selectedValues(ctx),
+      format: fieldCol?.fmt,
+      single: !!ctx.options.single,
+      name: ctx.visual.id,
+      onChange: (vals) => ctx.api.setFilters(vals.length ? [{ field, op: 'in', values: vals } as Filter] : []),
     });
   },
 });

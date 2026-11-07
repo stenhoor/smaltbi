@@ -62,11 +62,14 @@ working on them.
   theme, synced into `docs/.vitepress/theme/` by the same script. smaltbi's layer is the user tools: cerulean
   (`--layer-tool`, aliased by `--product-bi`). Icons (`src/visuals/icons.ts`)
   follow the brand's Chevron style (BRAND.md, Iconography).
-- **smaltkit:** shared code lives in [stenhoor/smaltkit](https://github.com/stenhoor/smaltkit) (ADR 0005), pinned as
-  `github:stenhoor/smaltkit#<commit>`. The charts, tables, formatting, SVG and DOM helpers and their CSS (`ui.css`,
-  bundled into `dist/report.css`) come from there: change them in smaltkit, then bump the pin in its own PR. Still to
-  move: the rest of `src/kit/`, `src/data/sources.ts` and the vendor/serve scripts, later smaltui's SQL editor and
-  grid. Keep `src/kit/` free of smaltbi-specific code.
+- **smaltkit:** UI and helpers shared by smaltbi, smaltui and smaltnb live in
+  [stenhoor/smaltkit](https://github.com/stenhoor/smaltkit) (ADR 0005; smaltnb DESIGN decision 20), pinned as
+  `github:stenhoor/smaltkit#<commit>`. From there: charts, tables, controls (the slicers), formatting, SVG and DOM
+  helpers and their CSS (`ui.css`, bundled into `dist/report.css`), the data steps (`smaltkit/manifest`), URLs and the
+  engine loader (`smaltkit/engine`, set up in `src/report/engine.ts`). Anything another app could use goes there, not
+  here: change it in smaltkit (its own PR, with tests), then bump the pin here. Still to move: `src/kit/` (zip, local
+  files) and the vendor/serve scripts; smaltui's SQL editor and grid arrive there for the measure editor and large
+  tables. Keep `src/kit/` free of smaltbi-specific code.
 - **Deploys:** merging to `main` redeploys https://stenhoor.github.io/smaltbi/. The Pages source must be
   "GitHub Actions" (#6); the Pages workflow checks this and smoke-tests the live site, but look at the site after a
   merge that changes it.

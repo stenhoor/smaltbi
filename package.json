@@ -25,11 +25,11 @@
   "devDependencies": {
     "@types/node": "^22.20.5",
     "esbuild": "0.28.2",
+    "hyparquet-compressors": "^1.1.2",
     "typescript": "^5.9.3",
-    "vitepress": "^1.6.4",
-    "hyparquet-compressors": "^1.1.2"
+    "vitepress": "^1.6.4"
   },
   "dependencies": {
-    "smaltkit": "github:stenhoor/smaltkit#d760b284a9ea13797836300436b929b9c12454c8"
+    "smaltkit": "github:stenhoor/smaltkit#406595e1202946c92bdc153697af2913cfcb6e18"
   }
 }

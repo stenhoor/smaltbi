@@ -2,7 +2,7 @@
 import type { ColumnType, Relationship } from '../core/types.js';
 import type { SchemaInfo } from '../core/model.js';
 import { quoteIdent } from '../core/sql.js';
-import type { Database } from '../kit/engine.js';
+import type { Database } from '../report/engine.js';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DATETIME_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/;
