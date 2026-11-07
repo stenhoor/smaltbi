@@ -45,19 +45,9 @@ features:
     linkText: Publishing
 ---
 
-## A live report {#demo}
-
-The sample report for a small coffee and tea shop: about 17,000 sales across customers, products and stores, loaded into
-smaltdb in your browser. Click a bar or a region to filter the page, double-click a column to drill down, or right-click a
-country on *Customers & stores* to drill through.
-
-<div class="sb-demo"><iframe id="demoFrame" title="Sample report: Smalt Coffee &amp; Tea sales" src="./viewer.html?report=examples/sales/report.json" loading="lazy"></iframe></div>
-
-<p class="sb-demo-links"><a href="./viewer.html?report=examples/sales/report.json" target="_self">Open full screen ↗</a> · <a href="./designer.html?report=examples/sales/report.json" target="_self">Edit it in the designer ↗</a> · <a href="./designer.html" target="_self">Start an empty report ↗</a></p>
-
 ## Your data stays in your browser
 
 smaltbi runs on [smaltdb](https://smaltdb.dev), the smaltworks engine, in a Web Worker: data stays in memory or in the
 browser's private storage (OPFS), and the page fetches only the files a report loads. There is no server to set up.
 smaltbi is one of the [smaltworks](https://smaltworks.dev) tools, beside the [smaltui](https://stenhoor.github.io/smaltui/)
-SQL console and [smaltnb](https://stenhoor.github.io/smaltnb/) notebooks.
+query workbench and [smaltnb](https://stenhoor.github.io/smaltnb/) notebooks.

@@ -51,9 +51,9 @@ export default defineConfig({
     logo: { light: '/lockup.svg', dark: '/lockup-on-dark.svg', alt: 'smaltbi' },
     siteTitle: false,
     nav: [
+      { text: 'Demo', link: '/designer.html?report=examples/sales/report.json', target: '_self' },
       { text: 'Guide', link: '/guide/' },
       { text: 'Report format', link: '/REPORT_FORMAT' },
-      { text: 'Demo', link: '/designer.html?report=examples/sales/report.json', target: '_self' },
       smaltworksMenu(),
     ],
     sidebar: [
