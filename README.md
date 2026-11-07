@@ -52,7 +52,7 @@ Actions**; with "Deploy from a branch", GitHub also publishes the raw branch, wh
 ## Quick start
 
 ```bash
-npm install        # also copies the smaltdb engine into vendor/smaltdb/
+npm install        # also builds the engine (smaltdb, smaltql, plugins) into vendor/smaltdb/
 npm run build      # bundles the designer and viewer into dist/
 npm run serve      # http://localhost:8080
 ```
@@ -136,7 +136,9 @@ static host. `node scripts/publish.mjs report.json out/` does the same from the 
 
 ## Dependencies
 
-Runtime: **smaltdb** (loaded at run time from `vendor/smaltdb/`) and
+Runtime: **smaltdb** with **[smaltql](https://github.com/stenhoor/smaltql)** for SQL and the io, external and Parquet
+plugins (built from `src/engine/` into `vendor/smaltdb/` and loaded at run time; pinned in `packed.json` until they
+are on npm) and
 [**smaltkit**](https://github.com/stenhoor/smaltkit), the smalt apps' shared browser code (charts, tables,
 formatting, DOM helpers), bundled at build time. Build: esbuild and TypeScript. The UI, charts and styles
 are plain HTML, CSS and SVG. Anything else goes through

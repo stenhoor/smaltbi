@@ -1,8 +1,15 @@
 // Test helpers: an async, client-shaped wrapper around smaltdb's synchronous engine, so the
-// browser code paths (introspect, runner, applySteps) run unchanged in Node.
+// browser code paths (introspect, runner, applySteps) run unchanged in Node. SQL is smaltql, registered with the
+// engine in this process; CSV / JSON import is the @smaltdb/io plugin, as in the browser worker (src/engine/).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { Database as EngineDb, importCSV, importJSON } from 'smaltdb/engine';
+import { Database as EngineDb } from 'smaltdb/engine';
+import 'smaltql/register';
+import io from '@smaltdb/io';
+import external from '@smaltdb/external';
+import parquet from '@smaltdb/parquet';
+import { importCSV, importJSON } from '@smaltdb/io/client';
+import { registerFile } from '@smaltdb/external/client';
 import type { Database } from '../src/kit/engine.js';
 import type { Report } from '../src/core/types.js';
 import { Model } from '../src/core/model.js';
@@ -12,14 +19,15 @@ import { QueryRunner } from '../src/data/runner.js';
 export const root = process.cwd();
 
 export function clientDb(): Database {
-  const db = EngineDb.openMemory();
+  const db = EngineDb.openMemory({ plugins: [io, external, parquet] });
   const blobText = async (s: unknown) => (typeof s === 'string' ? s : await (s as Blob).text());
   const api = {
     async exec(sql: string, params?: unknown[]) {
-      return params ? db.run(sql, params as never) : (db.exec(sql), { changes: 0, lastInsertRowid: 0 });
+      // The async engine calls: statements over external data (linked files, Parquet) need them.
+      return params ? db.runAsync(sql, params as never) : (await db.execAsync(sql), { changes: 0, lastInsertRowid: 0 });
     },
     async query(sql: string, params?: unknown[], opts?: { rowMode?: string }) {
-      const r = db.query(sql, params as never);
+      const r = await db.queryAsync(sql, params as never);
       if (opts?.rowMode === 'columnar') {
         const data: Record<string, unknown[]> = {};
         r.columns.forEach((c: string, i: number) => (data[c] = r.rows.map((row: unknown[]) => row[i])));
@@ -34,7 +42,9 @@ export function clientDb(): Database {
     async importJSON(table: string, src: unknown, o?: object) {
       return importJSON(db, table, await blobText(src), o as never);
     },
-    async registerFile() {},
+    async registerFile(name: string, file: Blob | null) {
+      return registerFile(db, name, file);
+    },
     async close() {
       db.close();
     },

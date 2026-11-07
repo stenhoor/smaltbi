@@ -1,8 +1,10 @@
 # Architecture
 
 smaltbi is a static web app in TypeScript, bundled by esbuild into two entry points: the designer
-(`dist/designer.js`, ~140 KB minified) and the viewer (`dist/viewer.js`). The smaltdb engine is not
-bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worker.
+(`dist/designer.js`, ~140 KB minified) and the viewer (`dist/viewer.js`). The engine is not
+bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worker. It is built from
+`src/engine/`: smaltdb, with SQL from [smaltql](https://github.com/stenhoor/smaltql) and the `@smaltdb/io`,
+`@smaltdb/external` and `@smaltdb/parquet` plugins registered in the worker.
 
 ```
                         ┌──────────────────────── main thread ───────────────────────────┐
@@ -13,7 +15,7 @@ bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worke
                     └── applySteps() ──► smaltdb client ◄─────────────┘
                                              │  postMessage
                         ┌─────────── worker ─▼────────────┐
-                        │ smaltdb engine: SQL, OPFS, files │
+                        │ smaltdb + smaltql, OPFS, plugins │
                         └──────────────────────────────────┘
 ```
 

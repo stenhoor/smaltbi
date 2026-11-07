@@ -21,7 +21,7 @@ change. See [what that means](https://smaltworks.dev/stability).
 
 ```bash
 git clone https://github.com/stenhoor/smaltbi && cd smaltbi
-npm install        # also copies the smaltdb engine into vendor/smaltdb/
+npm install        # also builds the engine (smaltdb, smaltql, plugins) into vendor/smaltdb/
 npm run build      # bundles the designer and viewer into dist/
 npm run serve      # http://localhost:8080/designer.html
 ```
