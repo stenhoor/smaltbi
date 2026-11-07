@@ -11,17 +11,8 @@ hero:
     alt: smaltbi
   actions:
     - theme: brand
-      text: Open the designer
-      link: /designer.html?report=examples/sales/report.json
-      target: _self
-    - theme: alt
-      text: View the published sample
-      link: /sample/
-      target: _self
-    - theme: alt
       text: Getting started
       link: /guide/
-
 features:
   - title: Drag fields, get charts
     details: Drop a field on the canvas and smaltbi picks a visual. Change its type, add fields to its axis, legend or values, and format it from the side panel.
