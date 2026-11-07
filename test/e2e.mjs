@@ -80,7 +80,8 @@ try {
       name: document.querySelector('.VPHero .name')?.textContent,
       text: document.querySelector('.VPHero .text')?.textContent,
       logo: [...document.querySelectorAll('.VPNavBar img, .VPHero img')].filter((i) => getComputedStyle(i).display !== 'none').every((i) => i.complete && i.naturalWidth > 0),
-      designer: document.querySelector('.VPHero .actions a')?.getAttribute('href'),
+      // The hero has one button, Getting started; the app opens only from the Demo nav item (BRAND.md rule 12).
+      actions: [...document.querySelectorAll('.VPHero .actions a')].map((a) => [a.textContent.trim(), a.getAttribute('href')]),
       // Exactly one of each light / dark pair shows, and it loads. checkVisibility() also counts a hidden ancestor:
       // VitePress hides its footer on pages with a sidebar.
       stage: [...document.querySelectorAll('.sw-stage img')].filter((i) => i.checkVisibility() && i.complete && i.naturalWidth > 0).length === 1,
@@ -100,15 +101,15 @@ try {
     });
     check(docBadges.stage === 1 && docBadges.first && docBadges.endorsement === 1, `doc pages show the work-in-progress badge at the top and one endorsement (${JSON.stringify(docBadges)})`);
     await doc.close();
-    check(hero.designer === '/smaltbi/designer.html?report=examples/sales/report.json', `product site links the designer (${hero.designer})`);
+    check(JSON.stringify(hero.actions) === JSON.stringify([['Getting started', '/smaltbi/guide/']]), `the hero's only button is Getting started (${JSON.stringify(hero.actions)})`);
     // The home page embeds no demo; the Demo nav item, first, opens the designer (smalt-brand BRAND.md, rule 12).
     const demoNav = await landing.evaluate(() => ({
       iframes: document.querySelectorAll('iframe').length,
       first: [...document.querySelectorAll('.VPNavBarMenu a')].map((a) => [a.textContent.trim(), a.getAttribute('href')])[0],
     }));
     check(demoNav.iframes === 0 && demoNav.first?.[0] === 'Demo' && /designer\.html\?report=examples\/sales\/report\.json$/.test(demoNav.first?.[1] ?? ''), `product site: no embedded demo, Demo first in the nav (${JSON.stringify(demoNav)})`);
-    // The designer link opens the app, not a site 404.
-    await landing.click('.VPHero .actions a >> nth=0');
+    // The Demo nav item opens the designer on the sample, not a site 404.
+    await landing.click('.VPNavBarMenu a >> nth=0');
     await landing.waitForURL(/designer\.html\?report=/);
     await landing.waitForSelector('.sb-visual .sk-bar', { timeout: 20000 });
     check(true, 'the designer opens from the product site');
