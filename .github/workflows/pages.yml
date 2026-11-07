@@ -27,7 +27,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci   # postinstall copies the smaltdb engine into vendor/smaltdb
+      - uses: actions/cache@v4
+        with:
+          path: .cache/packed
+          key: packed-${{ hashFiles('packed.json') }}
+      - run: npm ci   # postinstall builds the engine (smaltdb, smaltql, plugins: packed.json) into vendor/smaltdb
       - run: npm run site
       - uses: actions/configure-pages@v5
         with:

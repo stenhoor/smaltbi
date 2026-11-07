@@ -46,11 +46,13 @@ working on them.
 
 ## Cross-repo impact
 
-- **smaltdb:** smaltbi depends on the npm package at `^0.8.3` (vendored into `vendor/smaltdb/` on install). smaltdb
-  is moving optional code out of its core into plugins
-  ([ADR 0012](https://github.com/stenhoor/smaltdb/blob/main/docs/adr/0012-plugins.md)): external tables, CSV/JSON
-  import and export, and the Parquet reader, all of which smaltbi's data steps use. Upgrade deliberately, in its own
-  PR, and run the full check suite.
+- **smaltdb, smaltql and the plugins:** smaltdb 0.9 is the engine with no language of its own; SQL is smaltql
+  ([smaltdb ADR 0015](https://github.com/stenhoor/smaltdb/blob/main/docs/adr/0015-smaltql.md)), and CSV/JSON
+  (`@smaltdb/io`), external tables and local files (`@smaltdb/external`) and Parquet (`@smaltdb/parquet`) are plugins.
+  None is on npm yet: `packed.json` pins each to a commit, and `scripts/fetch-packed.mjs` (identical in the smaltdb
+  repos) builds and installs them on `npm install`. `src/engine/` is smaltbi's worker (smaltql plus the plugins) and
+  client, built into `vendor/smaltdb/`. Move the pins together, to a set the plugin repos' own `packed.json` agree on,
+  in its own PR, and run the full check suite. When they reach npm, the pins become ordinary dependencies.
 - **smalt-brand:** logos, badges, colours and voice come from
   [stenhoor/smalt-brand](https://github.com/stenhoor/smalt-brand/blob/main/BRAND.md). Use it as the source rather
   than editing copies by hand. `brand/` holds copies of smaltbi's logos, favicons, badges and `tokens.json`;

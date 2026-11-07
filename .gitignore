@@ -7,3 +7,4 @@ out/
 _site/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+.cache/

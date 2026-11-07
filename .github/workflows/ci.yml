@@ -11,7 +11,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # Pinned builds of smaltdb, smaltql and the plugins (packed.json), cached by pin.
+      - uses: actions/cache@v4
+        with:
+          path: .cache/packed
+          key: packed-${{ hashFiles('packed.json') }}
+      - run: npm ci   # postinstall: scripts/fetch-packed.mjs, then the engine into vendor/smaltdb
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

@@ -113,6 +113,20 @@ try {
     check(!process.env.E2E_SITE, 'product site checks skipped: _site/ is missing (run npm run site)');
   }
 
+  // ---------------------------------------------------------------- Parquet in the browser
+  // The engine worker (src/engine/worker.ts) registers smaltql and the plugins: a gzip Parquet file is imported and a
+  // Snappy one linked in place.
+  {
+    const pq = await newPage(browser, { viewport: { width: 1200, height: 700 } });
+    pq.on('pageerror', (e) => errors.push('parquet: ' + e.message));
+    pq.on('console', (m) => m.type() === 'error' && errors.push('parquet: ' + m.text()));
+    await pq.goto(`http://localhost:${port}/viewer.html?report=test/fixtures/parquet-report.json`);
+    const ok = await until(pq, () => document.querySelectorAll('.sk-kpi-value').length === 2, undefined, 30000);
+    const cards = await pq.evaluate(() => [...document.querySelectorAll('.sk-kpi-value')].map((e) => e.textContent));
+    check(ok && cards[0] === '4,000' && cards[1] === '2,000', `Parquet import and link run in the browser engine (${cards})`);
+    await pq.close();
+  }
+
   // ---------------------------------------------------------------- designer
   await page.goto(`http://localhost:${port}/designer.html`);
   await page.evaluate(() => localStorage.clear());

@@ -1,0 +1,26 @@
+{
+  "smaltbi": 1,
+  "name": "Parquet fixture",
+  "data": {
+    "database": { "name": "parquet-fixture", "storage": "memory" },
+    "steps": [
+      { "import": "sales-gzip.parquet", "table": "imported" },
+      { "link": "sales-snappy.parquet", "table": "linked", "format": "parquet" }
+    ]
+  },
+  "model": {
+    "measures": [
+      { "table": "imported", "name": "Imported rows", "sql": "COUNT(*)", "format": "integer" },
+      { "table": "linked", "name": "Linked EU rows", "sql": "COUNT(*) FILTER (WHERE linked.region = 'eu')", "format": "integer" }
+    ]
+  },
+  "pages": [
+    {
+      "id": "p", "name": "Parquet",
+      "visuals": [
+        { "id": "k-imported", "type": "card", "layout": { "x": 0, "y": 0, "w": 3, "h": 2 }, "fields": { "values": ["imported.Imported rows"] } },
+        { "id": "k-linked", "type": "card", "layout": { "x": 3, "y": 0, "w": 3, "h": 2 }, "fields": { "values": ["linked.Linked EU rows"] } }
+      ]
+    }
+  ]
+}
