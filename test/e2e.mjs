@@ -1,7 +1,7 @@
 // End-to-end test in Chromium (Playwright): the designer builds visuals, the viewer interacts,
 // and a published ZIP runs on its own. Run after `npm run build`: node test/e2e.mjs
 import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdtempSync, symlinkSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -60,42 +60,58 @@ try {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 
-  // ---------------------------------------------------------------- landing page
-  const landing = await browser.newPage({ viewport: { width: 1360, height: 900 } });
-  landing.on('pageerror', (e) => errors.push('landing: ' + e.message));
-  landing.on('console', (m) => m.type() === 'error' && errors.push('landing: ' + m.text()));
-  await landing.goto(`http://localhost:${port}/`);
-  const hero = await landing.evaluate(() => ({
-    eyebrow: document.querySelector('.eyebrow')?.textContent,
-    h1: document.querySelector('h1')?.textContent,
-    logo: [...document.querySelectorAll('.brand img')].some((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0),
-    designer: document.querySelector('.cta .btn.primary')?.getAttribute('href'),
-    sample: document.querySelector('.cta a[href="sample/"]') !== null,
-    tokens: getComputedStyle(document.body).backgroundColor,
-  }));
-  check(hero.eyebrow === 'Small. Alternative. Insight.' && /powered by smaltdb/.test(hero.h1 ?? '') && hero.logo, `landing page: tagline, headline and logo (${JSON.stringify(hero)})`);
-  check(hero.tokens === 'rgb(245, 246, 248)', `landing page uses the brand tokens (${hero.tokens})`);
-  check(hero.designer === 'designer.html?report=examples/sales/report.json' && hero.sample, 'landing page links the designer and the published sample');
-  // The embedded live report renders inside the page.
-  await landing.locator('#demoFrame').scrollIntoViewIfNeeded();
-  const frame = landing.frameLocator('#demoFrame');
-  await frame.locator('.sb-visual[data-id=c-cat] .sk-bar').first().waitFor({ timeout: 20000 });
-  check(true, 'landing page embeds a live report');
-  // The theme toggle switches the page and the embedded report (shared setting, storage event).
-  await landing.click('#themeBtn'); // auto → light
-  await landing.click('#themeBtn'); // light → dark
-  const dark = await until(landing, () => getComputedStyle(document.body).backgroundColor === 'rgb(20, 23, 31)');
-  const frameDark = await until(landing, () => {
-    const d = document.getElementById('demoFrame').contentDocument;
-    return d && getComputedStyle(d.querySelector('.sb-report')).backgroundColor === 'rgb(20, 23, 31)';
-  });
-  check(dark && frameDark, 'the theme toggle switches the landing page and the embedded report to dark');
-  await landing.click('#themeBtn'); // dark → auto
-  // Old links to the designer at the site root are forwarded.
-  await landing.goto(`http://localhost:${port}/?report=examples/sales/report.json`);
-  await landing.waitForURL(/designer\.html\?report=/);
-  check(true, 'old ?report= links at the root forward to the designer');
-  await landing.close();
+  // ---------------------------------------------------------------- product site (front page)
+  // The front page is the VitePress site in docs/, assembled into _site/ by `npm run site`. CI builds it; locally
+  // the checks run when _site/ exists (E2E_SITE=1 makes a missing _site/ a failure).
+  const siteDir = join(root, '_site');
+  if (existsSync(join(siteDir, 'index.html'))) {
+    const sitePort = port + 2;
+    // The site is built for /smaltbi/ (GitHub Pages): serve it under that path.
+    const siteRoot = mkdtempSync(join(tmpdir(), 'smaltbi-pages-'));
+    symlinkSync(siteDir, join(siteRoot, 'smaltbi'), 'dir');
+    await serve(siteRoot, sitePort);
+    const base = `http://localhost:${sitePort}/smaltbi/`;
+    const landing = await browser.newPage({ viewport: { width: 1360, height: 900 }, colorScheme: 'light' });
+    landing.on('pageerror', (e) => errors.push('site: ' + e.message));
+    landing.on('console', (m) => m.type() === 'error' && errors.push('site: ' + m.text()));
+    await landing.goto(base);
+    await landing.waitForSelector('.VPHero');
+    const hero = await landing.evaluate(() => ({
+      name: document.querySelector('.VPHero .name')?.textContent,
+      text: document.querySelector('.VPHero .text')?.textContent,
+      logo: [...document.querySelectorAll('.VPNavBar img, .VPHero img')].filter((i) => getComputedStyle(i).display !== 'none').every((i) => i.complete && i.naturalWidth > 0),
+      designer: document.querySelector('.VPHero .actions a')?.getAttribute('href'),
+      stage: [...document.querySelectorAll('.sb-stage img')].some((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0),
+      endorsement: [...document.querySelectorAll('.VPFooter img')].some((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0),
+    }));
+    check(hero.name === 'smaltbi' && hero.text === 'Small. Alternative. Insight.' && hero.logo, `product site: wordmark, tagline and logo (${JSON.stringify(hero)})`);
+    check(hero.stage && hero.endorsement, 'product site shows the work-in-progress badge and "A smaltworks project"');
+    check(hero.designer === '/smaltbi/designer.html?report=examples/sales/report.json', `product site links the designer (${hero.designer})`);
+    // The embedded live report renders inside the page.
+    await landing.locator('#demoFrame').scrollIntoViewIfNeeded();
+    await landing.frameLocator('#demoFrame').locator('.sb-visual[data-id=c-cat] .sk-bar').first().waitFor({ timeout: 20000 });
+    check(true, 'product site embeds a live report');
+    // The site's dark switch reaches the embedded report (shared setting, storage event).
+    await landing.click('.VPNavBar .VPSwitchAppearance');
+    const frameDark = await until(landing, () => {
+      const d = document.getElementById('demoFrame').contentDocument;
+      return document.documentElement.classList.contains('dark') && d && getComputedStyle(d.querySelector('.sb-report')).backgroundColor === 'rgb(20, 23, 31)';
+    });
+    check(frameDark, 'the dark switch turns the site and the embedded report dark');
+    await landing.click('.VPNavBar .VPSwitchAppearance');
+    // The designer link opens the app, not a site 404.
+    await landing.click('.VPHero .actions a >> nth=0');
+    await landing.waitForURL(/designer\.html\?report=/);
+    await landing.waitForSelector('.sb-visual .sk-bar', { timeout: 20000 });
+    check(true, 'the designer opens from the product site');
+    // Old links to the designer at the site root are forwarded.
+    await landing.goto(`${base}?report=examples/sales/report.json`);
+    await landing.waitForURL(/designer\.html\?report=/);
+    check(true, 'old ?report= links at the root forward to the designer');
+    await landing.close();
+  } else {
+    check(!process.env.E2E_SITE, 'product site checks skipped: _site/ is missing (run npm run site)');
+  }
 
   // ---------------------------------------------------------------- designer
   await page.goto(`http://localhost:${port}/designer.html`);

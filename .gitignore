@@ -5,3 +5,5 @@ dist-test/
 out/
 *.log
 _site/
+docs/.vitepress/dist/
+docs/.vitepress/cache/

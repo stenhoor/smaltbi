@@ -1,6 +1,6 @@
 {
   "repo": "stenhoor/smalt-brand",
-  "commit": "b4ce43fb451af5051fb6618a9449fa460209bdc9",
+  "commit": "2192ec33705a4aa06a599d0069656496fbbf5c39",
   "files": {
     "logos/smaltbi/lockup.svg": "lockup.svg",
     "logos/smaltbi/lockup-on-dark.svg": "lockup-on-dark.svg",
@@ -15,7 +15,13 @@
     "badges/powered-by-smaltbi-on-dark.svg": "powered-by-smaltbi-on-dark.svg",
     "badges/powered-by-smaltdb.svg": "powered-by-smaltdb.svg",
     "badges/powered-by-smaltdb-on-dark.svg": "powered-by-smaltdb-on-dark.svg",
+    "badges/work-in-progress.svg": "work-in-progress.svg",
+    "badges/work-in-progress-on-dark.svg": "work-in-progress-on-dark.svg",
+    "badges/a-smaltworks-project.svg": "a-smaltworks-project.svg",
+    "badges/a-smaltworks-project-on-dark.svg": "a-smaltworks-project-on-dark.svg",
     "tokens/tokens.json": "tokens.json",
-    "tokens/tokens.css": "tokens.css"
+    "tokens/tokens.css": "tokens.css",
+    "themes/vitepress/smaltdb.css": "../docs/.vitepress/theme/smaltdb.css",
+    "themes/vitepress/shiki.ts": "../docs/.vitepress/theme/shiki.ts"
   }
 }

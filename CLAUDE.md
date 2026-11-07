@@ -56,7 +56,9 @@ working on them.
   than editing copies by hand. `brand/` holds copies of smaltbi's logos, favicons, badges and `tokens.json`;
   refresh them with `node scripts/sync-brand.mjs <smalt-brand checkout>`, never by editing. The Smalt theme
   (`themes/smalt.theme.json`) uses the Kiln tokens; update it when `tokens.json` changes. The designer chrome
-  (`styles/app.css`), the landing page and `brand/tokens.css` read the tokens directly. Icons (`src/visuals/icons.ts`)
+  (`styles/app.css`) reads `brand/tokens.css` directly, and the product site (`docs/`, VitePress) uses the family docs
+  theme, synced into `docs/.vitepress/theme/` by the same script. smaltbi's layer is the user tools: cerulean
+  (`--layer-tool`, aliased by `--product-bi`). Icons (`src/visuals/icons.ts`)
   follow the brand's Chevron style (BRAND.md, Iconography).
 - **smaltkit:** shared code lives in [stenhoor/smaltkit](https://github.com/stenhoor/smaltkit) (ADR 0005), pinned as
   `github:stenhoor/smaltkit#<commit>`. The charts, tables, formatting, SVG and DOM helpers and their CSS (`ui.css`,
@@ -72,12 +74,13 @@ working on them.
 ```bash
 npm install            # also vendors the smaltdb engine into vendor/smaltdb/
 npm run build          # dist/ (designer.js, viewer.js, css)
-npm run serve          # http://localhost:8080: landing page; /designer.html, /viewer.html (COOP/COEP headers)
+npm run serve          # http://localhost:8080: /designer.html, /viewer.html (COOP/COEP headers)
+npm run docs:dev       # the product site (docs/, VitePress), live reload
 npm run typecheck
 npm test               # unit tests; compiled SQL runs against the real smaltdb engine
 node test/e2e.mjs      # Chromium end-to-end (Playwright); run after npm run build
 E2E_CPU_THROTTLE=4 node test/e2e.mjs   # same, CPU slowed 4x: catches timing races
-npm run site           # assemble _site/ for GitHub Pages
+npm run site           # _site/ for GitHub Pages: the product site, with the app beside it (e2e tests it if present)
 ```
 
 Before pushing: typecheck, unit tests, build, e2e, and e2e at 4x throttle. For a bug, reproduce it first and add a
