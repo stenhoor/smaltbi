@@ -5,7 +5,7 @@ import type { FieldRef, Report, Theme, Visual } from '../core/types.js';
 import { visualDef } from '../visuals/index.js';
 import { ReportSession } from '../report/session.js';
 import { ReportView } from '../report/view.js';
-import { poweredByBadge, viewerBar } from '../report/chrome.js';
+import { type ColorMode, colorModeButton, poweredByBadge, viewerBar } from '../report/chrome.js';
 import { pageLayout } from '../theme/theme.js';
 import { type Engine, loadEngine } from '../report/engine.js';
 import { dialog, download, fileName, h, pickFile, showMenu, toast } from 'smaltkit/dom';
@@ -37,6 +37,9 @@ class Designer {
   private canvasHost = h('div.sbd-canvas');
   private pagesHost = h('nav.sbd-pages');
   private top = h('header.sbd-top');
+  // Light, dark or automatic, for the designer and the report on its canvas; shared with the viewer and the site.
+  private colorMode: ColorMode = 'auto';
+  private modeBtn = colorModeButton('button.sbd-tbtn.sbd-mode', (m) => this.applyColorMode(m));
   private root = h('div.sbd-app');
 
   constructor(
@@ -92,8 +95,10 @@ class Designer {
       state ? { page: state.page } : undefined,
     );
     this.view.selectedVisual = this.selected;
+    this.view.setColorMode(this.colorMode);
     if (this.preview) {
-      const bar = viewerBar(this.view, { extra: [h('button.sbv-btn', { onclick: () => this.togglePreview() }, '✎ Back to editing')] });
+      // The top bar keeps the colour-mode switch, so the preview's bar leaves its own out.
+      const bar = viewerBar(this.view, { mode: false, extra: [h('button.sbv-btn', { onclick: () => this.togglePreview() }, '✎ Back to editing')] });
       this.canvasHost.prepend(bar);
       this.previewBar = bar;
       // Preview shows what readers get, including the badge.
@@ -192,10 +197,21 @@ class Designer {
         h('button.sbd-tbtn', { title: 'Redo (Ctrl+Shift+Z)', disabled: !this.store.canRedo, onclick: () => this.store.redo() }, '↷'),
       ),
       h('div.sbd-spacer'),
+      this.modeBtn,
       h('span.sbd-engine', { title: 'Query engine' }, this.engine.label),
       btn(this.preview ? '✎ Edit' : '▶ Preview', 'Try the report as a viewer sees it', () => this.togglePreview()),
       btn('Publish', 'Download a static site', () => void publishDialog(this.dctx), '.sbd-primary'),
     );
+  }
+
+  /** Light / dark for the designer's chrome (`data-theme`, read by tokens.css and app.css) and the report canvas. */
+  private applyColorMode(m: ColorMode): void {
+    this.colorMode = m;
+    if (m === 'auto') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = m;
+    if (m === 'auto') document.body.removeAttribute('data-mode');
+    else document.body.dataset.mode = m;
+    this.view?.setColorMode(m);
   }
 
   private fileMenu(): void {
