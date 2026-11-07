@@ -7,6 +7,8 @@
 
 **Small. Alternative. Insight.**
 
+<a href="https://smaltworks.dev/stability"><picture><source media="(prefers-color-scheme: dark)" srcset="brand/work-in-progress-on-dark.svg"><img alt="Work in progress. Come build with us." src="brand/work-in-progress.svg" height="56"></picture></a>
+
 Business intelligence in the browser, powered by [smaltdb](https://github.com/stenhoor/smaltdb).
 
 smaltbi is a report designer and viewer, built as a static web app. Load CSV, JSON or Parquet files
@@ -42,7 +44,7 @@ Every push to `main` deploys to GitHub Pages. This needs **Settings â†’ Pages â†
 Actions**; with "Deploy from a branch", GitHub also publishes the raw branch, which has no built app
 (the deploy workflow checks this setting and fails if it is wrong):
 
-- <https://stenhoor.github.io/smaltbi/>: the landing page, with a live sample report.
+- <https://stenhoor.github.io/smaltbi/>: the product site (guide, report format, design docs), with a live sample report.
 - <https://stenhoor.github.io/smaltbi/designer.html?report=examples/sales/report.json>: the designer, with the sample.
 - <https://stenhoor.github.io/smaltbi/sample/>: the sample report, published as a standalone static site.
 - <https://stenhoor.github.io/smaltbi/viewer.html?report=examples/sales/report.json>: the viewer.
@@ -55,7 +57,7 @@ npm run build      # bundles the designer and viewer into dist/
 npm run serve      # http://localhost:8080
 ```
 
-- `http://localhost:8080/`: the landing page (`index.html`).
+- `http://localhost:8080/`: opens the designer. `npm run docs:dev` serves the product site (`docs/`).
 - `http://localhost:8080/designer.html`: the designer, with the sample report (a small coffee & tea retailer).
 - `http://localhost:8080/viewer.html?report=examples/sales/report.json`: the same report as a viewer sees it.
 
@@ -117,7 +119,7 @@ static host. `node scripts/publish.mjs report.json out/` does the same from the 
 | `styles/` | `report.css` (reports and viewer), `app.css` (designer) |
 | `themes/` | Built-in theme files |
 | `examples/sales/` | The sample report and its generated data (`npm run sample`) |
-| `docs/` | Vision, architecture, file formats, plugins, roadmap, decisions |
+| `docs/` | The product site (VitePress on the smaltworks docs theme): guide, vision, architecture, file formats, plugins, roadmap, decisions |
 
 ## Documentation
 
@@ -152,3 +154,5 @@ the icons follow its Chevron style (`src/visuals/icons.ts`). Published reports s
 ## License
 
 [MIT](LICENSE)
+
+<a href="https://smaltworks.dev"><picture><source media="(prefers-color-scheme: dark)" srcset="brand/a-smaltworks-project-on-dark.svg"><img alt="A smaltworks project" src="brand/a-smaltworks-project.svg" height="28"></picture></a>

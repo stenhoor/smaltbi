@@ -15,8 +15,10 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # The product site (docs/, VitePress) and the app beside it, as GitHub Pages serves them; e2e checks it.
+      - run: npm run site
       # Playwright is installed only in CI (not a project dependency).
       - run: npm i --no-save playwright@1.63.0 && npx playwright install --with-deps chromium
-      - run: node test/e2e.mjs
+      - run: E2E_SITE=1 node test/e2e.mjs
       # Again with the browser CPU slowed 4x, to catch timing races in the tests (issue #4).
-      - run: E2E_CPU_THROTTLE=4 node test/e2e.mjs
+      - run: E2E_SITE=1 E2E_CPU_THROTTLE=4 node test/e2e.mjs
