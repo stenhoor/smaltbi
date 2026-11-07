@@ -147,6 +147,18 @@ try {
   await page.goto(`http://localhost:${port}/designer.html?report=examples/sales/report.json`);
   await page.waitForSelector('.sb-visual[data-id=c-cat] .sk-bar', { timeout: 20000 });
   check(true, 'designer opens the sample report');
+  // The light / dark / automatic switch: the designer's chrome and its report go dark together, whatever the system
+  // setting, and the choice is the one the viewer and the product site share (smaltbi.mode).
+  await page.click('.sbd-mode'); // auto -> light
+  await page.click('.sbd-mode'); // light -> dark
+  const darkDesigner = await until(page, () =>
+    document.documentElement.dataset.theme === 'dark' &&
+    getComputedStyle(document.querySelector('.sbd-top')).backgroundColor === 'rgb(27, 31, 41)' &&
+    getComputedStyle(document.querySelector('.sb-report')).backgroundColor === 'rgb(20, 23, 31)' &&
+    localStorage.getItem('smaltbi.mode') === 'dark');
+  check(darkDesigner, 'the designer has a light / dark switch that darkens its chrome and the report');
+  await page.click('.sbd-mode'); // dark -> auto
+  await until(page, () => !document.documentElement.dataset.theme && localStorage.getItem('smaltbi.mode') === 'auto');
   const count = () => page.locator('.sb-page > .sb-visual').count();
   const before = await count();
 
@@ -245,6 +257,8 @@ try {
   await page.keyboard.press('Delete');
   await page.keyboard.press('Backspace');
   check((await rels()).length === relsBefore, `Delete in Preview leaves relationships alone (${relsBefore} → ${(await rels()).length})`);
+  const modeSwitches = await page.locator('.sbd-mode, .sbv-mode').count();
+  check(modeSwitches === 1, `Preview shows one light / dark switch, the top bar's (${modeSwitches})`);
   await page.click('.sbd-tbtn:has-text("Edit")');
   const panesBack = await until(page, () => {
     const visible = (sel) => (document.querySelector(sel)?.getBoundingClientRect().width ?? 0) > 0;

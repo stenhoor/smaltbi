@@ -46,13 +46,18 @@ button { font: inherit; color: inherit; }
 .sbd-logo { display: flex; align-items: center; gap: 8px; margin-right: 6px; text-decoration: none; }
 .sbd-logo img { display: block; }
 .sbd-logo .sbd-dark { display: none; }
-@media (prefers-color-scheme: dark) { .sbd-logo .sbd-light { display: none; } .sbd-logo .sbd-dark { display: block; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sbd-logo .sbd-light { display: none; } :root:not([data-theme="light"]) .sbd-logo .sbd-dark { display: block; } }
+:root[data-theme="dark"] .sbd-logo .sbd-light { display: none; }
+:root[data-theme="dark"] .sbd-logo .sbd-dark { display: block; }
 .sbd-name { font: inherit; font-weight: 600; font-size: 14px; border: 1px solid transparent; background: transparent; color: var(--d-text); padding: 5px 8px; border-radius: 6px; width: 260px; }
 .sbd-name:hover, .sbd-name:focus { border-color: var(--d-border); outline: none; background: var(--d-bg); }
 .sbd-tgroup { display: flex; gap: 2px; padding-left: 8px; border-left: 1px solid var(--d-border); }
 .sbd-tbtn { background: none; border: 1px solid transparent; padding: 6px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
 .sbd-tbtn:hover:not(:disabled) { background: var(--d-bg); border-color: var(--d-border); }
 .sbd-tbtn:disabled { opacity: 0.35; cursor: default; }
+/* The light / dark / automatic switch (colorModeButton, shared with the viewer). */
+.sbd-mode { display: inline-flex; align-items: center; gap: 6px; }
+.sbd-mode svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
 .sbd-tbtn.sbd-primary { background: var(--d-accent); color: var(--d-on-accent); border-color: var(--d-accent); font-weight: 600; }
 .sbd-tbtn.sbd-primary:hover { filter: brightness(1.08); background: var(--d-accent); }
 .sbd-spacer { flex: 1; }
