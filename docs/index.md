@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: 'sm<span class="alt">alt</span><span class="suffix">bi</span>'
+  name: 'sm<span class="alt">alt</span><span class="suffix tool">bi</span>'
   text: Small. Alternative. Insight.
   tagline: Business intelligence in the browser, powered by smaltdb.
   image:

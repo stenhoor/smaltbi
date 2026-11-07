@@ -1,6 +1,6 @@
 {
   "repo": "stenhoor/smalt-brand",
-  "commit": "2192ec33705a4aa06a599d0069656496fbbf5c39",
+  "commit": "8396e7530fde8e728ef17d310796d0b79a80f5e2",
   "files": {
     "logos/smaltbi/lockup.svg": "lockup.svg",
     "logos/smaltbi/lockup-on-dark.svg": "lockup-on-dark.svg",
@@ -22,6 +22,8 @@
     "tokens/tokens.json": "tokens.json",
     "tokens/tokens.css": "tokens.css",
     "themes/vitepress/smaltdb.css": "../docs/.vitepress/theme/smaltdb.css",
-    "themes/vitepress/shiki.ts": "../docs/.vitepress/theme/shiki.ts"
+    "themes/vitepress/shiki.ts": "../docs/.vitepress/theme/shiki.ts",
+    "themes/vitepress/smaltworks.ts": "../docs/.vitepress/theme/smaltworks.ts",
+    "themes/vitepress/stage.ts": "../docs/.vitepress/theme/stage.ts"
   }
 }
