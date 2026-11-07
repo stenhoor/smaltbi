@@ -9,8 +9,8 @@ export default {
   Layout: withSmaltworks(DefaultTheme),
   enhanceApp() {
     if (typeof window === 'undefined') return;
-    // The embedded report (an iframe of the viewer) follows the site's light / dark switch through the viewer's
-    // own setting (smaltbi.mode); the viewer listens for its storage event.
+    // The app follows the site's light / dark switch through its own setting (smaltbi.mode), which the viewer reads
+    // when it opens and listens to (storage event).
     const sync = () => {
       const mode = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
       try {

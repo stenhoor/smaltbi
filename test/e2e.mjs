@@ -101,18 +101,12 @@ try {
     check(docBadges.stage === 1 && docBadges.first && docBadges.endorsement === 1, `doc pages show the work-in-progress badge at the top and one endorsement (${JSON.stringify(docBadges)})`);
     await doc.close();
     check(hero.designer === '/smaltbi/designer.html?report=examples/sales/report.json', `product site links the designer (${hero.designer})`);
-    // The embedded live report renders inside the page.
-    await landing.locator('#demoFrame').scrollIntoViewIfNeeded();
-    await landing.frameLocator('#demoFrame').locator('.sb-visual[data-id=c-cat] .sk-bar').first().waitFor({ timeout: 20000 });
-    check(true, 'product site embeds a live report');
-    // The site's dark switch reaches the embedded report (shared setting, storage event).
-    await landing.click('.VPNavBar .VPSwitchAppearance');
-    const frameDark = await until(landing, () => {
-      const d = document.getElementById('demoFrame').contentDocument;
-      return document.documentElement.classList.contains('dark') && d && getComputedStyle(d.querySelector('.sb-report')).backgroundColor === 'rgb(20, 23, 31)';
-    });
-    check(frameDark, 'the dark switch turns the site and the embedded report dark');
-    await landing.click('.VPNavBar .VPSwitchAppearance');
+    // The home page embeds no demo; the Demo nav item, first, opens the designer (smalt-brand BRAND.md, rule 12).
+    const demoNav = await landing.evaluate(() => ({
+      iframes: document.querySelectorAll('iframe').length,
+      first: [...document.querySelectorAll('.VPNavBarMenu a')].map((a) => [a.textContent.trim(), a.getAttribute('href')])[0],
+    }));
+    check(demoNav.iframes === 0 && demoNav.first?.[0] === 'Demo' && /designer\.html\?report=examples\/sales\/report\.json$/.test(demoNav.first?.[1] ?? ''), `product site: no embedded demo, Demo first in the nav (${JSON.stringify(demoNav)})`);
     // The designer link opens the app, not a site 404.
     await landing.click('.VPHero .actions a >> nth=0');
     await landing.waitForURL(/designer\.html\?report=/);
