@@ -4,9 +4,8 @@
 import type { DataStep, Report } from '../core/types.js';
 import { quoteIdent } from '../core/sql.js';
 import { BUILTIN_THEMES } from '../theme/theme.js';
-import { referencedFiles } from '../data/sources.js';
+import { referencedFiles, type FileStore } from 'smaltkit/manifest';
 import { zip, type ZipEntry } from '../kit/zip.js';
-import type { FileStore } from '../data/sources.js';
 import type { ReportSession } from '../report/session.js';
 
 export interface PublishOptions {
@@ -85,7 +84,7 @@ export async function publishEntries(session: ReportSession, opts: PublishOption
     const tables = (await session.db.query("SELECT table_name AS name FROM information_schema.tables WHERE table_type IN ('BASE TABLE', 'MATERIALIZED VIEW', 'EXTERNAL') AND table_name NOT LIKE 'sqlite_%'")) as { name: string }[];
     const steps: DataStep[] = [];
     for (const t of tables) {
-      const csv = await session.db.exportCSV(`SELECT * FROM ${quoteIdent(t.name)}`);
+      const csv = await session.engine.client.exportCSV(session.db, `SELECT * FROM ${quoteIdent(t.name)}`);
       const path = `data/${t.name.replace(/[^\w.-]+/g, '_')}.csv`;
       entries.push({ path, data: csv });
       steps.push({ import: path, table: t.name, format: 'csv' });
@@ -101,7 +100,7 @@ export async function publishEntries(session: ReportSession, opts: PublishOption
       used.add(name);
       return name;
     };
-    const local = new Set(referencedFiles(report.data));
+    const local = new Set(referencedFiles(report.data.steps ?? []));
     for (const step of report.data.steps ?? []) {
       const s = { ...step } as Record<string, unknown>;
       for (const key of ['import', 'link', 'sqlFile']) {

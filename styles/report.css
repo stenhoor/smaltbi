@@ -87,25 +87,9 @@
 }
 
 /* ---------------------------------------------------------------- slicers and text */
-.sb-slicer { font-size: var(--sb-fs-sub); }
-.sb-list { display: flex; flex-direction: column; gap: 2px; height: 100%; overflow: auto; }
-.sb-list label, .sb-dropdown-list label { display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-radius: 5px; cursor: pointer; }
-.sb-list label:hover, .sb-dropdown-list label:hover { background: color-mix(in oklab, var(--sb-text) 5%, transparent); }
-.sb-slicer input[type='checkbox'], .sb-slicer input[type='radio'] { accent-color: var(--sb-accent); margin: 0; }
-.sb-chips { display: flex; flex-wrap: wrap; gap: 6px; align-content: center; height: 100%; }
-.sb-chip { font: inherit; font-size: var(--sb-fs-sub); border: 1px solid var(--sb-border); background: var(--sb-surface); color: var(--sb-text); padding: 5px 12px; border-radius: 999px; cursor: pointer; transition: all 0.15s; }
-.sb-chip:hover { border-color: var(--sb-accent); }
-.sb-chip.sb-on { background: var(--sb-accent); border-color: var(--sb-accent); color: var(--sb-surface); }
-.sb-input { font: inherit; font-size: var(--sb-fs-sub); color: var(--sb-text); background: var(--sb-surface); border: 1px solid var(--sb-border); border-radius: 6px; padding: 6px 9px; width: 100%; }
-.sb-input:focus { outline: 2px solid color-mix(in oklab, var(--sb-accent) 40%, transparent); border-color: var(--sb-accent); }
-.sb-range { display: flex; align-items: center; gap: 6px; }
-.sb-dropdown { position: relative; }
-.sb-dropdown summary { list-style: none; cursor: pointer; }
-.sb-dropdown summary::after { content: '▾'; float: right; color: var(--sb-muted); }
-.sb-dropdown-list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); max-height: 260px; overflow: auto; background: var(--sb-surface); border: 1px solid var(--sb-border); border-radius: 8px; padding: 4px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); }
-.sb-visual:has(.sb-dropdown[open]) { z-index: 10; }
-.sb-visual:has(.sb-dropdown) .sb-visual-body { overflow: visible; }
-.sb-clear { position: absolute; right: 0; bottom: 0; font: inherit; font-size: var(--sb-fs-small); color: var(--sb-accent); background: none; border: 0; cursor: pointer; padding: 2px; }
+/* Slicers are smaltkit controls (ui.css); an open dropdown rises above the other visuals. */
+.sb-visual:has(.sk-dropdown[open]) { z-index: 10; }
+.sb-visual:has(.sk-dropdown) .sb-visual-body { overflow: visible; }
 .sb-text { height: 100%; overflow: auto; line-height: 1.5; }
 .sb-text h2 { font-family: var(--sb-font-heading); font-size: calc(var(--sb-fs-title) * 1.55); margin: 0; letter-spacing: -0.01em; line-height: 1.2; }
 .sb-text h3 { font-family: var(--sb-font-heading); font-size: calc(var(--sb-fs-title) * 1.2); margin: 0 0 4px; }
@@ -141,7 +125,7 @@
   .sb-visual-tools, .sb-tooltip { display: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sb-visual, .sb-chip { transition: none; }
+  .sb-visual, .sk-chip { transition: none; }
   .sb-visual.sb-loading::after { animation: none; }
 }
 

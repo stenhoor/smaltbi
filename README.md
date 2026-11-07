@@ -114,7 +114,8 @@ static host. `node scripts/publish.mjs report.json out/` does the same from the 
 | `src/report/` | The report renderer (`ReportView`), interactions, URL state, viewer chrome |
 | `src/designer/` | The designer app |
 | `src/theme/` | Theme loading and compilation to CSS |
-| `src/kit/` | Helpers staged for smaltkit (engine loader, URLs, zip, files) |
+| `src/kit/` | Helpers staged for smaltkit (zip, local files) |
+| `src/engine/` | The engine worker and client built into `vendor/smaltdb/` (smaltdb, smaltql, plugins) |
 | `src/publish/` | Static-site publishing |
 | `styles/` | `report.css` (reports and viewer), `app.css` (designer) |
 | `themes/` | Built-in theme files |

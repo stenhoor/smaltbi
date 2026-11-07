@@ -35,15 +35,9 @@ export interface DataSpec {
   steps?: DataStep[];
 }
 
-export type DataStep =
-  | { sql: string }
-  | { sqlFile: string }
-  | { import: string; table: string; format?: FileFormat; options?: Record<string, unknown> }
-  | { link: string; table: string; format?: FileFormat; options?: Record<string, unknown>; connectionName?: string }
-  | { table: string; data: Record<string, unknown>[] }
-  | { connection: string; url: string };
-
-export type FileFormat = 'csv' | 'tsv' | 'json' | 'ndjson' | 'parquet';
+/** A data step: the environment manifest's format, shared by the smalt apps (smaltkit/manifest). */
+export type { ManifestStep as DataStep, DataFormat as FileFormat } from 'smaltkit/manifest';
+import type { ManifestStep as DataStep } from 'smaltkit/manifest';
 
 // ------------------------------------------------------------------ model
 

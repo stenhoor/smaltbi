@@ -1,6 +1,6 @@
 // Local files the user imported (CSV, Parquet, …), kept in OPFS under smaltbi-files/ so a report
 // that reads `local:<name>` still works after a reload. Falls back to memory. Shared-kit candidate.
-import type { FileStore } from '../data/sources.js';
+import type { FileStore } from 'smaltkit/manifest';
 
 const DIR = 'smaltbi-files';
 const memory = new Map<string, Blob>();

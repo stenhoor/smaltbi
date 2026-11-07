@@ -4,8 +4,10 @@ import type { Report, Theme } from '../core/types.js';
 import { Model, type SchemaInfo } from '../core/model.js';
 import { hash } from '../core/sql.js';
 import { loadTheme } from '../theme/theme.js';
-import { type Database, type Engine, loadEngine } from '../kit/engine.js';
-import { applySteps, type FileStore, type Log } from '../data/sources.js';
+import { type Database, type Engine, loadEngine } from './engine.js';
+import { applySteps, type FileStore } from 'smaltkit/manifest';
+
+export type Log = (level: 'ok' | 'warn' | 'info', text: string) => void;
 import { introspect } from '../data/introspect.js';
 import { QueryRunner } from '../data/runner.js';
 
@@ -113,6 +115,6 @@ async function openDatabase(engine: Engine, report: Report, base: string, opts: 
       await db.exec(`DROP ${kw} IF EXISTS "${o.name.replace(/"/g, '""')}"`).catch(() => {});
     }
   }
-  await applySteps(db, report.data, base, opts.log, opts.files);
+  await applySteps<Database>(db, report.data.steps ?? [], { base, io: engine.client, log: opts.log, files: opts.files });
   return db;
 }

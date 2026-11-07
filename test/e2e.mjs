@@ -337,7 +337,7 @@ try {
   // Cross-filter: click the "Europe" slicer button, the Orders card changes.
   const orders = () => viewer.locator('.sb-visual[data-id=k-orders] .sk-kpi-value').textContent();
   const o1 = await orders();
-  await viewer.click('.sb-chip:has-text("Europe")');
+  await viewer.click('.sk-chip:has-text("Europe")');
   await until(viewer, (before) => document.querySelector('.sb-visual[data-id=k-orders] .sk-kpi-value')?.textContent !== before, o1);
   const o2 = await orders();
   check(o1 !== o2, `slicer filters other visuals (${o1} → ${o2})`);
@@ -365,7 +365,7 @@ try {
   await viewer.click('.sbv-tab:has-text("Overview")');
   await viewer.waitForSelector('.sb-visual[data-id=c-channel] .sk-slice');
   for (let i = 0; i < 15; i++) {
-    await viewer.click(`.sb-chip >> nth=${i % 4}`);
+    await viewer.click(`.sk-chip >> nth=${i % 4}`);
     await viewer.click('.sbv-tab:has-text("Products")');
     await viewer.click('.sbv-tab:has-text("Overview")');
   }

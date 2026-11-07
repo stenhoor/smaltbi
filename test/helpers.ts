@@ -10,7 +10,8 @@ import external from '@smaltdb/external';
 import parquet from '@smaltdb/parquet';
 import { importCSV, importJSON } from '@smaltdb/io/client';
 import { registerFile } from '@smaltdb/external/client';
-import type { Database } from '../src/kit/engine.js';
+import type { Database } from '../src/report/engine.js';
+import type { StepIO } from 'smaltkit/manifest';
 import type { Report } from '../src/core/types.js';
 import { Model } from '../src/core/model.js';
 import { introspect } from '../src/data/introspect.js';
@@ -18,9 +19,19 @@ import { QueryRunner } from '../src/data/runner.js';
 
 export const root = process.cwd();
 
+const engines = new WeakMap<object, EngineDb>();
+const engineOf = (db: object): EngineDb => engines.get(db)!;
+const blobText = async (s: unknown) => (typeof s === 'string' ? s : await (s as Blob).text());
+
+/** The plugin helpers for clientDb() databases, in the shape the browser's engine client exports (src/engine/client.ts). */
+export const nodeIo: StepIO<Database> = {
+  importCSV: async (db, table, src, o) => importCSV(engineOf(db), table, await blobText(src), o as never),
+  importJSON: async (db, table, src, o) => importJSON(engineOf(db), table, await blobText(src), o as never),
+  registerFile: (db, name, file) => registerFile(engineOf(db), name, file),
+};
+
 export function clientDb(): Database {
   const db = EngineDb.openMemory({ plugins: [io, external, parquet] });
-  const blobText = async (s: unknown) => (typeof s === 'string' ? s : await (s as Blob).text());
   const api = {
     async exec(sql: string, params?: unknown[]) {
       // The async engine calls: statements over external data (linked files, Parquet) need them.
@@ -36,19 +47,11 @@ export function clientDb(): Database {
       if (opts?.rowMode === 'array') return Object.assign(r.rows, { columns: r.columns });
       return r.rows.map((row: unknown[]) => Object.fromEntries(r.columns.map((c: string, i: number) => [c, row[i]])));
     },
-    async importCSV(table: string, src: unknown, o?: object) {
-      return importCSV(db, table, await blobText(src), o as never);
-    },
-    async importJSON(table: string, src: unknown, o?: object) {
-      return importJSON(db, table, await blobText(src), o as never);
-    },
-    async registerFile(name: string, file: Blob | null) {
-      return registerFile(db, name, file);
-    },
     async close() {
       db.close();
     },
   };
+  engines.set(api, db);
   return api as unknown as Database;
 }
 
@@ -61,7 +64,7 @@ export async function sampleSession() {
   const report = loadSampleReport();
   const db = clientDb();
   for (const s of report.data.steps ?? []) {
-    if ('import' in s) await db.importCSV(s.table, readFileSync(join(root, 'examples/sales', s.import), 'utf8'), { create: true });
+    if ('import' in s) await nodeIo.importCSV(db, s.table, readFileSync(join(root, 'examples/sales', s.import), 'utf8'), { create: true });
   }
   const schema = await introspect(db);
   const model = new Model(schema, report.model);
