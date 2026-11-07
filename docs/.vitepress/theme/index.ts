@@ -4,8 +4,8 @@ import { h } from 'vue';
 import './smaltdb.css';
 import './smaltbi.css';
 
-// The work-in-progress badge under the hero's title, as on every smaltworks product page (smalt-brand BRAND.md,
-// "Before 1.0"): linked to the stability page.
+// The work-in-progress badge, at the top of every page (smalt-brand BRAND.md, "Before 1.0"): under the hero's title on
+// the home page, above the content on the others. Linked to the stability page.
 const stage = () =>
   h('div', { class: 'sb-stage' }, [
     h('a', { href: 'https://smaltworks.dev/stability' }, [
@@ -16,7 +16,7 @@ const stage = () =>
 
 export default {
   extends: DefaultTheme,
-  Layout: () => h(DefaultTheme.Layout, null, { 'home-hero-info-after': stage }),
+  Layout: () => h(DefaultTheme.Layout, null, { 'home-hero-info-after': stage, 'doc-before': stage }),
   enhanceApp() {
     if (typeof window === 'undefined') return;
     // The embedded report (an iframe of the viewer) follows the site's light / dark switch through the viewer's

@@ -81,11 +81,24 @@ try {
       text: document.querySelector('.VPHero .text')?.textContent,
       logo: [...document.querySelectorAll('.VPNavBar img, .VPHero img')].filter((i) => getComputedStyle(i).display !== 'none').every((i) => i.complete && i.naturalWidth > 0),
       designer: document.querySelector('.VPHero .actions a')?.getAttribute('href'),
-      stage: [...document.querySelectorAll('.sb-stage img')].some((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0),
-      endorsement: [...document.querySelectorAll('.VPFooter img')].some((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0),
+      // Exactly one of each light / dark pair shows, and it loads.
+      stage: [...document.querySelectorAll('.sb-stage img')].filter((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0).length === 1,
+      endorsement: [...document.querySelectorAll('.VPFooter img')].filter((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0).length === 1,
     }));
     check(hero.name === 'smaltbi' && hero.text === 'Small. Alternative. Insight.' && hero.logo, `product site: wordmark, tagline and logo (${JSON.stringify(hero)})`);
-    check(hero.stage && hero.endorsement, 'product site shows the work-in-progress badge and "A smaltworks project"');
+    check(hero.stage && hero.endorsement, 'product site shows the work-in-progress badge and "A smaltworks project", once each');
+    // Every page starts with the work-in-progress badge and ends with one endorsement.
+    const doc = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await doc.goto(`${base}guide/`);
+    await doc.waitForSelector('.VPDoc .sb-stage img');
+    const docBadges = await doc.evaluate(() => {
+      const shown = (sel) => [...document.querySelectorAll(sel)].filter((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0).length;
+      const stage = document.querySelector('.VPDoc .sb-stage')?.getBoundingClientRect().top ?? 1e9;
+      const title = document.querySelector('.VPDoc h1')?.getBoundingClientRect().top ?? 0;
+      return { stage: shown('.VPDoc .sb-stage img'), first: stage < title, endorsement: shown('.VPFooter img') };
+    });
+    check(docBadges.stage === 1 && docBadges.first && docBadges.endorsement === 1, `doc pages show the work-in-progress badge at the top and one endorsement (${JSON.stringify(docBadges)})`);
+    await doc.close();
     check(hero.designer === '/smaltbi/designer.html?report=examples/sales/report.json', `product site links the designer (${hero.designer})`);
     // The embedded live report renders inside the page.
     await landing.locator('#demoFrame').scrollIntoViewIfNeeded();

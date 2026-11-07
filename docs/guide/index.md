@@ -4,11 +4,6 @@ smaltbi is a report designer and viewer, built as a static web app on [smaltdb](
 Parquet files (or open an existing smaltdb database), model them with relationships and SQL measures, drag fields onto
 a canvas, and publish the result as a static site. Every report runs entirely in its reader's browser.
 
-::: warning Work in progress
-smaltbi is before 1.0, like the rest of the smalt family: it works, it moves fast, and the report format can still
-change. See [what that means](https://smaltworks.dev/stability).
-:::
-
 ## Try it
 
 - <a href="../designer.html?report=examples/sales/report.json" target="_self">The designer</a>, with the sample report
