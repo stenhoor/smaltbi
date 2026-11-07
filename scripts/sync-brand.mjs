@@ -34,6 +34,9 @@ const files = {
   // The family docs theme (smaltdb.dev, smaltworks.dev) for the product site in docs/.
   'themes/vitepress/smaltdb.css': '../docs/.vitepress/theme/smaltdb.css',
   'themes/vitepress/shiki.ts': '../docs/.vitepress/theme/shiki.ts',
+  // The smaltworks menu and footer, and the stage and "A smaltworks project" badges (BRAND.md, "Sites and READMEs").
+  'themes/vitepress/smaltworks.ts': '../docs/.vitepress/theme/smaltworks.ts',
+  'themes/vitepress/stage.ts': '../docs/.vitepress/theme/stage.ts',
 };
 mkdirSync(out, { recursive: true });
 for (const [from, to] of Object.entries(files)) {

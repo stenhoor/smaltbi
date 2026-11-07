@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { smaltLight, smaltDark } from './theme/shiki';
+import { smaltworksMenu, smaltworksFooter } from './theme/smaltworks';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const REPO = 'https://github.com/stenhoor/smaltbi';
@@ -53,18 +54,7 @@ export default defineConfig({
       { text: 'Guide', link: '/guide/' },
       { text: 'Report format', link: '/REPORT_FORMAT' },
       { text: 'Demo', link: '/designer.html?report=examples/sales/report.json', target: '_self' },
-      {
-        text: 'smaltworks',
-        items: [
-          { text: 'The family', link: `${WORKS}/` },
-          { text: 'smaltdb: the engine', link: 'https://smaltdb.dev' },
-          { text: 'smaltql: SQL', link: 'https://stenhoor.github.io/smaltql/' },
-          { text: 'smaltdf: dataframes', link: 'https://stenhoor.github.io/smaltdf/' },
-          { text: 'smaltui: SQL console', link: 'https://stenhoor.github.io/smaltui/' },
-          { text: 'smaltnb: notebooks', link: 'https://stenhoor.github.io/smaltnb/' },
-          { text: 'Work in progress', link: `${WORKS}/stability` },
-        ],
-      },
+      smaltworksMenu(),
     ],
     sidebar: [
       {
@@ -90,9 +80,6 @@ export default defineConfig({
     socialLinks: [{ icon: 'github', link: REPO }],
     search: { provider: 'local' },
     outline: { level: [2, 3] },
-    footer: {
-      message: `<a href="${WORKS}/"><img class="sw-light" src="${base}a-smaltworks-project.svg" alt="A smaltworks project" height="28"><img class="sw-dark" src="${base}a-smaltworks-project-on-dark.svg" alt="A smaltworks project" height="28"></a>`,
-      copyright: 'MIT License · Built AI-first, by developers, for everyone who creates.',
-    },
+    footer: smaltworksFooter(base),
   },
 });

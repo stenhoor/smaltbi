@@ -81,21 +81,22 @@ try {
       text: document.querySelector('.VPHero .text')?.textContent,
       logo: [...document.querySelectorAll('.VPNavBar img, .VPHero img')].filter((i) => getComputedStyle(i).display !== 'none').every((i) => i.complete && i.naturalWidth > 0),
       designer: document.querySelector('.VPHero .actions a')?.getAttribute('href'),
-      // Exactly one of each light / dark pair shows, and it loads.
-      stage: [...document.querySelectorAll('.sb-stage img')].filter((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0).length === 1,
-      endorsement: [...document.querySelectorAll('.VPFooter img')].filter((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0).length === 1,
+      // Exactly one of each light / dark pair shows, and it loads. checkVisibility() also counts a hidden ancestor:
+      // VitePress hides its footer on pages with a sidebar.
+      stage: [...document.querySelectorAll('.sw-stage img')].filter((i) => i.checkVisibility() && i.complete && i.naturalWidth > 0).length === 1,
+      endorsement: [...document.querySelectorAll('.VPFooter img, .sw-project img')].filter((i) => i.checkVisibility() && i.complete && i.naturalWidth > 0).length === 1,
     }));
     check(hero.name === 'smaltbi' && hero.text === 'Small. Alternative. Insight.' && hero.logo, `product site: wordmark, tagline and logo (${JSON.stringify(hero)})`);
     check(hero.stage && hero.endorsement, 'product site shows the work-in-progress badge and "A smaltworks project", once each');
     // Every page starts with the work-in-progress badge and ends with one endorsement.
     const doc = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await doc.goto(`${base}guide/`);
-    await doc.waitForSelector('.VPDoc .sb-stage img');
+    await doc.waitForSelector('.VPDoc .sw-stage img');
     const docBadges = await doc.evaluate(() => {
-      const shown = (sel) => [...document.querySelectorAll(sel)].filter((i) => getComputedStyle(i).display !== 'none' && i.complete && i.naturalWidth > 0).length;
-      const stage = document.querySelector('.VPDoc .sb-stage')?.getBoundingClientRect().top ?? 1e9;
+      const shown = (sel) => [...document.querySelectorAll(sel)].filter((i) => i.checkVisibility() && i.complete && i.naturalWidth > 0).length;
+      const stage = document.querySelector('.VPDoc .sw-stage')?.getBoundingClientRect().top ?? 1e9;
       const title = document.querySelector('.VPDoc h1')?.getBoundingClientRect().top ?? 0;
-      return { stage: shown('.VPDoc .sb-stage img'), first: stage < title, endorsement: shown('.VPFooter img') };
+      return { stage: shown('.VPDoc .sw-stage img'), first: stage < title, endorsement: shown('.VPFooter img, .sw-project img') };
     });
     check(docBadges.stage === 1 && docBadges.first && docBadges.endorsement === 1, `doc pages show the work-in-progress badge at the top and one endorsement (${JSON.stringify(docBadges)})`);
     await doc.close();
