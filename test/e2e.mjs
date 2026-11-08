@@ -78,7 +78,8 @@ try {
     await landing.waitForSelector('.VPHero');
     const hero = await landing.evaluate(() => ({
       name: document.querySelector('.VPHero .name')?.textContent,
-      text: document.querySelector('.VPHero .text')?.textContent,
+      // The tagline breaks after "Small. Alternative." on every smalt site (smalt-brand BRAND.md rule 2).
+      text: document.querySelector('.VPHero .text')?.innerHTML,
       logo: [...document.querySelectorAll('.VPNavBar img, .VPHero img')].filter((i) => getComputedStyle(i).display !== 'none').every((i) => i.complete && i.naturalWidth > 0),
       // The hero has one button, Getting started; the app opens only from the Demo nav item (BRAND.md rule 12).
       actions: [...document.querySelectorAll('.VPHero .actions a')].map((a) => [a.textContent.trim(), a.getAttribute('href')]),
@@ -87,7 +88,7 @@ try {
       stage: [...document.querySelectorAll('.sw-stage img')].filter((i) => i.checkVisibility() && i.complete && i.naturalWidth > 0).length === 1,
       endorsement: [...document.querySelectorAll('.VPFooter img, .sw-project img')].filter((i) => i.checkVisibility() && i.complete && i.naturalWidth > 0).length === 1,
     }));
-    check(hero.name === 'smaltbi' && hero.text === 'Small. Alternative. Insight.' && hero.logo, `product site: wordmark, tagline and logo (${JSON.stringify(hero)})`);
+    check(hero.name === 'smaltbi' && hero.text === 'Small. Alternative.<br>Insight.' && hero.logo, `product site: wordmark, tagline and logo (${JSON.stringify(hero)})`);
     check(hero.stage && hero.endorsement, 'product site shows the work-in-progress badge and "A smaltworks project", once each');
     // Every page starts with the work-in-progress badge and ends with one endorsement.
     const doc = await browser.newPage({ viewport: { width: 1280, height: 900 } });
