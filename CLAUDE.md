@@ -56,6 +56,10 @@ working on them.
   does those.
 - After pushing, wait for CI on both runs (push and pull_request) and fix failures before reporting. A push run can
   catch what the pull_request run missed.
+- **Ask before adding outside code.** Ask the owner, and wait for a yes, before adding a package (a dependency of any
+  kind, or a pin in `packed.json`), copying or bundling in someone else's code, or loading code from another site at run
+  time (a CDN such as jsDelivr). Say what it is, its licence and size, what it's for, and why our own code can't do it.
+  Outside code that a feature needs goes in a plugin, so it is named and optional, never in core.
 
 ## Cross-repo impact
 
