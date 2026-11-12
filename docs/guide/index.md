@@ -29,7 +29,8 @@ npm run serve      # http://localhost:8080/designer.html
    or run SQL to create views. Steps run in order each time the report opens.
 2. **Model.** Switch to *Model* for the diagram of your tables. Drag a column onto another table's key to relate them,
    and add measures (`SUM(sales.quantity * sales.unit_price)`) and calculated columns. Measures can use each other:
-   `[Revenue] - [Cost]`.
+   `[Revenue] - [Cost]`. *Add date table* creates a calendar related to a date column, with Year › Quarter › Month ›
+   Date to drill, and optionally fiscal years, Sunday weeks and ISO weeks.
 3. **Visuals.** Back in *Report*, click a field to add a visual, or drag fields onto the canvas and into a visual's
    wells. The side panel changes its type, format, filters and SQL.
 4. **Pages and interaction.** Add pages, slicers, drill-through targets and bookmarks. *Preview* shows the report as a

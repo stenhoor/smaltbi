@@ -268,6 +268,35 @@ try {
   await until(page, () => document.querySelectorAll('.sb-visual[data-id=c-cat] .sk-bar').length === 4);
   check((await page.locator('.sb-visual[data-id=c-cat] .sk-bar').count()) === 4, 'report renders again after editing the model');
 
+  // Add date table (ADR 0006): a calendar related to the sales dates, with fiscal years from July and ISO weeks.
+  await page.click('.sbd-seg-btn:has-text("Model")');
+  await page.click('.sbd-mv-datetable');
+  await page.selectOption('.sbd-datetable select >> nth=0', 'sales.order_date');
+  await page.selectOption('.sbd-datetable select >> nth=1', '7');
+  await page.locator('.sbd-datetable label.sbd-check input').check();
+  await page.click('.sk-dialog-foot button:has-text("Add date table")');
+  const calendarCard = await until(page, () => !!document.querySelector('.sbd-mv-card[data-table=calendar]'), undefined, 30000);
+  const dt = await page.evaluate(() => {
+    const m = window.smaltbi.store.report.model;
+    return { spec: m.dateTable, rel: (m.relationships ?? []).some((r) => r.from === 'sales.order_date' && r.to === 'calendar.date'), hier: (m.hierarchies ?? []).filter((x) => x.table === 'calendar').map((x) => x.name) };
+  });
+  check(calendarCard && dt.rel && dt.spec?.fiscalStart === 7 && dt.spec?.isoWeeks && dt.hier.join() === 'Calendar,Fiscal calendar,ISO weeks', `Add date table builds a related calendar with its hierarchies (${JSON.stringify(dt)})`);
+  // A visual over the calendar: revenue by fiscal year (FY2024 … FY2026 around 2024-01 … 2025-11).
+  await page.click('.sbd-seg-btn:has-text("Report")');
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.report.pages[0];
+    s.change('page', () => pg.visuals.push({ id: 'c-fy', type: 'column', title: 'Revenue by fiscal year', layout: { x: 0, y: 40, w: 6, h: 4 }, fields: { category: ['calendar.Fiscal calendar'], values: ['sales.Revenue'] } }), pg.id);
+  });
+  const fyBars = await until(page, () => document.querySelectorAll('.sb-visual[data-id=c-fy] .sk-bar').length === 3, undefined, 20000);
+  const fyLabels = await page.evaluate(() => [...document.querySelectorAll('.sb-visual[data-id=c-fy] .sk-tick.sk-cat')].map((t) => t.textContent));
+  check(fyBars && fyLabels.join() === 'FY2024,FY2025,FY2026', `a visual queries through the date table (${fyLabels})`);
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.report.pages[0];
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== 'c-fy')), pg.id);
+  });
+
   // Theme: switch to Midnight.
   await page.click('.sbd-tbtn:has-text("Theme")');
   await page.click('.sbd-theme-card:has-text("Midnight")');

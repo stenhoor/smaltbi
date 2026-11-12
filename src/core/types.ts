@@ -35,6 +35,8 @@ export interface DataSpec {
   steps?: DataStep[];
 }
 
+import type { DateTableSpec } from './datetable.js';
+
 /** A data step: the environment manifest's format, shared by the smalt apps (smaltkit/manifest). */
 export type { ManifestStep as DataStep, DataFormat as FileFormat } from 'smaltkit/manifest';
 import type { ManifestStep as DataStep } from 'smaltkit/manifest';
@@ -50,7 +52,8 @@ export interface ModelSpec {
   /** Per-table display settings. */
   tables?: Record<string, TableSettings>;
   /** Where each table card sits in the designer's model diagram (pixels). Display only. */
-  layout?: Record<string, { x: number; y: number }>;
+  layout?: Record<string, { x: number; y: number }>;  /** The date table added by "Add date table" (time-intelligence measures use it). */
+  dateTable?: DateTableSpec;
 }
 
 export interface Relationship {

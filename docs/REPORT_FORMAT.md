@@ -63,7 +63,9 @@ environment manifests. To report on an existing OPFS database, use
   "tables": {
     "sales": { "label": "Sales", "hidden": false, "columns": { "id": { "hidden": true }, "discount": { "format": "percent" } } }
   },
-  "layout": { "sales": { "x": 368, "y": 40 }, "customers": { "x": 696, "y": 40 } }   // model diagram positions (display only)
+  "layout": { "sales": { "x": 368, "y": 40 }, "customers": { "x": 696, "y": 40 } },  // model diagram positions (display only)
+  "dateTable": { "table": "calendar", "column": "date", "source": "sales.order_date",   // written by "Add date table"
+                 "fiscalStart": 7, "weekStart": 1, "isoWeeks": true }
 }
 ```
 
@@ -76,6 +78,11 @@ environment manifests. To report on an existing OPFS database, use
 - **`sortBy`** sorts a column by another column of the same table (month names by month number).
 - **Types**: `number`, `text`, `date`, `datetime`, `bool`, `any`. Introspection detects ISO date strings.
 - Without `relationships`, foreign keys declared in the database are used.
+- **`dateTable`** records the calendar that "Add date table" (model view) created: a SQL data step (the last one) that
+  builds a row per day over whole (fiscal) years around `source`'s dates, a relationship `source → table.date`, the
+  hierarchies *Calendar* (year › quarter › month › date), *Fiscal calendar* (when `fiscalStart` isn't 1; a fiscal
+  year is named by the year it ends in, e.g. FY2025 for July 2024 – June 2025) and *ISO weeks* (with `isoWeeks`), and
+  the columns' labels and sort order. `weekStart` is 1 for Monday weeks or 0 for Sunday weeks.
 - Relationships must be **unambiguous**: two active paths between the same tables (for example
   `sales → customers` and `sales → stores → customers`) make queries that cross them fail with an
   explanation. Set `"active": false` on one of them.
