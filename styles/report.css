@@ -24,9 +24,20 @@
   gap: var(--sb-gap);
   margin: 0 auto;
 }
+/* A fixed page (page.size): a sheet of that size, never reflowed; "Fit to window" scales it with a transform. */
+.sb-sheet { margin: 0 auto; flex: none; }
+.sb-report:has(> .sb-sheet) { background: color-mix(in oklab, var(--sb-page-bg, var(--sb-bg)) 94%, var(--sb-text)); overflow-x: auto; }
+.sb-page.sb-fixed {
+  margin: 0;
+  overflow: hidden;
+  transform-origin: 0 0;
+  background: var(--sb-page-bg, var(--sb-bg));
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--sb-text) 10%, transparent), 0 6px 24px color-mix(in oklab, var(--sb-text) 10%, transparent);
+  border-radius: 2px;
+}
 @container (max-width: 720px) {
-  .sb-page { grid-template-columns: minmax(0, 1fr); }
-  .sb-page > .sb-visual { grid-column: 1 / -1 !important; grid-row: auto / span var(--h, 4) !important; }
+  .sb-page:not(.sb-fixed) { grid-template-columns: minmax(0, 1fr); }
+  .sb-page:not(.sb-fixed) > .sb-visual { grid-column: 1 / -1 !important; grid-row: auto / span var(--h, 4) !important; }
 }
 
 /* ---------------------------------------------------------------- visual frame */

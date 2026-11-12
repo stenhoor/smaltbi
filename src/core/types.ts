@@ -149,6 +149,20 @@ export interface Page {
   hidden?: boolean;
   /** Page background etc. Falls back to the theme's page settings. */
   layout?: Partial<PageLayout>;
+  /**
+   * A fixed page size (ADR 0006): the page is a sheet of this size, its rows fitted to its height. Without it the page
+   * is responsive (the default): as wide as the window, as long as its visuals.
+   */
+  size?: PageSize;
+}
+
+/** A fixed page: a preset (portrait unless `landscape`) or a custom size in CSS pixels (96 per inch). */
+export interface PageSize {
+  preset: '16:9' | '4:3' | 'letter' | 'a4' | 'custom';
+  landscape?: boolean;
+  /** Custom only. */
+  width?: number;
+  height?: number;
 }
 
 export interface PageLayout {

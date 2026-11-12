@@ -6,7 +6,7 @@ import { visualDef } from '../visuals/index.js';
 import { ReportSession } from '../report/session.js';
 import { ReportView } from '../report/view.js';
 import { type ColorMode, colorModeButton, poweredByBadge, viewerBar } from '../report/chrome.js';
-import { pageLayout } from '../theme/theme.js';
+import { pageGeometry, pageLayout } from '../theme/theme.js';
 import { type Engine, loadEngine } from '../report/engine.js';
 import { dialog, download, fileName, h, pickFile, showMenu, toast } from 'smaltkit/dom';
 import { localFiles } from '../kit/files.js';
@@ -553,6 +553,12 @@ class Designer {
   decorate(frame: HTMLElement, v: Visual): void {
     if (this.preview) return;
     frame.classList.add('sbd-editable');
+    // On a fixed page, mark visuals that reach below the sheet (the viewer cuts them off).
+    const geo = pageGeometry(this.session.theme, this.page);
+    if (geo.fixed && v.layout.y + v.layout.h > geo.rows) {
+      frame.classList.add('sbd-outside');
+      frame.title = 'Below the page: readers will not see this visual';
+    }
     const grip = h('div.sbd-grip', { title: 'Drag to move' }, '⠿');
     const resize = h('div.sbd-resize', { title: 'Drag to resize' });
     const del = h('button.sbd-del', { title: 'Delete (Del)', onclick: (e: Event) => (e.stopPropagation(), this.deleteVisual(v.id)) }, '×');
@@ -563,10 +569,12 @@ class Designer {
       e.stopPropagation();
       this.select(v.id);
       const grid = frame.parentElement!;
-      const layout = pageLayout(this.session.theme, this.page);
-      const gr = grid.getBoundingClientRect();
-      const gap = parseFloat(getComputedStyle(grid).columnGap) || layout.gap;
-      const colW = (gr.width + gap) / layout.columns;
+      const layout = pageGeometry(this.session.theme, this.page);
+      const cs = getComputedStyle(grid);
+      const gap = parseFloat(cs.columnGap) || layout.gap;
+      // The grid's content box (a fixed page has padding inside the sheet).
+      const inner = grid.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const colW = (inner + gap) / layout.columns;
       const rowH = layout.rowHeight + gap;
       const start = { x: e.clientX, y: e.clientY, l: { ...v.layout } };
       let next = { ...v.layout };
@@ -623,9 +631,13 @@ class Designer {
       const grid = this.canvasHost.querySelector('.sb-page') as HTMLElement | null;
       let at: { x: number; y: number } | undefined;
       if (grid) {
-        const layout = pageLayout(this.session.theme, this.page);
+        const layout = pageGeometry(this.session.theme, this.page);
         const r = grid.getBoundingClientRect();
-        at = { x: Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * layout.columns)), y: Math.max(0, Math.floor((e.clientY - r.top) / (layout.rowHeight + layout.gap))) };
+        const cs = getComputedStyle(grid);
+        const left = r.left + parseFloat(cs.paddingLeft);
+        const top = r.top + parseFloat(cs.paddingTop);
+        const inner = r.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        at = { x: Math.max(0, Math.min(layout.columns - 1, Math.floor(((e.clientX - left) / inner) * layout.columns))), y: Math.max(0, Math.floor((e.clientY - top) / (layout.rowHeight + layout.gap))) };
       }
       const kind = this.session.model.kindOf(ref);
       const numeric = kind === 'column' && this.session.model.column(ref)?.type === 'number';

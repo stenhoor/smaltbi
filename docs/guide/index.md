@@ -45,6 +45,10 @@ npm run serve      # http://localhost:8080/designer.html
      one; Space selects it, and Esc clears the search.
 4. **Pages and interaction.** Add pages, slicers, drill-through targets and bookmarks. *Preview* shows the report as a
    reader sees it.
+   - **Page size:** a page is responsive by default, fitting the window. For a slide or a printed page, click an empty
+     part of the canvas and choose a *Page size* in the side panel: 16:9, 4:3, US Letter, A4 (portrait or landscape)
+     or a custom size. The page becomes a sheet of that size, with its rows fitted to it. Visuals that reach below it
+     are marked, because readers won't see them. Readers see a sheet at 100% and scroll, or click *Fit to window*.
 
 The [report format](/REPORT_FORMAT) describes the file the designer writes, field by field.
 

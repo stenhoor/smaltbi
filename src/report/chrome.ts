@@ -47,13 +47,35 @@ export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[]; mode?
   const report = view.report;
   const tabs = h('nav.sbv-tabs', { role: 'tablist' });
   const renderTabs = () => {
+    showFit();
     tabs.replaceChildren(
       ...report.pages
         .filter((p) => !p.hidden && !p.drillthrough?.length)
         .map((p) => h('button.sbv-tab' + (p.id === view.state.page ? '.sbv-on' : ''), { role: 'tab', 'aria-selected': p.id === view.state.page, onclick: () => view.goTo(p.id) }, p.name)),
     );
   };
+  // Fit to window (fixed-size pages only): the reader's choice, remembered in this browser.
+  const FIT_KEY = 'smaltbi.fitPage';
+  try {
+    view.setFitPage(localStorage.getItem(FIT_KEY) === '1');
+  } catch {}
+  const fitBtn = h('button.sbv-btn.sbv-fit', {
+    onclick: () => {
+      view.setFitPage(!view.fitPage);
+      try {
+        localStorage.setItem(FIT_KEY, view.fitPage ? '1' : '0');
+      } catch {}
+      showFit();
+    },
+  });
+  const showFit = () => {
+    fitBtn.hidden = !view.fixedPage;
+    fitBtn.textContent = view.fitPage ? '⤢ 100%' : '⤡ Fit to window';
+    fitBtn.title = view.fitPage ? 'Show the page at full size (scroll to see all of it)' : 'Scale the page down to fit the window';
+    fitBtn.setAttribute('aria-pressed', String(view.fitPage));
+  };
   renderTabs();
+  showFit();
   const modeBtn = opts.mode === false
     ? null
     : colorModeButton('button.sbv-btn.sbv-mode', (m) => {
@@ -86,6 +108,7 @@ export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[]; mode?
             '☆ Bookmarks',
           )
         : null,
+      fitBtn,
       h('button.sbv-btn', { title: 'Clear all selections and slicers', onclick: () => view.clearSelections() }, '↺ Reset'),
       modeBtn,
       ...(opts.extra ?? []),

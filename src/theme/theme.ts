@@ -1,7 +1,7 @@
 // Themes: JSON design tokens compiled to CSS custom properties on `.sb-report`.
 // Visuals only ever reference the variables, so a theme switch is a stylesheet swap: no re-query,
 // no re-render.
-import type { PageLayout, Theme } from '../core/types.js';
+import type { PageLayout, PageSize, Theme } from '../core/types.js';
 import smalt from '../../themes/smalt.theme.json';
 import paper from '../../themes/paper.theme.json';
 import midnight from '../../themes/midnight.theme.json';
@@ -43,6 +43,44 @@ export async function loadTheme(ref: Theme | string | undefined, base?: string):
   }
   const parent = ref.extends ? await loadTheme(ref.extends, base) : root;
   return mergeTheme(parent, ref);
+}
+
+/** Preset page sizes in CSS pixels (96 per inch), portrait for paper; screens are landscape. */
+export const PAGE_PRESETS: Record<Exclude<PageSize['preset'], 'custom'>, { label: string; width: number; height: number; paper?: boolean }> = {
+  '16:9': { label: '16:9 (1280 × 720)', width: 1280, height: 720 },
+  '4:3': { label: '4:3 (1024 × 768)', width: 1024, height: 768 },
+  letter: { label: 'US Letter (8.5 × 11 in)', width: 816, height: 1056, paper: true },
+  a4: { label: 'A4 (210 × 297 mm)', width: 794, height: 1123, paper: true },
+};
+
+/** A fixed page's width and height in px, or null for a responsive page (or a custom size missing a dimension). */
+export function pageSize(page?: { size?: PageSize }): { width: number; height: number } | null {
+  const s = page?.size;
+  if (!s) return null;
+  if (s.preset === 'custom') {
+    const w = Math.round(Number(s.width));
+    const hh = Math.round(Number(s.height));
+    return w >= 200 && hh >= 150 && w <= 10000 && hh <= 10000 ? { width: w, height: hh } : null;
+  }
+  const p = PAGE_PRESETS[s.preset];
+  if (!p) return null;
+  // Paper is portrait unless landscape; screens are landscape unless portrait (landscape: false).
+  const swap = p.paper ? !!s.landscape : s.landscape === false;
+  return swap ? { width: p.height, height: p.width } : { width: p.width, height: p.height };
+}
+
+/**
+ * Where a page's grid cells are: columns, rows and the row height (on a fixed page, worked out so that `rows` rows fill
+ * the sheet inside its padding), the gap, and the fixed size if there is one.
+ */
+export function pageGeometry(theme: Theme, page?: { layout?: Partial<PageLayout>; size?: PageSize }): PageLayout & { pad: number; fixed: { width: number; height: number } | null } {
+  const layout = pageLayout(theme, page);
+  const pad = theme.page?.padding ?? 16;
+  const fixed = pageSize(page);
+  if (!fixed) return { ...layout, pad, fixed };
+  const rows = Math.max(1, layout.rows);
+  const rowHeight = Math.max(8, (fixed.height - 2 * pad - (rows - 1) * layout.gap) / rows);
+  return { ...layout, rows, rowHeight, pad, fixed };
 }
 
 /** The page layout of a page, falling back to the theme's page settings. */

@@ -5,7 +5,7 @@ import type { FieldRef, Filter, Page, Report, SqlValue, ViewState, Visual } from
 import { type ResolvedField, ModelError, refName } from '../core/model.js';
 import { compileQuery, type CompiledQuery, type QuerySpec, wrapCustomSql } from '../core/compile.js';
 import { formatter } from '../core/format.js';
-import { pageLayout, paletteSize, themeCss } from '../theme/theme.js';
+import { pageGeometry, pageSize, paletteSize, themeCss } from '../theme/theme.js';
 import { CONDITIONAL_ROLE, cellFormatFor, conditionalFields } from './conditional.js';
 import { type DataColumn, dataColumn, type Plan, type PlanContext, type VisualData, type VisualDef, optionsOf, visualDef } from '../visuals/index.js';
 import type { Frame } from '../data/runner.js';
@@ -71,6 +71,20 @@ export class ReportView {
     this.styleEl.textContent = themeCss(this.session.theme);
   }
 
+  /** Fixed-size pages: scaled down to fit the window (the viewer's "Fit to window"), or shown at 100% and scrolled. */
+  fitPage = false;
+  private fitSheet: (() => void) | null = null;
+
+  setFitPage(on: boolean): void {
+    this.fitPage = on;
+    this.fitSheet?.();
+  }
+
+  /** The current page has a fixed size (the viewer offers "Fit to window" then). */
+  get fixedPage(): boolean {
+    return !!pageSize(this.page);
+  }
+
   setColorMode(mode: 'auto' | 'light' | 'dark'): void {
     if (mode === 'auto') this.root.removeAttribute('data-mode');
     else this.root.dataset.mode = mode;
@@ -112,19 +126,52 @@ export class ReportView {
       this.root.replaceChildren(h('div.sb-empty', {}, 'This report has no pages'));
       return;
     }
-    const layout = pageLayout(this.session.theme, page);
+    const layout = pageGeometry(this.session.theme, page);
     const rows = Math.max(layout.rows, ...page.visuals.map((v) => v.layout.y + v.layout.h));
     const grid = h('div.sb-page', {
       style: `--cols:${layout.columns};--row:${layout.rowHeight}px;--rows:${rows};max-width:${layout.fit === 'width' ? 'none' : layout.width + 'px'}`,
     });
+    // A fixed page is a sheet of its size; "Fit to window" scales it (and the box around it) down.
+    let sheet: HTMLElement = grid;
+    this.fitSheet = null;
+    if (layout.fixed) {
+      const { width, height } = layout.fixed;
+      grid.classList.add('sb-fixed');
+      grid.style.cssText += `;width:${width}px;height:${height}px;max-width:none;padding:${layout.pad}px`;
+      sheet = h('div.sb-sheet', { 'data-size': `${width}x${height}` }, grid);
+      const fit = () => {
+        let s = 1;
+        if (this.fitPage && sheet.isConnected) {
+          const cs = getComputedStyle(this.root);
+          const availW = this.root.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+          const top = sheet.getBoundingClientRect().top;
+          // The visible bottom: the window's, or the scrolling pane's the report sits in (the designer's canvas).
+          let bottom = this.root.ownerDocument.defaultView?.innerHeight ?? height;
+          for (let el = this.root.parentElement; el; el = el.parentElement) {
+            if (/(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.clientHeight < el.scrollHeight + 1) {
+              bottom = Math.min(bottom, el.getBoundingClientRect().top + el.clientHeight);
+              break;
+            }
+          }
+          const availH = bottom - Math.max(0, top) - parseFloat(cs.paddingBottom) - 8;
+          s = Math.max(0.1, Math.min(1, availW / width, availH / height));
+        }
+        grid.style.transform = s === 1 ? '' : `scale(${s})`;
+        sheet.style.width = `${width * s}px`;
+        sheet.style.height = `${height * s}px`;
+        sheet.dataset.scale = String(Math.round(s * 1000) / 1000);
+      };
+      this.fitSheet = fit;
+      queueMicrotask(fit);
+    }
     if (this.state.drillthrough) {
       const from = this.state.drillthrough.from;
       const chips = this.state.drillthrough.filters.map((f) => `${this.fieldLabel(f.field ?? '')}: ${(f.values ?? []).map((v) => this.fmtValue(f.field ?? '', v)).join(', ')}`);
       this.root.replaceChildren(
         h('div.sb-drillbar', {}, h('button.sb-back', { onclick: () => this.goTo(from) }, '← Back'), h('span', {}, 'Drill-through: ' + chips.join(' · '))),
-        grid,
+        sheet,
       );
-    } else this.root.replaceChildren(grid);
+    } else this.root.replaceChildren(sheet);
     for (const v of page.visuals) grid.append(this.frameFor(v));
     this.refreshAll();
   }
@@ -544,6 +591,9 @@ export class ReportView {
   }
 
   private bindEvents(): void {
+    // A fitted sheet follows the window (and the pane it is in).
+    new ResizeObserver(() => this.fitPage && this.fitSheet?.()).observe(this.root);
+    this.root.ownerDocument.defaultView?.addEventListener('resize', () => this.fitPage && this.fitSheet?.());
     const markOf = (e: Event) => {
       const t = e.target as Element;
       const mark = t.closest?.('[data-row]') as HTMLElement | SVGElement | null;

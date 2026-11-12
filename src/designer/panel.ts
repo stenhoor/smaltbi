@@ -1,5 +1,5 @@
 // The right-hand panel: Build (visual types and field wells), Format, Filters and SQL.
-import type { Aggregation, FieldRef, Filter, FilterOp, Page, SqlValue, Visual } from '../core/types.js';
+import type { Aggregation, FieldRef, Filter, FilterOp, Page, PageSize, SqlValue, Visual } from '../core/types.js';
 import { conditionalSection } from './conditional.js';
 import { referenceSection } from './reflines.js';
 import { aggLabel, refName } from '../core/model.js';
@@ -7,6 +7,7 @@ import { quoteIdent } from '../core/sql.js';
 import { type OptionDef, type VisualDef, visualDef, visualDefs } from '../visuals/index.js';
 import { h, showMenu, toast } from 'smaltkit/dom';
 import { FIELD_MIME, draggedRefs } from './fields.js';
+import { PAGE_PRESETS, pageGeometry, pageSize } from '../theme/theme.js';
 
 /** A chip dragged out of a well: where it came from, and its settings (aggregation, label). */
 const MOVE_MIME = 'application/x-smaltbi-move';
@@ -322,6 +323,7 @@ function pageTab(ctx: PanelContext): HTMLElement {
     h('div.sbd-section-title', {}, 'Page'),
     field('Name', textInput(p.name, (val) => ctx.store.change('pages', () => (p.name = val || p.name)))),
     checkbox('Hidden in the viewer', !!p.hidden, (on) => ctx.store.change('pages', () => (p.hidden = on || undefined))),
+    pageSizeSection(ctx, p),
     dt,
   );
 }
@@ -530,5 +532,78 @@ function sqlTab(ctx: PanelContext, v: Visual): HTMLElement {
         'Edit as custom SQL',
       ),
     ),
+  );
+}
+
+/** Page size: responsive (the default) or a fixed sheet: a preset, portrait or landscape, or a custom size. */
+function pageSizeSection(ctx: PanelContext, p: Page): HTMLElement {
+  const set = (size: PageSize | undefined) => ctx.store.change('page', () => (size ? (p.size = size) : delete p.size), p.id);
+  const size = p.size;
+  const preset = size?.preset ?? '';
+  const px = pageSize(p);
+  const rows = pageGeometry(ctx.session.theme, p).rows;
+  /** Visuals below the sheet's last row: cut off in the viewer. */
+  const outside = px ? p.visuals.filter((v) => v.layout.y + v.layout.h > rows) : [];
+  const num = (label: string, value: number | undefined, on: (n: number) => void) =>
+    field(label, h('input.sbd-input', { type: 'number', min: 100, max: 10000, step: 1, value: value ?? '', onchange: (e: Event) => on(Number((e.target as HTMLInputElement).value)) }));
+  return h(
+    'div.sbd-page-size',
+    {},
+    field(
+      'Page size',
+      h(
+        'select.sbd-input',
+        {
+          onchange: (e: Event) => {
+            const v = (e.target as HTMLSelectElement).value as PageSize['preset'] | '';
+            if (!v) return set(undefined);
+            const cur = pageSize(p) ?? PAGE_PRESETS['16:9'];
+            set(v === 'custom' ? { preset: 'custom', width: cur.width, height: cur.height } : { preset: v });
+          },
+        },
+        h('option', { value: '', selected: !preset }, 'Responsive (fits the window)'),
+        ...Object.entries(PAGE_PRESETS).map(([k, d]) => h('option', { value: k, selected: preset === k }, d.label)),
+        h('option', { value: 'custom', selected: preset === 'custom' }, 'Custom…'),
+      ),
+    ),
+    size && size.preset !== 'custom'
+      ? h(
+          'div.sbd-seg',
+          {},
+          ...([false, true] as const).map((land) => {
+            const isLand = px ? px.width > px.height : false;
+            return h(
+              'button.sbd-seg-btn' + (isLand === land ? '.sbd-on' : ''),
+              { onclick: () => set({ preset: size.preset, ...(PAGE_PRESETS[size.preset as keyof typeof PAGE_PRESETS].paper ? (land ? { landscape: true } : {}) : land ? {} : { landscape: false }) }) },
+              land ? 'Landscape' : 'Portrait',
+            );
+          }),
+        )
+      : null,
+    size?.preset === 'custom'
+      ? h(
+          'div.sbd-grid2',
+          {},
+          num('Width (px)', size.width, (n) => set({ ...size, width: n })),
+          num('Height (px)', size.height, (n) => set({ ...size, height: n })),
+        )
+      : null,
+    h('div.sbd-hint', {}, px ? `A ${px.width} × ${px.height} px sheet with ${rows} rows. Readers see it at 100% and scroll, or choose Fit to window.` : 'The page fills the window and grows with its visuals; on narrow screens visuals stack.'),
+    outside.length ? h('div.sbd-hint.sbd-warn', {}, `${outside.length === 1 ? '1 visual reaches' : `${outside.length} visuals reach`} below the page (marked): readers won't see ${outside.length === 1 ? 'it' : 'them'}. Move or resize, or add rows.`) : null,
+    px
+      ? field(
+          'Rows',
+          h('input.sbd-input', {
+            type: 'number',
+            min: 1,
+            max: 60,
+            value: rows,
+            onchange: (e: Event) => {
+              const n = Math.max(1, Math.min(60, Math.round(Number((e.target as HTMLInputElement).value)) || rows));
+              ctx.store.change('page', () => (p.layout = { ...(p.layout ?? {}), rows: n }), p.id);
+            },
+          }),
+        )
+      : null,
   );
 }
