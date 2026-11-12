@@ -20,6 +20,8 @@ registerVisual({
     { key: 'totals', label: 'Totals row', type: 'bool', default: true },
     { key: 'format', label: 'Value formatting', type: 'select', choices: [['none', 'None'], ['bars', 'Data bars'], ['heat', 'Heat colors']], default: 'none' },
     { key: 'density', label: 'Density', type: 'select', choices: [['normal', 'Normal'], ['compact', 'Compact'], ['relaxed', 'Relaxed']], default: 'normal' },
+    { key: 'pageSize', label: 'Rows per page', type: 'select', choices: [['0', 'All (scroll)'], ['10', '10'], ['25', '25'], ['50', '50'], ['100', '100']], default: '0' },
+    { key: 'freeze', label: 'Frozen columns', type: 'select', choices: [['0', 'None'], ['1', 'First column'], ['2', 'First two columns']], default: '0' },
   ],
   sort: 'value',
   limit: 1000,

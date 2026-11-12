@@ -347,6 +347,48 @@ try {
   await page.keyboard.press('Delete');
   await page.locator('.sbd-field-sel button:has-text("Clear")').click().catch(() => {});
 
+  // Table depth: rows per page with a pager, a frozen first column, a column width dragged and saved.
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.visual(document.querySelector('.sb-visual').dataset.id).page;
+    s.change('page', () => pg.visuals.push({ id: 'e2e-table', type: 'table', layout: { x: 0, y: 40, w: 4, h: 6 }, options: { pageSize: '10', freeze: '1' }, fields: { columns: ['products.name', 'products.category', 'products.subcategory'], values: ['sales.Revenue', 'sales.Orders', 'sales.Units', 'sales.Cost'] } }), pg.id);
+  });
+  const tbl = (sel) => `.sb-visual[data-id="e2e-table"] ${sel}`;
+  const paged = await until(page, (sel) => document.querySelectorAll(sel + ' tbody tr').length === 10 && /^1–10 of 28$/.test(document.querySelector(sel + ' .sk-pager-info')?.textContent ?? ''), tbl(''));
+  await page.click(tbl('.sk-pager-btn[aria-label="Next page"]'));
+  const page2 = await until(page, (sel) => /^11–20 of 28$/.test(document.querySelector(sel)?.textContent ?? ''), tbl('.sk-pager-info'));
+  await page.click(tbl('thead th[data-col="3"]'));
+  const sortedBack = await until(page, (sel) => /^1–10 of 28$/.test(document.querySelector(sel)?.textContent ?? ''), tbl('.sk-pager-info'));
+  check(paged && page2 && sortedBack, 'table: 10 rows per page, the pager moves on, sorting returns to page 1');
+  // The frozen first column stays put when the table scrolls sideways.
+  const frozen = await page.evaluate((sel) => {
+    const wrap = document.querySelector(sel + ' .sk-table-wrap');
+    const cell = document.querySelector(sel + ' tbody td.sk-frozen');
+    const other = cell.nextElementSibling;
+    const x0 = cell.getBoundingClientRect().left;
+    const o0 = other.getBoundingClientRect().left;
+    wrap.scrollLeft = 120;
+    return wrap.scrollLeft > 0 && Math.abs(cell.getBoundingClientRect().left - x0) < 1 && other.getBoundingClientRect().left < o0 - 50;
+  }, tbl(''));
+  check(frozen, 'table: the frozen first column stays in view when the table scrolls sideways');
+  // Drag the first column's right edge 60px wider: the width is saved with the visual.
+  await page.evaluate((sel) => (document.querySelector(sel + ' .sk-table-wrap').scrollLeft = 0), tbl(''));
+  const handle = await page.locator(tbl('thead th[data-col="0"] .sk-col-resize')).boundingBox();
+  const w0 = await page.evaluate((sel) => document.querySelector(sel).getBoundingClientRect().width, tbl('thead th[data-col="0"]'));
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + handle.width / 2 + 30, handle.y + handle.height / 2, { steps: 3 });
+  await page.mouse.move(handle.x + handle.width / 2 + 60, handle.y + handle.height / 2, { steps: 3 });
+  await page.mouse.up();
+  const savedWidth = await until(page, (w) => Math.abs((window.smaltbi.store.visual('e2e-table').visual.options.widths?.['products.name'] ?? 0) - (w + 60)) <= 2, w0);
+  const drawnWidth = await until(page, (sel) => Math.abs(document.querySelector(sel).getBoundingClientRect().width - window.smaltbi.store.visual('e2e-table').visual.options.widths['products.name']) <= 1, tbl('thead th[data-col="0"]'));
+  check(savedWidth && drawnWidth, `table: a column dragged wider keeps its width (${w0} → ${JSON.stringify(await page.evaluate(() => window.smaltbi.store.visual('e2e-table').visual.options.widths))})`);
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.visual('e2e-table').page;
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== 'e2e-table')), pg.id);
+  });
+
   // Fixed page sizes (ADR 0006): A4 from the Page tab, a sheet with its rows fitted; Fit to window in Preview.
   await page.keyboard.press('Escape');
   await page.click('.sbd-canvas', { position: { x: 5, y: 5 } });

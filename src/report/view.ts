@@ -20,6 +20,8 @@ export interface ViewOptions {
   onSelectVisual?: (id: string | null) => void;
   /** Edit mode: extra frame decorations (move / resize handles). */
   decorate?: (frame: HTMLElement, v: Visual) => void;
+  /** Edit mode: an option changed on the visual itself (a table's column widths dragged): keep it with the visual. */
+  onOption?: (v: Visual, key: string, value: unknown) => void;
 }
 
 interface VisualRuntime {
@@ -296,6 +298,7 @@ export class ReportView {
         palette: paletteSize(this.session.theme),
         selected: (row) => (keys && !def.slicer ? keys.has(JSON.stringify(this.rowTuple(data, row).map(norm))) : null),
         cellFormat: def.conditional ? cellFormatFor(v, data) : undefined,
+        setOption: this.opts.onOption ? (key, value) => this.opts.onOption!(v, key, value) : undefined,
         api: {
           select: (row, additive) => this.select(v, row, !!additive),
           setFilters: (filters) => this.setSelection(v, filters),

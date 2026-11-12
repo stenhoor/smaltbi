@@ -41,6 +41,9 @@ npm run serve      # http://localhost:8080/designer.html
    - **Several fields at once:** Ctrl-click (⌘-click on a Mac) or Shift-click to select several fields, then drag
      them, or choose *Add*. With no visual selected, they make one chart: the first category field on the axis and
      the measures as its values.
+   - **Tables:** in *Format*, *Rows per page* adds a pager and *Frozen columns* keeps the first columns in view when a
+     wide table scrolls sideways. Drag the right edge of a column's header to set its width, which is saved with the
+     table; double-click the edge to fit the column to its contents again.
    - **Field search:** press `/` and type to find a field. Use ↓ and ↑ to move through the matches and Enter to add
      one; Space selects it, and Esc clears the search.
 4. **Pages and interaction.** Add pages, slicers, drill-through targets and bookmarks. *Preview* shows the report as a

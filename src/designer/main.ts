@@ -95,6 +95,20 @@ class Designer {
         onSelectVisual: (id) => this.select(id),
         onState: () => (this.renderPages(), this.previewBar?.renderTabs()),
         decorate: (frame, v) => this.decorate(frame, v),
+        // Column widths dragged in a table are saved with the visual (not in Preview: that is the reader's view).
+        onOption: this.preview
+          ? undefined
+          : (v, key, value) =>
+              this.store.change(
+                'visual',
+                () => {
+                  const o = { ...(v.options ?? {}) };
+                  if (value === undefined) delete o[key];
+                  else o[key] = value;
+                  v.options = o;
+                },
+                v.id,
+              ),
       },
       state ? { page: state.page } : undefined,
     );
