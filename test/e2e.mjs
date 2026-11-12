@@ -225,6 +225,34 @@ try {
     s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== id)), pg.id);
   }, cfId);
 
+  // Matrix: stepped, a parent row per category with subtotals (and a row total); a caret collapses one.
+  const mxId = await page.evaluate(() => {
+    const id = document.querySelector('.sb-visual.sb-selected')?.dataset.id ?? document.querySelector('.sb-visual').dataset.id;
+    const s = window.smaltbi.store;
+    s.change('visual', () => Object.assign(s.visual(id).visual, { type: 'matrix', conditional: undefined, options: {}, layout: { x: 0, y: 40, w: 8, h: 9 }, fields: { rows: ['products.category', 'products.subcategory'], columns: ['stores.channel'], values: ['sales.Orders'] } }), id);
+    return id;
+  });
+  const mx = (sel) => `.sb-visual[data-id="${mxId}"] ${sel}`;
+  const stepped = await until(page, (sel) => document.querySelectorAll(sel).length === 4 && [...document.querySelectorAll(sel)].every((tr) => [...tr.querySelectorAll('td.sk-subtotal')].every((td) => td.textContent.trim() !== '')), mx('tr.sk-parent'), 10000);
+  const leaves = await page.locator(mx('tbody tr:not(.sk-parent)')).count();
+  check(stepped && leaves > 4, `matrix: stepped, 4 categories with subtotals over ${leaves} subcategories`);
+  await page.locator(mx('tr.sk-parent .sk-caret')).first().click();
+  const collapsed = await until(page, ([sel, n]) => document.querySelectorAll(sel).length < n && document.querySelector(sel.replace(':not(.sk-parent)', '.sk-parent') + ' .sk-caret')?.getAttribute('aria-expanded') === 'false', [mx('tbody tr:not(.sk-parent)'), leaves]);
+  await page.locator(mx('tr.sk-parent .sk-caret')).first().click();
+  const expanded = await until(page, ([sel, n]) => document.querySelectorAll(sel).length === n, [mx('tbody tr:not(.sk-parent)'), leaves]);
+  check(collapsed && expanded, 'matrix: a caret collapses and expands a category');
+  await page.evaluate((id) => {
+    const s = window.smaltbi.store;
+    s.change('visual', () => (s.visual(id).visual.options = { layout: 'tabular' }), id);
+  }, mxId);
+  const tabular = await until(page, (sel) => /subcategory/i.test(document.querySelector(sel + ' table.sk-matrix:not(.sk-stepped) thead tr:last-child th:nth-child(2)')?.textContent ?? ''), `.sb-visual[data-id="${mxId}"]`);
+  check(tabular && !(await page.locator(mx('.sk-parent')).count()), 'matrix: tabular layout, a column per level');
+  await page.evaluate((id) => {
+    const s = window.smaltbi.store;
+    const pg = s.visual(id).page;
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== id)), pg.id);
+  }, mxId);
+
   // Model view: the ER diagram of tables and relationships.
   await page.click('.sbd-seg-btn:has-text("Model")');
   await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4 && document.querySelectorAll('.sbd-mv-rel').length === 3);

@@ -50,6 +50,9 @@ registerVisual({
     { key: 'rowTotals', label: 'Row totals', type: 'bool', default: true },
     { key: 'colTotals', label: 'Column totals', type: 'bool', default: true },
     { key: 'format', label: 'Value formatting', type: 'select', choices: [['none', 'None'], ['heat', 'Heat colors'], ['bars', 'Data bars']], default: 'none' },
+    { key: 'layout', label: 'Layout', type: 'select', choices: [['stepped', 'Stepped (expand and collapse)'], ['tabular', 'Tabular (a column per level)']], default: 'stepped' },
+    { key: 'subtotals', label: 'Subtotals', type: 'bool', default: true, when: { key: 'layout', equals: 'stepped' } },
+    { key: 'collapsed', label: 'Start collapsed', type: 'bool', default: false, when: { key: 'layout', equals: 'stepped' } },
   ],
   sort: 'category',
   limit: 20000,
@@ -65,6 +68,14 @@ registerVisual({
       if (rows.length && ctx.visual.options?.colTotals !== false) extra.colTotals = { dims: cols, measures };
       if (rows.length && cols.length && ctx.visual.options?.rowTotals !== false && ctx.visual.options?.colTotals !== false) extra.grand = { dims: [], measures };
       if (!cols.length && rows.length && ctx.visual.options?.colTotals !== false) extra.colTotals = { dims: [], measures };
+      // Stepped: a parent row per level shows that level's subtotals (sub:k, the first k row fields), and its row total.
+      const o = ctx.visual.options ?? {};
+      if (rows.length > 1 && o.layout !== 'tabular' && o.subtotals !== false) {
+        for (let k = 1; k < rows.length; k++) {
+          extra[`sub:${k}`] = { dims: [...rows.slice(0, k), ...cols], measures };
+          if (extra.rowTotals) extra[`sub:${k}:rt`] = { dims: rows.slice(0, k), measures };
+        }
+      }
     }
     return { main, extra };
   },

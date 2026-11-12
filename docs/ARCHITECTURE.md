@@ -48,7 +48,7 @@ A visual has data **roles** (axis, legend, values, …), each declared by its `V
 1. **Resolves fields.** Hierarchies expand to their levels. For a drillable role with several levels,
    only the current level is used and the levels above become filters (the drill path).
 2. **Plans queries.** The default plan is one query: every dimension role, then every measure role.
-   Visuals can plan more (the matrix plans row, column and grand totals; the KPI card a sparkline).
+   Visuals can plan more (the matrix plans row, column and grand totals, and a subtotal query per row level; the KPI card a sparkline).
 3. **Collects filters.** Report, page and visual filters; a drill-through's filters; and the
    selections of every *other* visual on the page (plus slicers synced from other pages). A visual is
    never filtered by its own selection: it highlights instead.
