@@ -1,9 +1,10 @@
-// Slicers (list, dropdown, buttons, range, search), text boxes and images.
+// Slicers (list, dropdown, buttons, range, search), text boxes and images: smaltkit's controls and markdown.
 import type { Filter, SqlValue } from '../core/types.js';
 import { type RenderContext, registerVisual } from './api.js';
 import { ICONS } from './icons.js';
 import { esc } from 'smaltkit/svg';
 import { choiceControl, rangeControl, searchControl } from 'smaltkit/controls';
+import { markdown } from 'smaltkit/markdown';
 
 function selectedValues(ctx: RenderContext): SqlValue[] | null {
   const f = ctx.api.filters().find((x) => x.op === 'in');
@@ -71,35 +72,6 @@ registerVisual({
   },
 });
 
-/** Minimal, safe markdown: headings, bold, italic, code, links, lists, paragraphs. */
-export function miniMarkdown(src: string): string {
-  const inline = (s: string) =>
-    esc(s)
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/`(.+?)`/g, '<code>$1</code>')
-      .replace(/\[(.+?)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  const out: string[] = [];
-  let list: string[] = [];
-  const flush = () => {
-    if (list.length) out.push(`<ul>${list.map((l) => `<li>${l}</li>`).join('')}</ul>`);
-    list = [];
-  };
-  for (const line of src.split(/\n/)) {
-    const h = /^(#{1,3})\s+(.*)$/.exec(line);
-    const li = /^\s*[-*]\s+(.*)$/.exec(line);
-    if (li) {
-      list.push(inline(li[1]!));
-      continue;
-    }
-    flush();
-    if (h) out.push(`<h${h[1]!.length + 1}>${inline(h[2]!)}</h${h[1]!.length + 1}>`);
-    else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
-  }
-  flush();
-  return out.join('');
-}
-
 registerVisual({
   type: 'text',
   label: 'Text box',
@@ -113,7 +85,8 @@ registerVisual({
   static: true,
   render(ctx) {
     const ms = ctx.data.measures;
-    let html = miniMarkdown(String(ctx.options.text ?? ''));
+    // smaltkit/markdown (grown from this text box's own renderer): `#` is an <h2>, under the visual's title.
+    let html = markdown(String(ctx.options.text ?? ''), { headingOffset: 1 });
     html = html.replace(/\{(\d+)\}/g, (w, i: string) => {
       const m = ms[Number(i)];
       return m && ctx.data.rows ? `<span class="sb-text-value">${esc(m.fmt(m.values[0]!))}</span>` : w;
