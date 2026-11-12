@@ -105,6 +105,7 @@ registerVisual({
 
 registerVisual({
   type: 'card',
+  conditional: true,
   label: 'KPI card',
   group: 'core',
   icon: ICONS.card!,

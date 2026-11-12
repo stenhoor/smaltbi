@@ -81,7 +81,8 @@ from the fact table, so a measure by any related dimension just works.
 **Visuals.** Bar, column, line, area, line-and-column combo, pie, donut, scatter/bubble, KPI card
 (with comparison and sparkline), table (totals, data bars, heat colors, sort), matrix (row/column
 totals as separate queries, so non-additive measures stay correct), slicer (list, dropdown, buttons,
-range, search), text (markdown with live values), image, waterfall, funnel, treemap, heatmap, gauge.
+range, search), text (markdown with live values), conditional formatting of tables, matrices and cards (by value or
+by another measure: colours, backgrounds, icons), image, waterfall, funnel, treemap, heatmap, gauge.
 
 **Interaction.** Cross-filtering between visuals (Ctrl-click to add), slicers (optionally synced across
 pages), drill down/up along hierarchies, drill-through to detail pages, tooltips, "include/exclude

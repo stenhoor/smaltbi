@@ -3,7 +3,7 @@
 import type { Aggregation, Filter, SqlValue, Visual } from '../core/types.js';
 import type { ResolvedField } from '../core/model.js';
 import type { QuerySpec } from '../core/compile.js';
-import type { ChartColumn, ChartContext } from 'smaltkit/charts';
+import type { CellFormat, ChartColumn, ChartContext } from 'smaltkit/charts';
 
 export interface RoleDef {
   name: string;
@@ -75,6 +75,8 @@ export interface RenderContext {
   locale?: string;
   /** null when nothing is selected in this visual, else whether row `i` is selected. */
   selected(row: number): boolean | null;
+  /** Conditional formatting of a measure value (report/conditional.ts); tables, matrices and cards use it. */
+  cellFormat?(column: DataColumn, row: number): CellFormat | null;
   /** Interactions. */
   api: VisualApi;
 }
@@ -109,6 +111,8 @@ export interface VisualDef {
   slicer?: boolean;
   /** Static visuals (text, image) do not query data when they have no fields. */
   static?: boolean;
+  /** Draws conditional formatting (Visual.conditional): tables, matrices and KPI cards. */
+  conditional?: boolean;
   plan?(ctx: PlanContext): Plan;
   render(ctx: RenderContext): void;
 }

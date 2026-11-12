@@ -8,6 +8,7 @@ import { ICONS } from './icons.js';
 
 registerVisual({
   type: 'table',
+  conditional: true,
   label: 'Table',
   group: 'core',
   icon: ICONS.table!,
@@ -36,6 +37,7 @@ registerVisual({
 
 registerVisual({
   type: 'matrix',
+  conditional: true,
   label: 'Matrix',
   group: 'core',
   icon: ICONS.matrix!,

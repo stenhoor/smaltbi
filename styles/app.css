@@ -153,6 +153,9 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-check input { accent-color: var(--d-accent); margin: 0; }
 .sbd-row { display: flex; gap: 6px; align-items: center; }
 /* The measure / calculated column SQL editor (smaltkit/editor, styled by its ui.css). */
+.sbd-rule { display: flex; flex-direction: column; gap: 6px; }
+.sbd-rule-label { color: var(--d-muted); font-size: 12px; }
+.sbd-add-rule { align-self: flex-start; }
 .sbd-code-editor { height: 150px; border: 1px solid var(--d-border); border-radius: 7px; resize: vertical; }
 .sbd-row > .sbd-input { flex: 1; }
 .sbd-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

@@ -188,6 +188,43 @@ try {
   const undone = await until(page, () => document.querySelectorAll('.sb-visual.sb-selected .sk-bar').length === 1);
   check(undone, 'undo removes the added field');
 
+  // Conditional formatting: the selected visual as a table of revenue by category; a rule from the Format tab.
+  const cfId = await page.evaluate(() => {
+    const id = document.querySelector('.sb-visual.sb-selected').dataset.id;
+    const s = window.smaltbi.store;
+    const found = s.visual(id);
+    s.change('visual', () => Object.assign(found.visual, { type: 'table', fields: { columns: ['products.category'], values: ['sales.Revenue'] } }), id);
+    return id;
+  });
+  await until(page, (id) => document.querySelectorAll(`.sb-visual[data-id="${id}"] tbody tr`).length === 4, cfId);
+  await page.click('.sbd-tab:has-text("Format")');
+  await page.click('.sbd-add-rule');
+  await page.selectOption('.sbd-rule select >> nth=0', 'sales.Revenue');
+  await page.selectOption('.sbd-rule select >> nth=2', 'gt');
+  await page.locator('.sbd-rule input[type=number]').fill('150000');
+  await page.locator('.sbd-rule input[type=number]').press('Enter');
+  await page.locator('.sbd-rule input[type=number]').blur();
+  await page.selectOption('.sbd-rule select >> nth=4', 'good');
+  await page.selectOption('.sbd-rule select >> nth=5', 'up');
+  await page.locator('.sbd-rule label.sbd-check input').check();
+  const cfCells = await until(page, (id) => document.querySelectorAll(`.sb-visual[data-id="${id}"] td.sk-tone-good.sk-fill`).length === 2, cfId, 10000);
+  const cf = await page.evaluate((id) => [...document.querySelectorAll(`.sb-visual[data-id="${id}"] tbody tr`)].map((tr) => [tr.cells[0].textContent, tr.cells[1].className, !!tr.cells[1].querySelector('.sk-cf-icon')]), cfId);
+  const rule = await page.evaluate((id) => window.smaltbi.store.visual(id).visual.conditional, cfId);
+  check(cfCells && cf.filter(([, cls, icon]) => /sk-tone-good sk-fill/.test(cls) && icon).map(([c]) => c).sort().join() === 'Coffee,Tea' && cf.filter(([, cls]) => /sk-tone/.test(cls)).length === 2, `conditional formatting: revenue above 150,000 is good, filled, with an icon (${JSON.stringify(cf)} ${JSON.stringify(rule)})`);
+  // A rule may test a measure the table doesn't show (Orders): it is fetched, not drawn.
+  await page.evaluate((id) => {
+    const s = window.smaltbi.store;
+    s.change('visual', () => (s.visual(id).visual.conditional = [{ apply: 'sales.Revenue', test: 'sales.Orders', op: 'gte', value: 1, tone: 'accent' }]), id);
+  }, cfId);
+  const byMeasure = await until(page, (id) => document.querySelectorAll(`.sb-visual[data-id="${id}"] td.sk-tone-accent`).length === 4, cfId, 10000);
+  const headers = await page.evaluate((id) => [...document.querySelectorAll(`.sb-visual[data-id="${id}"] thead th`)].map((th) => th.textContent), cfId);
+  check(byMeasure && headers.length === 2, `conditional formatting by a measure the table doesn't show (${headers})`);
+  await page.evaluate((id) => {
+    const s = window.smaltbi.store;
+    const pg = s.visual(id).page;
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== id)), pg.id);
+  }, cfId);
+
   // Model view: the ER diagram of tables and relationships.
   await page.click('.sbd-seg-btn:has-text("Model")');
   await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4 && document.querySelectorAll('.sbd-mv-rel').length === 3);
