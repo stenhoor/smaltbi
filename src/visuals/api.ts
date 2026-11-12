@@ -79,6 +79,8 @@ export interface RenderContext {
   selected(row: number): boolean | null;
   /** Conditional formatting of a measure value (report/conditional.ts); tables, matrices and cards use it. */
   cellFormat?(column: DataColumn, row: number): CellFormat | null;
+  /** The reader changed an option on the visual (a table's column widths): the designer keeps it. */
+  setOption?(key: string, value: unknown): void;
   /** Interactions. */
   api: VisualApi;
 }
