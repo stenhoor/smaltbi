@@ -1,6 +1,7 @@
 // The right-hand panel: Build (visual types and field wells), Format, Filters and SQL.
 import type { Aggregation, FieldRef, Filter, FilterOp, Page, SqlValue, Visual } from '../core/types.js';
 import { conditionalSection } from './conditional.js';
+import { referenceSection } from './reflines.js';
 import { aggLabel, refName } from '../core/model.js';
 import { quoteIdent } from '../core/sql.js';
 import { type OptionDef, type VisualDef, visualDef, visualDefs } from '../visuals/index.js';
@@ -183,9 +184,11 @@ function formatTab(ctx: PanelContext, v: Visual): HTMLElement {
     field('Subtitle', textInput(v.subtitle ?? '', (val) => set(() => (v.subtitle = val || undefined)))),
   );
   for (const o of def?.options ?? []) {
+    if (o.section) out.append(h('div.sbd-section-title', {}, o.section));
     if (o.when && (v.options?.[o.when.key] ?? def?.options?.find((x) => x.key === o.when!.key)?.default) !== o.when.equals) continue;
     out.append(optionInput(o, v.options?.[o.key] ?? o.default, (val) => set(() => (v.options = { ...(v.options ?? {}), [o.key]: val }))));
   }
+  if (def?.refLines) out.append(referenceSection(ctx, v));
   if (def && !def.static) {
     out.append(
       h('div.sbd-section-title', {}, 'Data'),

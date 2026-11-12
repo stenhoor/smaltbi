@@ -24,6 +24,8 @@ export interface OptionDef {
   default?: unknown;
   /** Show only when another option has a value. */
   when?: { key: string; equals: unknown };
+  /** A heading in the Format tab: options after it, up to the next section, go under it. */
+  section?: string;
 }
 
 /**
@@ -102,6 +104,8 @@ export interface VisualDef {
   group: 'core' | 'advanced' | 'plugin';
   roles: RoleDef[];
   options?: OptionDef[];
+  /** The Format tab offers reference lines (options.refLines, drawn by smaltkit's cartesian charts). */
+  refLines?: boolean;
   /** Default sort: by the first measure descending (`value`), or by the first dimension (`category`). */
   sort?: 'value' | 'category';
   limit?: number;

@@ -253,6 +253,39 @@ try {
     s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== id)), pg.id);
   }, mxId);
 
+  // Chart axes: a continuous date axis, a reference line added in the Format tab, log scale; small multiples.
+  const axId = await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.visual(document.querySelector('.sb-visual').dataset.id).page;
+    const id = 'e2e-axes';
+    s.change('page', () => pg.visuals.push({ id, type: 'line', title: 'Axes', options: { xAxis: 'continuous' }, layout: { x: 0, y: 40, w: 8, h: 7 }, fields: { category: ['sales.order_date'], values: ['sales.Revenue'] } }), pg.id);
+    return id;
+  });
+  const ax = (sel) => `.sb-visual[data-id="${axId}"] ${sel}`;
+  const timeAxis = await until(page, (sel) => [...document.querySelectorAll(sel)].some((t) => /^Jan 2025$/.test(t.textContent)), ax('.sk-tick.sk-cat'));
+  const days = await page.locator(ax('circle.sk-mark')).count();
+  check(timeAxis && days > 300, `chart axis: continuous dates with calendar ticks (${days} days)`);
+  await page.locator(`.sb-visual[data-id="${axId}"]`).click({ position: { x: 20, y: 12 } });
+  await until(page, (id) => document.querySelector(`.sb-visual.sb-selected[data-id="${id}"]`), axId);
+  await page.click('.sbd-tab:has-text("Format")');
+  await page.click('.sbd-add-refline');
+  const refLine = await until(page, ([line, label]) => document.querySelectorAll(line).length === 1 && /^Average: \$\d/.test(document.querySelector(label)?.textContent ?? ''), [ax('line.sk-ref'), ax('text.sk-ref-label')]);
+  check(refLine, 'chart axis: a reference line at the average, added from the Format tab');
+  await page.selectOption('.sbd-field-row:has(span:text-is("Y axis scale")) select', 'log');
+  const logTicks = await until(page, (sel) => [...document.querySelectorAll(sel)].map((t) => t.textContent).join() === '$100,$200,$500,$1K,$2K,$5K,$10K', ax('text.sk-tick:not(.sk-cat)'));
+  check(logTicks, 'chart axis: log scale');
+  await page.evaluate((id) => {
+    const s = window.smaltbi.store;
+    s.change('visual', () => Object.assign(s.visual(id).visual, { type: 'column', options: { legend: 'none' }, fields: { category: ['products.category'], values: ['sales.Revenue'], multiples: ['customers.region'] } }), id);
+  }, axId);
+  const multiples = await until(page, (sel) => document.querySelectorAll(sel + ' .sk-panel').length === 3 && document.querySelectorAll(sel + ' rect.sk-bar').length === 12, `.sb-visual[data-id="${axId}"]`);
+  check(multiples, 'small multiples: a panel per region, 4 categories each');
+  await page.evaluate((id) => {
+    const s = window.smaltbi.store;
+    const pg = s.visual(id).page;
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== id)), pg.id);
+  }, axId);
+
   // Model view: the ER diagram of tables and relationships.
   await page.click('.sbd-seg-btn:has-text("Model")');
   await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4 && document.querySelectorAll('.sbd-mv-rel').length === 3);

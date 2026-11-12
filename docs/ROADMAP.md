@@ -46,8 +46,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - ✓ Conditional formatting rules (by value, by measure, icons) for tables, matrices and cards.
 - ✓ Matrix: stepped layout (the default) with expand/collapse and subtotals per level; tabular layout as an option.
 - Table: pagination for large results, column widths, frozen first column.
-- Continuous time axis for line/area charts (gaps and uneven dates), log scale, reference lines,
-  axis titles, min/max overrides, small multiples.
+- ✓ Chart axes: continuous date/number axis (gaps and uneven dates), log scale, reference lines (value or
+  average/median/min/max), axis titles, min/max overrides, small multiples.
 - Copy/paste visuals between pages and reports; align/distribute tools; snap guides.
 - Mobile layout per page.
 
