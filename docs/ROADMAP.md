@@ -25,17 +25,20 @@ tests and the Chromium end-to-end test green.
 
 Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 
-- Quick measures for time intelligence, written as plain SQL: previous period, year-to-date, same
-  period last year, rolling N (generated from a date column; no new language).
-- "Add date table" in the model view (calendar table, relationship, Year › Quarter › Month › Day).
+- Next, after catching up with the family's engine and smaltkit ([ADR 0006](adr/0006-outside-code-smaltdf-pages-calendar.md)):
+  - "Add date table" in the model view (calendar table, relationship, Year › Quarter › Month › Day), with a
+    fiscal year start, a week start day and ISO weeks.
+  - Quick measures for time intelligence, written as plain SQL: previous period, year-to-date, same
+    period last year, rolling N (generated from a date column; no new language).
 - ✓ Unambiguous models: the model view flags tables reachable by more than one active path, and the
   compiler errors instead of guessing; marking a relationship inactive resolves it.
 - ✓ Relevant values: dimensions filter each other through the fact table (slicers list only values
   with data under the other selections).
-- Fixed page sizes per page (16:9, 4:3, Letter, A4), scaled to fit; responsive stays the default.
-- Extract the shared kit into the `smaltkit` repository and package, used by smaltui and smaltbi
-  ([ADR 0005](adr/0005-smaltkit-and-smalt-brand.md)): the charts, tables, formatting and DOM helpers have moved;
-  the engine loader, data steps and dev scripts are next.
+- Fixed page sizes as an option per page (16:9, 4:3, Letter and A4 portrait or landscape, or a custom size);
+  responsive stays the default. Readers see a fixed page at 100% and scroll, or switch on "Fit to window".
+- ✓ Shared kit in the `smaltkit` repository, used by smaltui, smaltbi and smaltnb
+  ([ADR 0005](adr/0005-smaltkit-and-smalt-brand.md)): charts, tables, controls, formatting, DOM helpers, data steps,
+  URLs and the engine loader. Still to move when another app needs them: the zip writer, local files, dev scripts.
 - Measure editor with completion and syntax highlighting (shared editor kit from smaltui).
 - Field wells: drag to reorder, drag between wells, multi-select; field search with keyboard.
 - Conditional formatting rules (by value, by measure, icons) for tables, matrices and cards.
