@@ -95,7 +95,8 @@ saved in the report); auto layout, detect relationships, zoom and fit; ambiguous
 
 **Designer.** Fields pane, drag-and-drop canvas on a 12-column grid, field wells with aggregation and
 labels, format options, visual/page/report filters (value pickers, between, top N, SQL), a SQL tab that
-shows exactly what runs and lets you replace it, a measure editor with a live test, undo/redo,
+shows exactly what runs and lets you replace it, a measure editor (SQL highlighting, completion of tables, columns and `[measures]` from the model, unknown
+references marked as you type, and a live test that marks where an error is), undo/redo,
 autosave, and a preview mode.
 
 **Themes.** `.theme.json` token files compiled to CSS custom properties: colors, 12-color palette,

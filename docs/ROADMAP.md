@@ -40,7 +40,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - ✓ Shared kit in the `smaltkit` repository, used by smaltui, smaltbi and smaltnb
   ([ADR 0005](adr/0005-smaltkit-and-smalt-brand.md)): charts, tables, controls, formatting, DOM helpers, data steps,
   URLs and the engine loader. Still to move when another app needs them: the zip writer, local files, dev scripts.
-- Measure editor with completion and syntax highlighting (shared editor kit from smaltui).
+- ✓ Measure editor with completion and syntax highlighting (smaltkit's editor, from smaltui), completing from the
+  model and marking unknown `[references]` and test errors.
 - Field wells: drag to reorder, drag between wells, multi-select; field search with keyboard.
 - Conditional formatting rules (by value, by measure, icons) for tables, matrices and cards.
 - Matrix: expand/collapse, stepped layout, subtotals per level.
