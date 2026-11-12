@@ -347,6 +347,50 @@ try {
   await page.keyboard.press('Delete');
   await page.locator('.sbd-field-sel button:has-text("Clear")').click().catch(() => {});
 
+  // Fixed page sizes (ADR 0006): A4 from the Page tab, a sheet with its rows fitted; Fit to window in Preview.
+  await page.keyboard.press('Escape');
+  await page.click('.sbd-canvas', { position: { x: 5, y: 5 } });
+  await page.selectOption('.sbd-page-size select', 'a4');
+  const a4 = await until(page, () => {
+    const sheet = document.querySelector('.sb-sheet[data-size="794x1123"] > .sb-page.sb-fixed');
+    return sheet && Math.round(sheet.getBoundingClientRect().width) === 794 && Math.round(sheet.getBoundingClientRect().height) === 1123;
+  });
+  const fitted = await page.evaluate(() => {
+    // A visual h rows tall spans h rows and h - 1 gaps of the fitted row height: 12 rows fill 1123 - 2 × padding.
+    const grid = document.querySelector('.sb-page.sb-fixed');
+    const cs = getComputedStyle(grid);
+    const row = parseFloat(cs.getPropertyValue('--row'));
+    const gap = parseFloat(cs.rowGap);
+    const pad = parseFloat(cs.paddingTop);
+    return Math.abs(12 * row + 11 * gap + 2 * pad - 1123) < 0.5;
+  });
+  const outside = await page.locator('.sb-visual.sbd-outside').count();
+  const sizeWarned = /below the page/.test((await page.locator('.sbd-page-size .sbd-warn').textContent().catch(() => '')) ?? '');
+  check(a4 && fitted && outside > 0 && sizeWarned, `fixed page: an A4 sheet, 12 rows fill it, ${outside} visuals below it marked and warned`);
+  await page.click('.sbd-page-size .sbd-seg-btn:has-text("Landscape")');
+  const landscape = await until(page, () => !!document.querySelector('.sb-sheet[data-size="1123x794"]'));
+  check(landscape, 'fixed page: landscape turns the sheet');
+  await page.click('.sbd-tbtn:has-text("Preview")');
+  await until(page, () => document.querySelector('.sbd-app')?.classList.contains('sbd-preview') && !document.querySelector('.sbv-fit')?.hidden);
+  await page.evaluate(() => localStorage.removeItem('smaltbi.fitPage'));
+  const full = await page.evaluate(() => document.querySelector('.sb-sheet').dataset.scale);
+  await page.click('.sbv-fit');
+  const fitWindow = await until(page, () => {
+    const sheet = document.querySelector('.sb-sheet');
+    const r = sheet.getBoundingClientRect();
+    return Number(sheet.dataset.scale) < 1 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1;
+  });
+  const remembered = await page.evaluate(() => localStorage.getItem('smaltbi.fitPage'));
+  await page.click('.sbv-fit');
+  const back = await until(page, () => document.querySelector('.sb-sheet').dataset.scale === '1');
+  check(full === '1' && fitWindow && remembered === '1' && back, `fixed page: the reader sees it at 100% (${full}) or fits it to the window, and back`);
+  await page.click('.sbd-tbtn:has-text("Edit")');
+  await until(page, () => !document.querySelector('.sbd-app').classList.contains('sbd-preview'));
+  await page.click('.sbd-canvas', { position: { x: 5, y: 5 } });
+  await page.selectOption('.sbd-page-size select', '');
+  const responsive = await until(page, () => !document.querySelector('.sb-sheet') && !document.querySelector('.sbd-outside'));
+  check(responsive, 'fixed page: back to responsive');
+
   // Model view: the ER diagram of tables and relationships.
   await page.click('.sbd-seg-btn:has-text("Model")');
   await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4 && document.querySelectorAll('.sbd-mv-rel').length === 3);

@@ -120,6 +120,7 @@ Patterns such as `"$#,0.00"` or `"0.0%"` also work.
   "drillthrough": ["customers.country"],       // makes this a drill-through target
   "filters": [ … ],
   "layout": { "rowHeight": 56, "columns": 12, "gap": 12 },   // overrides the theme's page grid
+  "size": { "preset": "a4", "landscape": true },             // optional: a fixed page (below); responsive without it
   "visuals": [
     {
       "id": "c-date",
@@ -142,6 +143,17 @@ Patterns such as `"$#,0.00"` or `"0.0%"` also work.
   ]
 }
 ```
+
+**Page size** (`size`, optional; ADR 0006). Without it a page is responsive: it fills the window and grows with its
+visuals, and on narrow screens the visuals stack. With it the page is a fixed sheet that never reflows:
+
+- `preset` is one of `16:9` (1280 × 720 px), `4:3` (1024 × 768), `letter` (816 × 1056, 8.5 × 11 in) or `a4`
+  (794 × 1123), in CSS pixels at 96 per inch, or `custom` with `width` and `height`.
+- Paper is portrait unless `landscape` is true. Screens are landscape unless `landscape` is false.
+- The page's `layout.rows` (12 by default) fill the sheet's height, so the row height is worked out, not
+  `rowHeight`. Visuals below the last row are cut off; the designer marks them.
+- Readers see the sheet at 100% and scroll, or choose *Fit to window* in the viewer bar, which scales it down. The
+  choice is remembered in their browser.
 
 **Conditional formatting** (`conditional`, tables, matrices and KPI cards) colours measure values and adds icons.
 Each rule formats `apply` (a measure field of the visual, or `"*"` for all) when a test holds: the value itself, or

@@ -35,7 +35,7 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
   compiler errors instead of guessing; marking a relationship inactive resolves it.
 - ✓ Relevant values: dimensions filter each other through the fact table (slicers list only values
   with data under the other selections).
-- Fixed page sizes as an option per page (16:9, 4:3, Letter and A4 portrait or landscape, or a custom size);
+- ✓ Fixed page sizes as an option per page (16:9, 4:3, Letter and A4 portrait or landscape, or a custom size);
   responsive stays the default. Readers see a fixed page at 100% and scroll, or switch on "Fit to window".
 - ✓ Shared kit in the `smaltkit` repository, used by smaltui, smaltbi and smaltnb
   ([ADR 0005](adr/0005-smaltkit-and-smalt-brand.md)): charts, tables, controls, formatting, DOM helpers, data steps,
