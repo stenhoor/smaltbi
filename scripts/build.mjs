@@ -15,7 +15,7 @@ if (args.includes('--tests')) {
   const out = join(root, 'dist-test');
   rmSync(out, { recursive: true, force: true });
   const entries = readdirSync(join(root, 'test')).filter((f) => f.endsWith('.test.ts')).map((f) => join(root, 'test', f));
-  await build({ entryPoints: entries, outdir: out, bundle: true, platform: 'node', format: 'esm', target: 'node20', external: ['smaltdb', 'smaltdb/*', 'smaltql', 'smaltql/*', '@smaltdb/*'], outExtension: { '.js': '.mjs' }, logLevel: 'warning' });
+  await build({ entryPoints: entries, outdir: out, bundle: true, platform: 'node', format: 'esm', target: 'node20', external: ['smaltdb', 'smaltdb/*', '@smaltworks/*', '@smaltdb/*'], outExtension: { '.js': '.mjs' }, logLevel: 'warning' });
   process.exit(0);
 }
 
