@@ -6,5 +6,5 @@ the first round is answered in [ADR 0004](adr/0004-product-decisions.md), the sh
 
 ## Open
 
-1. **Fixed page sizes.** Which presets matter most: 16:9 slides, 4:3, US Letter, A4 (portrait and
-   landscape)?
+None. The last round (fixed page sizes, smaltdf, outside code, the calendar) is answered in
+[ADR 0006](adr/0006-outside-code-smaltdf-pages-calendar.md).

@@ -45,7 +45,8 @@ In:
 
 Out of 1.0 (candidates for plugins or later releases):
 
-- A non-SQL expression language; query engines other than smaltdb.
+- A non-SQL expression language (smaltdf included: dataframes belong in smaltnb, [ADR 0006](adr/0006-outside-code-smaltdf-pages-calendar.md));
+  query engines other than smaltdb.
 - Server features: refresh schedules, sharing/permissions, row-level security, subscriptions, alerts.
 - Maps (need geo shapes: a plugin).
 - Writing back to data sources.
