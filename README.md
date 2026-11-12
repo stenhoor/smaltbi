@@ -74,7 +74,8 @@ cleanup), or report on an existing OPFS database. The step format is smaltui's e
 
 **Model.** Tables and columns come from the database. On top: many-to-one relationships (typed or
 detected), measures (SQL aggregates, `[Measure]` references, `FILTER (WHERE …)`), calculated columns,
-hierarchies, display names, formats and hidden fields. The query compiler joins along relationships
+hierarchies, display names, formats and hidden fields, and a generated date table (calendar, fiscal years, weeks,
+ISO weeks). The query compiler joins along relationships
 from the fact table, so a measure by any related dimension just works.
 
 **Visuals.** Bar, column, line, area, line-and-column combo, pie, donut, scatter/bubble, KPI card

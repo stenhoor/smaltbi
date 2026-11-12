@@ -11,6 +11,7 @@ import { splitRef } from '../core/sql.js';
 import { h, toast } from 'smaltkit/dom';
 import { typeIcon } from '../visuals/icons.js';
 import type { DocStore } from './store.js';
+import { dateTableDialog } from './datetable.js';
 import type { ReportSession } from '../report/session.js';
 
 export type ModelSelection = { kind: 'table'; table: string } | { kind: 'rel'; index: number } | null;
@@ -161,6 +162,11 @@ export class ModelView {
       {},
       h('button.sbd-btn', { title: 'Arrange tables automatically', onclick: () => this.autoArrange() }, 'Auto layout'),
       h('button.sbd-btn', { title: 'Find relationships from foreign keys and column names', onclick: () => this.detect() }, 'Detect relationships'),
+      h(
+        'button.sbd-btn.sbd-mv-datetable',
+        { title: 'A calendar table related to a date column: Year › Quarter › Month › Date, fiscal years and weeks', onclick: () => void dateTableDialog(this.ctx.store, this.model) },
+        this.report.model.dateTable ? 'Date table…' : 'Add date table',
+      ),
       h(
         'span.sbd-mv-zoom',
         {},

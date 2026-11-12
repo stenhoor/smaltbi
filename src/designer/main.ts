@@ -710,7 +710,11 @@ async function boot(): Promise<void> {
   }
   let session: ReportSession;
   try {
-    session = await ReportSession.open(report, base, { engine, files: localFiles, log: (_l, t) => (app.querySelector('.sbv-loading div:last-child')!.textContent = t) });
+    session = await ReportSession.open(report, base, { engine, files: localFiles, log: (_l, t) => {
+      // The loading screen shows progress; the session keeps this log for later reloads, when that screen is gone.
+      const status = app.querySelector('.sbv-loading div:last-child');
+      if (status) status.textContent = t;
+    } });
   } catch (e) {
     console.error(e);
     toast('The saved report could not load its data: ' + (e as Error).message + '. Starting with the sample.', 'error', 8000);
