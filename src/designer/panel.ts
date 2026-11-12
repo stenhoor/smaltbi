@@ -6,7 +6,15 @@ import { aggLabel, refName } from '../core/model.js';
 import { quoteIdent } from '../core/sql.js';
 import { type OptionDef, type VisualDef, visualDef, visualDefs } from '../visuals/index.js';
 import { h, showMenu, toast } from 'smaltkit/dom';
-import { FIELD_MIME } from './fields.js';
+import { FIELD_MIME, draggedRefs } from './fields.js';
+
+/** A chip dragged out of a well: where it came from, and its settings (aggregation, label). */
+const MOVE_MIME = 'application/x-smaltbi-move';
+
+/** After the panel re-renders, put the focus back on a well's chip (keyboard reordering). */
+function focusChip(role: string, i: number): void {
+  requestAnimationFrame(() => document.querySelector<HTMLElement>(`.sbd-well[data-role="${CSS.escape(role)}"] > .sbd-chip[data-i="${i}"]`)?.focus());
+}
 import type { DocStore } from './store.js';
 import type { ReportSession } from '../report/session.js';
 import type { ReportView } from '../report/view.js';
@@ -121,9 +129,31 @@ function well(ctx: PanelContext, v: Visual, def: VisualDef, roleName: string): H
       'div.sbd-chip' + (kind === 'measure' ? '.sbd-measure' : ''),
       {
         draggable: true,
+        tabIndex: 0,
+        'data-i': i,
+        'aria-label': `${label}: Alt+Up and Alt+Down move it, Delete removes it`,
         ondragstart: (e: Event) => {
-          (e as DragEvent).dataTransfer!.setData(FIELD_MIME, ref);
-          (e as DragEvent).dataTransfer!.setData('application/x-smaltbi-move', JSON.stringify({ role: roleName, i }));
+          const dt = (e as DragEvent).dataTransfer!;
+          dt.setData(FIELD_MIME, ref);
+          dt.setData(MOVE_MIME, JSON.stringify({ visual: v.id, role: roleName, i, spec: r }));
+          dt.effectAllowed = 'copyMove';
+          (e.currentTarget as HTMLElement).classList.add('sbd-moving');
+        },
+        ondragend: (e: Event) => (e.currentTarget as HTMLElement).classList.remove('sbd-moving'),
+        onkeydown: (e: Event) => {
+          const ke = e as KeyboardEvent;
+          const to = ke.key === 'ArrowUp' ? i - 1 : ke.key === 'ArrowDown' ? i + 1 : -2;
+          if (ke.altKey && to >= 0 && to < refs.length) {
+            ke.preventDefault();
+            ke.stopPropagation();
+            update((l) => l.splice(to, 0, l.splice(i, 1)[0]!));
+            focusChip(roleName, to);
+          } else if (ke.key === 'Delete' || ke.key === 'Backspace') {
+            ke.preventDefault();
+            ke.stopPropagation();
+            update((l) => l.splice(i, 1));
+            focusChip(roleName, Math.min(i, refs.length - 2));
+          }
         },
       },
       h('span.sbd-chip-label', { title: ref }, label),
@@ -138,32 +168,67 @@ function well(ctx: PanelContext, v: Visual, def: VisualDef, roleName: string): H
     ...chips,
     h('div.sbd-drop', {}, refs.length ? '' : 'Drop a field here'),
   );
+  /** Where a drop lands: before the chip under the pointer's upper half, else after it; the end otherwise. */
+  const dropIndex = (e: DragEvent) => {
+    const list = [...zone.querySelectorAll<HTMLElement>(':scope > .sbd-chip')];
+    const at = list.findIndex((c) => {
+      const r = c.getBoundingClientRect();
+      return e.clientY < r.top + r.height / 2;
+    });
+    return at < 0 ? list.length : at;
+  };
+  const marker = h('div.sbd-insert');
+  const showMarker = (at: number) => {
+    const list = [...zone.querySelectorAll<HTMLElement>(':scope > .sbd-chip')];
+    const before = list[at] ?? zone.querySelector(':scope > .sbd-drop');
+    if (before && marker.nextSibling !== before) zone.insertBefore(marker, before);
+  };
   zone.addEventListener('dragover', (e) => {
     if (e.dataTransfer?.types.includes(FIELD_MIME)) {
       e.preventDefault();
+      if (e.dataTransfer.types.includes(MOVE_MIME)) e.dataTransfer.dropEffect = 'move';
       zone.classList.add('sbd-over');
+      showMarker(dropIndex(e));
     }
   });
-  zone.addEventListener('dragleave', () => zone.classList.remove('sbd-over'));
+  zone.addEventListener('dragleave', (e) => {
+    if (zone.contains(e.relatedTarget as Node)) return;
+    zone.classList.remove('sbd-over');
+    marker.remove();
+  });
   zone.addEventListener('drop', (e) => {
     e.preventDefault();
     zone.classList.remove('sbd-over');
-    const ref = e.dataTransfer!.getData(FIELD_MIME);
-    if (!ref) return;
-    const move = e.dataTransfer!.getData('application/x-smaltbi-move');
+    marker.remove();
+    const refsIn = draggedRefs(e.dataTransfer);
+    if (!refsIn.length) return;
+    let at = dropIndex(e);
+    const moveData = e.dataTransfer!.getData(MOVE_MIME);
+    const move = moveData ? (JSON.parse(moveData) as { visual: string; role: string; i: number; spec: FieldRef }) : null;
     ctx.store.change(
       'visual',
       () => {
         const fields = { ...v.fields };
-        if (move) {
-          const m = JSON.parse(move) as { role: string; i: number };
-          const from = [...(fields[m.role] ?? [])];
-          from.splice(m.i, 1);
-          fields[m.role] = from;
+        let incoming: FieldRef[] = refsIn;
+        if (move && move.visual === v.id) {
+          // A chip moved within this visual: take it out of its well (keeping its aggregation and label).
+          const from = [...(fields[move.role] ?? [])];
+          from.splice(move.i, 1);
+          fields[move.role] = from;
+          if (move.role === roleName && move.i < at) at--;
+          const spec = move.spec;
+          // A dimension well has no aggregation.
+          incoming = [role.kind === 'dimension' && typeof spec !== 'string' && spec.agg ? (spec.label ? { field: spec.field, label: spec.label } : spec.field) : spec];
         }
         const list = [...(fields[roleName] ?? [])];
-        if (role.max && list.length >= role.max) list.splice(role.max - 1);
-        list.push(ref);
+        list.splice(at, 0, ...incoming);
+        // A well with a maximum keeps the dropped fields (and as many of the others as fit).
+        if (role.max && list.length > role.max) {
+          const keep = new Set(incoming);
+          let extra = list.length - role.max;
+          for (let j = list.length - 1; j >= 0 && extra > 0; j--) if (!keep.has(list[j]!)) (list.splice(j, 1), extra--);
+          list.splice(role.max);
+        }
         fields[roleName] = list;
         v.fields = fields;
       },
@@ -331,8 +396,8 @@ function filterSection(ctx: PanelContext, title: string, filters: Filter[], save
   drop.addEventListener('dragleave', () => drop.classList.remove('sbd-over'));
   drop.addEventListener('drop', (e) => {
     e.preventDefault();
-    const ref = e.dataTransfer!.getData(FIELD_MIME);
-    if (ref) save([...filters, defaultFilter(ctx, ref)]);
+    const refs = draggedRefs(e.dataTransfer);
+    if (refs.length) save([...filters, ...refs.map((r) => defaultFilter(ctx, r))]);
   });
   sec.append(drop);
   return sec;

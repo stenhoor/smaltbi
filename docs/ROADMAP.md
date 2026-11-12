@@ -42,7 +42,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
   URLs and the engine loader. Still to move when another app needs them: the zip writer, local files, dev scripts.
 - ✓ Measure editor with completion and syntax highlighting (smaltkit's editor, from smaltui), completing from the
   model and marking unknown `[references]` and test errors.
-- Field wells: drag to reorder, drag between wells, multi-select; field search with keyboard.
+- ✓ Field wells: drag to reorder (and Alt+↑/↓), drag between wells keeping the field's settings, multi-select;
+  field search with keyboard (`/`, arrows, Enter).
 - ✓ Conditional formatting rules (by value, by measure, icons) for tables, matrices and cards.
 - ✓ Matrix: stepped layout (the default) with expand/collapse and subtotals per level; tabular layout as an option.
 - Table: pagination for large results, column widths, frozen first column.

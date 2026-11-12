@@ -36,6 +36,13 @@ npm run serve      # http://localhost:8080/designer.html
    months: no SQL to write.
 3. **Visuals.** Back in *Report*, click a field to add a visual, or drag fields onto the canvas and into a visual's
    wells. The side panel changes its type, format, filters and SQL.
+   - **Wells:** drop a field where you want it in a well. Drag a field from one well to another to move it; its
+     aggregation and label move with it. Alt+↑ and Alt+↓ reorder the focused field, and Delete removes it.
+   - **Several fields at once:** Ctrl-click (⌘-click on a Mac) or Shift-click to select several fields, then drag
+     them, or choose *Add*. With no visual selected, they make one chart: the first category field on the axis and
+     the measures as its values.
+   - **Field search:** press `/` and type to find a field. Use ↓ and ↑ to move through the matches and Enter to add
+     one; Space selects it, and Esc clears the search.
 4. **Pages and interaction.** Add pages, slicers, drill-through targets and bookmarks. *Preview* shows the report as a
    reader sees it.
 
