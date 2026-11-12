@@ -157,9 +157,9 @@ A field in `fields` can also be an object: `{ "field": "sales.quantity", "agg": 
 
 | Type | Roles (kind) | Notable options |
 |---|---|---|
-| `bar`, `column` | category (dim, drill), series (dim, 1), values (measure) | `stack`: none/stacked/percent, `labels`, `legend` |
-| `line`, `area` | category (dim, drill), series (dim, 1), values (measure) | `smooth`, `markers`, `stack` (area) |
-| `combo` | category (dim, drill), columns (measure), lines (measure) | `secondaryAxis` |
+| `bar`, `column` | category (dim, drill), series (dim, 1), values (measure), multiples (dim, 1) | `stack`: none/stacked/percent, `labels`, `legend`, and the axis options below |
+| `line`, `area` | category (dim, drill), series (dim, 1), values (measure), multiples (dim, 1) | `smooth`, `markers`, `stack` (area), and the axis options below |
+| `combo` | category (dim, drill), columns (measure), lines (measure), multiples (dim, 1) | `secondaryAxis`, `y2Title`, and the axis options below |
 | `pie`, `donut` | category (dim, drill), values (measure, 1) | `labels`, `legend`, `center` |
 | `scatter` | details (dim), legend (dim, 1), x, y, size (measure, 1 each) | `zero` |
 | `card` | values, target (measure, 1), trend (dim, 1) | `compare`: delta/value/none, `goodWhen`, `caption` |
@@ -173,6 +173,16 @@ A field in `fields` can also be an object: `{ "field": "sales.quantity", "agg": 
 | `treemap` | category (dim, drill), values (measure, 1) | `labels` |
 | `heatmap` | rows, columns (dim, 1 each), values (measure, 1) | `labels` |
 | `gauge` | values, target, max (measure, 1 each) | `maxValue` |
+
+Axis options of bar, column, line, area and combo charts:
+
+- `xAxis`: `category` (default) or `continuous`. Continuous places dates (and numbers) by value, so gaps and uneven
+  dates show; categories that aren't dates or numbers stay evenly spaced. Not for bar charts.
+- `yScale`: `linear` or `log` (positive values; ignored when stacked). `yMin`, `yMax` fix the value axis's ends.
+- `xTitle`, `yTitle`: axis titles.
+- `refLines`: `[{ "value": 1500, "label": "Target", "tone": "good" }, { "stat": "avg" }]`. `stat` is one of
+  `avg`, `median`, `min` and `max` of the first series, and `tone` is one of `good`, `bad`, `warn` and `accent`.
+- A `multiples` field draws a small chart per value, up to 24, all with the same scale.
 
 ## filters
 
