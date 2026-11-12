@@ -121,6 +121,7 @@ Patterns such as `"$#,0.00"` or `"0.0%"` also work.
   "filters": [ … ],
   "layout": { "rowHeight": 56, "columns": 12, "gap": 12 },   // overrides the theme's page grid
   "size": { "preset": "a4", "landscape": true },             // optional: a fixed page (below); responsive without it
+  "phoneOrder": ["k-rev", "c-date"],                         // optional: phone column order (the rest follow)
   "visuals": [
     {
       "id": "c-date",
@@ -135,6 +136,7 @@ Patterns such as `"$#,0.00"` or `"0.0%"` also work.
       "sql": "SELECT …",                                    // optional custom SQL
       "interactions": { "filterOthers": true, "filteredByOthers": true },
       "style": { "surface": "#ffffff" },                   // per-visual theme token overrides
+      "phone": { "hidden": false, "h": 4 },                // optional: on phones, hidden or its own height (rows)
       "conditional": [                                     // tables, matrices, cards: first matching rule wins
         { "apply": "sales.Revenue", "op": "lt", "compare": "sales.Revenue LY", "tone": "bad", "icon": "down" },
         { "apply": "*", "op": "gt", "value": 100000, "tone": "good", "fill": true }
@@ -154,6 +156,11 @@ visuals, and on narrow screens the visuals stack. With it the page is a fixed sh
   `rowHeight`. Visuals below the last row are cut off; the designer marks them.
 - Readers see the sheet at 100% and scroll, or choose *Fit to window* in the viewer bar, which scales it down. The
   choice is remembered in their browser.
+
+**On phones** (ADR 0007): a report narrower than 720px shows every page, fixed-size ones included, as one column.
+The visuals come in reading order (top to bottom, then left to right) at their desktop height. `phoneOrder` lists
+the ids that come first, in that order. A visual's `phone.hidden` leaves it out on phones, and `phone.h` sets its
+height in rows there.
 
 **Conditional formatting** (`conditional`, tables, matrices and KPI cards) colours measure values and adds icons.
 Each rule formats `apply` (a measure field of the visual, or `"*"` for all) when a test holds: the value itself, or

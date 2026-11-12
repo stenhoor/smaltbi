@@ -347,6 +347,57 @@ try {
   await page.keyboard.press('Delete');
   await page.locator('.sbd-field-sel button:has-text("Clear")').click().catch(() => {});
 
+  // Phone view: the page as one column in reading order; a visual hidden on phones, another moved up; a fixed-size
+  // page reflows into the column too.
+  await page.keyboard.press('Escape');
+  await page.click('.sbd-phone-btn');
+  const column = await until(page, () => {
+    const r = document.querySelector('.sb-report');
+    const frames = [...document.querySelectorAll('.sb-page > .sb-visual')].filter((f) => f.getBoundingClientRect().height > 0);
+    const lefts = new Set(frames.map((f) => Math.round(f.getBoundingClientRect().left)));
+    return Math.round(r.getBoundingClientRect().width) === 390 && frames.length > 5 && lefts.size === 1;
+  });
+  const shown = () => page.evaluate(() => [...document.querySelectorAll('.sb-page > .sb-visual')].filter((f) => f.getBoundingClientRect().height > 0).sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top).map((f) => f.dataset.id));
+  const reading = await page.evaluate(() => {
+    const pg = window.smaltbi.page;
+    return pg.visuals.map((v, i) => ({ v, i })).sort((a, b) => a.v.layout.y - b.v.layout.y || a.v.layout.x - b.v.layout.x || a.i - b.i).map((x) => x.v.id);
+  });
+  const firstOrder = await shown();
+  check(column && JSON.stringify(firstOrder) === JSON.stringify(reading), `phone view: one 390px column in reading order (${firstOrder.join(' ')})`);
+  // Hide the third visual on phones, and move the fifth up one place, from the Format tab.
+  await page.locator(`.sb-visual[data-id="${reading[2]}"]`).click({ position: { x: 12, y: 12 } });
+  await page.click('.sbd-tab:has-text("Format")');
+  await page.locator('.sbd-phone label.sbd-check input').uncheck();
+  const hidden = await until(page, (id) => document.querySelector(`.sb-visual[data-id="${id}"]`)?.getBoundingClientRect().height === 0 && window.smaltbi.page.visuals.find((v) => v.id === id).phone?.hidden === true, reading[2]);
+  await page.locator(`.sb-visual[data-id="${reading[4]}"]`).click({ position: { x: 12, y: 12 } });
+  await page.click('.sbd-phone-up');
+  const movedUp = await until(page, (ids) => {
+    const order = window.smaltbi.page.phoneOrder ?? [];
+    return order.indexOf(ids[1]) === order.indexOf(ids[0]) - 1;
+  }, [reading[3], reading[4]]);
+  const afterMove = await shown();
+  check(hidden && movedUp && afterMove.indexOf(reading[4]) < afterMove.indexOf(reading[3]) && !afterMove.includes(reading[2]), `phone view: hidden on phones and moved up (${afterMove.join(' ')})`);
+  // A fixed-size page is a column on a phone too: no sheet.
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('page', () => (d.page.size = { preset: 'a4' }), d.page.id);
+  });
+  const reflowed = await until(page, () => !document.querySelector('.sb-sheet') && document.querySelector('.sb-page:not(.sb-fixed)'));
+  check(reflowed, 'phone view: a fixed-size page reflows into the column');
+  // Back to desktop: the hidden visual is there; the phone settings stay with the page.
+  await page.click('.sbd-phone-btn');
+  const desktop = await until(page, (id) => document.querySelector('.sb-sheet') && document.querySelector(`.sb-visual[data-id="${id}"]`)?.getBoundingClientRect().height > 0, reading[2]);
+  check(desktop, 'phone view off: the A4 sheet is back and the visual hidden on phones shows on the desktop');
+  await page.evaluate((id) => {
+    const d = window.smaltbi;
+    d.store.change('page', () => {
+      delete d.page.size;
+      delete d.page.phoneOrder;
+      delete d.page.visuals.find((v) => v.id === id).phone;
+    }, d.page.id);
+  }, reading[2]);
+  await until(page, () => !document.querySelector('.sb-sheet'));
+
   // Arranging: Shift-click several visuals, align them, nudge with the arrows, drag them together with snap guides,
   // copy them and paste them on another page.
   await page.evaluate(() => {
@@ -698,6 +749,19 @@ try {
   await until(viewer, (sel) => document.querySelectorAll(sel).length >= 4, '.sk-kpi-value');
   const units = await viewer.locator('.sk-kpi-value').count();
   check(units >= 4, `published report has its cards (${units})`);
+  // On a phone the published report is one column in reading order, its tabs above.
+  const phoneViewer = await newPage(browser, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  phoneViewer.on('pageerror', (e) => errors.push('phone viewer: ' + e.message));
+  await phoneViewer.goto(`http://localhost:${port2}/`);
+  await phoneViewer.waitForSelector('.sb-visual[data-id=c-cat] .sk-bar', { timeout: 20000 });
+  const phoneCol = await until(phoneViewer, () => {
+    const frames = [...document.querySelectorAll('.sb-page > .sb-visual')];
+    const lefts = new Set(frames.map((f) => Math.round(f.getBoundingClientRect().left)));
+    const fits = frames.every((f) => f.getBoundingClientRect().right <= innerWidth + 1);
+    return frames.length > 5 && lefts.size === 1 && fits && document.documentElement.scrollWidth <= innerWidth + 1;
+  });
+  check(phoneCol, 'published report on a phone: one column, no sideways scrolling');
+  await phoneViewer.close();
   // The header carries the smaltbi mark, and the colour-mode button an SVG icon instead of a glyph.
   const header = await viewer.evaluate(() => {
     const img = [...document.querySelectorAll('.sbv-mark img')].find((i) => getComputedStyle(i).display !== 'none');

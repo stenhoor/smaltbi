@@ -8,6 +8,7 @@ import { type OptionDef, type VisualDef, visualDef, visualDefs } from '../visual
 import { h, showMenu, toast } from 'smaltkit/dom';
 import { FIELD_MIME, draggedRefs } from './fields.js';
 import { PAGE_PRESETS, pageGeometry, pageSize } from '../theme/theme.js';
+import { movePhone, phoneSequence } from '../report/phone.js';
 
 /** A chip dragged out of a well: where it came from, and its settings (aggregation, label). */
 const MOVE_MIME = 'application/x-smaltbi-move';
@@ -284,6 +285,7 @@ function formatTab(ctx: PanelContext, v: Visual): HTMLElement {
       }),
     ),
     ...(v.style ? [h('button.sbd-link', { onclick: () => set(() => delete v.style) }, 'Reset to theme')] : []),
+    phoneSection(ctx, v),
     h('div.sbd-section-title', {}, 'Position'),
     h(
       'div.sbd-grid4',
@@ -605,5 +607,59 @@ function pageSizeSection(ctx: PanelContext, p: Page): HTMLElement {
           }),
         )
       : null,
+  );
+}
+
+/** On phones the page is one column: show or hide this visual there, its height, and its place in the column. */
+function phoneSection(ctx: PanelContext, v: Visual): HTMLElement {
+  const p = ctx.page;
+  const seq = phoneSequence(p).map((x) => x.id);
+  const at = seq.indexOf(v.id);
+  const setPhone = (next: Visual['phone']) =>
+    ctx.store.change(
+      'layout',
+      () => {
+        const clean = { ...(v.phone ?? {}), ...next };
+        if (!clean.hidden) delete clean.hidden;
+        if (!clean.h) delete clean.h;
+        if (Object.keys(clean).length) v.phone = clean;
+        else delete v.phone;
+      },
+      v.id,
+    );
+  const move = (by: -1 | 1) => ctx.store.change('layout', () => (p.phoneOrder = movePhone(p, v.id, by)), v.id);
+  return h(
+    'div.sbd-phone',
+    {},
+    h('div.sbd-section-title', {}, 'On phones'),
+    checkbox('Show on phones', !v.phone?.hidden, (on) => setPhone({ hidden: !on })),
+    h(
+      'div.sbd-grid2',
+      {},
+      field(
+        'Height (rows)',
+        h('input.sbd-input', {
+          type: 'number',
+          min: 1,
+          max: 40,
+          value: v.phone?.h ?? '',
+          placeholder: String(v.layout.h),
+          onchange: (e: Event) => {
+            const n = Math.round(Number((e.target as HTMLInputElement).value));
+            setPhone({ h: n >= 1 && n <= 40 ? n : undefined });
+          },
+        }),
+      ),
+      field(
+        `Place: ${at + 1} of ${seq.length}`,
+        h(
+          'div.sbd-row',
+          {},
+          h('button.sbd-btn.sbd-phone-up', { title: 'Earlier in the phone column', disabled: at <= 0, onclick: () => move(-1) }, '↑ Up'),
+          h('button.sbd-btn.sbd-phone-down', { title: 'Later in the phone column', disabled: at < 0 || at >= seq.length - 1, onclick: () => move(1) }, '↓ Down'),
+        ),
+      ),
+    ),
+    p.phoneOrder ? h('button.sbd-link', { onclick: () => ctx.store.change('layout', () => delete p.phoneOrder, v.id) }, 'Back to reading order') : null,
   );
 }
