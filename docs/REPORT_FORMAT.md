@@ -164,7 +164,7 @@ A field in `fields` can also be an object: `{ "field": "sales.quantity", "agg": 
 | `scatter` | details (dim), legend (dim, 1), x, y, size (measure, 1 each) | `zero` |
 | `card` | values, target (measure, 1), trend (dim, 1) | `compare`: delta/value/none, `goodWhen`, `caption` |
 | `table` | columns (dim), values (measure) | `totals`, `format`: none/bars/heat, `density` |
-| `matrix` | rows (dim), columns (dim, 2), values (measure) | `rowTotals`, `colTotals`, `format` |
+| `matrix` | rows (dim), columns (dim, 2), values (measure) | `rowTotals`, `colTotals`, `format`, `layout` (`stepped`: one indented row-header column, parents expand and collapse; `tabular`: a column per row field), `subtotals` (stepped: parent rows show their level's subtotals), `collapsed` (start with parents collapsed) |
 | `slicer` | field (dim, 1) | `style`: list/dropdown/buttons/range/search, `single`, `sync` |
 | `text` | values (measure) for `{0}`, `{1}` | `text` (markdown subset), `align` |
 | `image` | — | `url`, `alt`, `fit` |
