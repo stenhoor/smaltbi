@@ -12,7 +12,7 @@ import { dialog, download, fileName, h, pickFile, showMenu, toast } from 'smaltk
 import { localFiles } from '../kit/files.js';
 import { corsHint } from 'smaltkit/urls';
 import { DocStore, emptyReport, freeSpot, newId, type ChangeKind } from './store.js';
-import { FIELD_MIME, fieldsPane } from './fields.js';
+import { FIELD_MIME, draggedRefs, fieldsPane } from './fields.js';
 import { defaultFilter, panel } from './panel.js';
 import { dataDialog, measureDialog, publishDialog, themeDialog, type DialogContext } from './dialogs.js';
 import { quickMeasureDialog } from './quickmeasure.js';
@@ -32,6 +32,9 @@ class Designer {
   modelSel: ModelSelection = null;
   private modelView: ModelView | null = null;
   collapsed = new Set<string>();
+  /** Fields selected in the Fields pane (Ctrl/Cmd- or Shift-click), and its search text: kept across re-renders. */
+  fieldSelection = new Set<string>();
+  fieldQuery = { value: '' };
   private previewBar: ReturnType<typeof viewerBar> | undefined;
   private fieldsHost = h('aside.sbd-left');
   private panelHost = h('aside.sbd-right');
@@ -300,6 +303,7 @@ class Designer {
         this.session.model,
         {
           add: (ref) => this.addField(ref),
+          addAll: (refs) => this.addFields(refs),
           newMeasure: (t) => void measureDialog(this.dctx, t),
           newColumn: (t) => void measureDialog(this.dctx, t, undefined, 'column'),
           editMeasure: (t, n) => void this.editMeasure(t, n),
@@ -314,6 +318,8 @@ class Designer {
           },
         },
         this.collapsed,
+        this.fieldSelection,
+        this.fieldQuery,
       ),
     );
   }
@@ -477,6 +483,33 @@ class Designer {
     );
   }
 
+  /**
+   * Several fields at once (a multi-selection clicked, dragged or added with Enter): into `target` or the selected
+   * visual, else a new visual: the first category field on the axis of a bar (or column, for dates) chart with the
+   * measures as its values, or a card (one measure) or table (several).
+   */
+  addFields(refs: string[], target?: Visual, at?: { x: number; y: number }): void {
+    if (refs.length === 1 || this.mode === 'model') return this.addField(refs[0]!, target);
+    if (!refs.length) return;
+    const sel = target ?? (this.selected ? this.store.visual(this.selected)?.visual : undefined);
+    if (sel) {
+      for (const r of refs) this.addField(r, sel);
+      return;
+    }
+    const model = this.session.model;
+    const isValue = (r: string) => model.kindOf(r) === 'measure' || (model.kindOf(r) === 'column' && model.column(r)?.type === 'number');
+    const values = refs.filter(isValue);
+    const dims = refs.filter((r) => !isValue(r));
+    if (!dims.length) this.createVisual(values.length === 1 ? 'card' : 'table', { values }, at);
+    else {
+      const first = dims[0]!;
+      const dateLike = model.kindOf(first) === 'hierarchy' || model.column(first)?.type === 'date';
+      this.createVisual(dateLike ? 'column' : 'bar', { category: [first], ...(values.length ? { values } : {}) }, at);
+      const v = this.selected ? this.store.visual(this.selected)?.visual : undefined;
+      for (const r of dims.slice(1)) if (v) this.addField(r, v);
+    }
+  }
+
   /** Click on a field: add it to the selected visual's best role, or start a new visual. */
   addField(ref: string, target?: Visual): void {
     if (this.mode === 'model') {
@@ -572,8 +605,8 @@ class Designer {
       e.preventDefault();
       e.stopPropagation();
       frame.classList.remove('sbd-drop-target');
-      const ref = e.dataTransfer!.getData(FIELD_MIME);
-      if (ref) this.addField(ref, v);
+      const refs = draggedRefs(e.dataTransfer);
+      if (refs.length) this.addFields(refs, v);
     });
   }
 
@@ -583,7 +616,8 @@ class Designer {
       if (!this.preview && this.mode === 'report' && e.dataTransfer?.types.includes(FIELD_MIME)) e.preventDefault();
     });
     this.canvasHost.addEventListener('drop', (e) => {
-      const ref = e.dataTransfer?.getData(FIELD_MIME);
+      const refs = draggedRefs(e.dataTransfer);
+      const ref = refs[0];
       if (!ref || this.preview || this.mode !== 'report') return;
       e.preventDefault();
       const grid = this.canvasHost.querySelector('.sb-page') as HTMLElement | null;
@@ -596,7 +630,8 @@ class Designer {
       const kind = this.session.model.kindOf(ref);
       const numeric = kind === 'column' && this.session.model.column(ref)?.type === 'number';
       this.selected = null;
-      if (kind === 'measure' || numeric) this.createVisual('card', { values: [ref] }, at);
+      if (refs.length > 1) this.addFields(refs, undefined, at);
+      else if (kind === 'measure' || numeric) this.createVisual('card', { values: [ref] }, at);
       else if (kind === 'hierarchy' || this.session.model.column(ref)?.type === 'date') this.createVisual('column', { category: [ref] }, at);
       else this.createVisual('bar', { category: [ref] }, at);
     });
@@ -614,6 +649,15 @@ class Designer {
         e.preventDefault();
         this.save();
       } else if (typing) return;
+      else if (e.key === '/' && !mod && this.mode === 'report' && !this.preview) {
+        // "/" jumps to the field search (as in many web apps).
+        const search = this.fieldsHost.querySelector<HTMLInputElement>('.sbd-search');
+        if (search) {
+          e.preventDefault();
+          search.focus();
+          search.select();
+        }
+      }
       else if (mod && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         if (e.shiftKey) this.store.redo();

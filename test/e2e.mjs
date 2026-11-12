@@ -286,6 +286,67 @@ try {
     s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== id)), pg.id);
   }, axId);
 
+  // Designer ergonomics: wells reorder by drag and keyboard, moves keep a field's settings; multi-select; field search.
+  const wellIds = await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.visual(document.querySelector('.sb-visual').dataset.id).page;
+    s.change('page', () => pg.visuals.push({ id: 'e2e-wells', type: 'column', layout: { x: 0, y: 40, w: 6, h: 5 }, fields: { category: [{ field: 'products.category', label: 'Cat' }], values: ['sales.Revenue', 'sales.Orders', 'sales.Units'] } }), pg.id);
+    return 'e2e-wells';
+  });
+  const wellFields = () => page.evaluate((id) => JSON.stringify(window.smaltbi.store.visual(id).visual.fields), wellIds);
+  await page.locator(`.sb-visual[data-id="${wellIds}"]`).click({ position: { x: 20, y: 12 } });
+  await page.click('.sbd-tab:has-text("Build")');
+  await until(page, () => document.querySelectorAll('.sbd-well[data-role="values"] > .sbd-chip').length === 3);
+  // Drag Units onto the top half of Revenue: it goes first.
+  await page.locator('.sbd-well[data-role="values"] > .sbd-chip >> nth=2').dragTo(page.locator('.sbd-well[data-role="values"] > .sbd-chip >> nth=0'), { targetPosition: { x: 20, y: 3 } });
+  const reordered = await until(page, (id) => JSON.stringify(window.smaltbi.store.visual(id).visual.fields.values) === '["sales.Units","sales.Revenue","sales.Orders"]', wellIds);
+  check(reordered, `field wells: drag to reorder (${await wellFields()})`);
+  // Alt+Down moves the focused chip down.
+  await page.locator('.sbd-well[data-role="values"] > .sbd-chip >> nth=0').focus();
+  await page.keyboard.press('Alt+ArrowDown');
+  const keyed = await until(page, (id) => JSON.stringify(window.smaltbi.store.visual(id).visual.fields.values) === '["sales.Revenue","sales.Units","sales.Orders"]', wellIds);
+  check(keyed, `field wells: Alt+Down reorders from the keyboard (${await wellFields()})`);
+  // Drag the axis field (renamed "Cat") into the legend well: it moves, label kept.
+  await page.locator('.sbd-well[data-role="category"] > .sbd-chip').dragTo(page.locator('.sbd-well[data-role="series"]'));
+  const moved = await until(page, (id) => {
+    const f = window.smaltbi.store.visual(id).visual.fields;
+    return !(f.category ?? []).length && JSON.stringify(f.series) === '[{"field":"products.category","label":"Cat"}]';
+  }, wellIds);
+  check(moved, `field wells: drag between wells keeps the field's label (${await wellFields()})`);
+  // Field search from the keyboard: "/" focuses it, typing filters, Down + Enter adds the match to the selected visual.
+  await page.locator('.sbd-canvas').click({ position: { x: 3, y: 3 } }).catch(() => {});
+  await page.locator(`.sb-visual[data-id="${wellIds}"]`).click({ position: { x: 20, y: 12 } });
+  await page.keyboard.press('/');
+  const searchFocused = await until(page, () => document.activeElement?.classList.contains('sbd-search'));
+  await page.keyboard.type('segment');
+  await page.keyboard.press('ArrowDown');
+  const fieldFocused = await until(page, () => document.activeElement?.dataset?.ref === 'customers.segment');
+  await page.keyboard.press('Enter');
+  const searched = await until(page, (id) => JSON.stringify(window.smaltbi.store.visual(id).visual.fields).includes('customers.segment'), wellIds);
+  check(searchFocused && fieldFocused && searched, `field search: "/", type, Down, Enter adds the field (${await wellFields()})`);
+  await page.locator('.sbd-search').fill('');
+  await page.locator('.sbd-search').dispatchEvent('input');
+  // Multi-select: with nothing selected, Ctrl-click two fields and add them: one new chart with both.
+  await page.evaluate((id) => {
+    const s = window.smaltbi.store;
+    const pg = s.visual(id).page;
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== id)), pg.id);
+  }, wellIds);
+  await page.keyboard.press('Escape');
+  const before2 = await count();
+  await page.locator('.sbd-field[data-ref="stores.channel"]').click({ modifiers: ['ControlOrMeta'] });
+  await page.locator('.sbd-field[data-ref="sales.Revenue"]').click({ modifiers: ['ControlOrMeta'] });
+  const twoSelected = await until(page, () => document.querySelectorAll('.sbd-field.sbd-selected').length === 2 && /2 fields selected/.test(document.querySelector('.sbd-field-sel')?.textContent ?? ''));
+  await page.click('.sbd-field-sel button:has-text("Add")');
+  const multiAdded = await until(page, (n) => document.querySelectorAll('.sb-page > .sb-visual').length === n + 1, before2);
+  const made = await page.evaluate(() => {
+    const v = window.smaltbi.store.visual(document.querySelector('.sb-visual.sb-selected').dataset.id).visual;
+    return `${v.type} ${JSON.stringify(v.fields)}`;
+  });
+  check(twoSelected && multiAdded && made === 'bar {"category":["stores.channel"],"values":["sales.Revenue"]}', `fields: multi-select adds both to one new chart (${made})`);
+  await page.keyboard.press('Delete');
+  await page.locator('.sbd-field-sel button:has-text("Clear")').click().catch(() => {});
+
   // Model view: the ER diagram of tables and relationships.
   await page.click('.sbd-seg-btn:has-text("Model")');
   await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4 && document.querySelectorAll('.sbd-mv-rel').length === 3);
