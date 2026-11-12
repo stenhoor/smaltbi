@@ -12,6 +12,7 @@ import { dialog, download, fileName, h, pickFile, showMenu, toast } from 'smaltk
 import { localFiles } from '../kit/files.js';
 import { corsHint } from 'smaltkit/urls';
 import { DocStore, emptyReport, freeSpot, newId, type ChangeKind } from './store.js';
+import { type AlignMode, align, clipText, distribute, guides, parseClip, placePasted, sameSize } from './arrange.js';
 import { FIELD_MIME, draggedRefs, fieldsPane } from './fields.js';
 import { defaultFilter, panel } from './panel.js';
 import { dataDialog, measureDialog, publishDialog, themeDialog, type DialogContext } from './dialogs.js';
@@ -25,6 +26,15 @@ const appBase = document.baseURI;
 class Designer {
   view!: ReportView;
   selected: string | null = null;
+  /** More visuals selected with the primary one (Shift- or Ctrl/Cmd-click): moved, aligned and copied together. */
+  group = new Set<string>();
+  /** When a drag last ended (a click right after it is not a selection change). */
+  private draggedAt = 0;
+
+  /** The selected visuals' ids, the primary one first. */
+  get selection(): string[] {
+    return this.selected ? [this.selected, ...[...this.group].filter((id) => id !== this.selected)] : [];
+  }
   tab = 'Build';
   preview = false;
   /** Report canvas or the model (ER) diagram. */
@@ -92,7 +102,11 @@ class Designer {
       host,
       {
         mode: this.preview ? 'view' : 'edit',
-        onSelectVisual: (id) => this.select(id),
+        // Shift- and Ctrl/Cmd-clicks build a selection (decorate's pointerdown); a click inside the selection keeps it.
+        onSelectVisual: (id, e) => {
+          if (e && (e.shiftKey || e.ctrlKey || e.metaKey)) return;
+          if (!id || !this.selection.includes(id)) this.select(id);
+        },
         onState: () => (this.renderPages(), this.previewBar?.renderTabs()),
         decorate: (frame, v) => this.decorate(frame, v),
         // Column widths dragged in a table are saved with the visual (not in Preview: that is the reader's view).
@@ -351,7 +365,9 @@ class Designer {
       );
       return;
     }
+    const arrangeBar = this.selection.length > 1 ? this.arrangeBar() : null;
     this.panelHost.replaceChildren(
+      ...(arrangeBar ? [arrangeBar] : []),
       panel({
         store: this.store,
         session: this.session,
@@ -363,6 +379,29 @@ class Designer {
         createVisual: (type, fields) => this.createVisual(type, fields),
         changeType: (v, type) => this.changeType(v, type),
       }),
+    );
+  }
+
+  /** With several visuals selected: align, distribute and size them (to the first selected). */
+  private arrangeBar(): HTMLElement {
+    const n = this.selection.length;
+    const btn = (label: string, title: string, fn: () => void, disabled = false) => h('button.sbd-btn.sbd-arrange-btn', { title, disabled, onclick: fn }, label);
+    const al = (m: AlignMode, label: string, title: string) => btn(label, title, () => this.arrange((ls, c) => align(ls, m, c)));
+    return h(
+      'div.sbd-arrange',
+      {},
+      h('div.sbd-section-title', {}, `${n} visuals selected`),
+      h('div.sbd-hint', {}, 'Aligned and sized to the first one you selected. Shift-click to add or remove one; the arrow keys move them; Ctrl/⌘+C copies them for any page or report.'),
+      h('div.sbd-arrange-row', {}, al('left', '⇤ Left', 'Align left edges'), al('center', '↔ Centre', 'Align centres'), al('right', 'Right ⇥', 'Align right edges')),
+      h('div.sbd-arrange-row', {}, al('top', '⤒ Top', 'Align tops'), al('middle', '↕ Middle', 'Align middles'), al('bottom', 'Bottom ⤓', 'Align bottoms')),
+      h(
+        'div.sbd-arrange-row',
+        {},
+        btn('Distribute ↔', 'Even gaps across (3 or more)', () => this.arrange((ls) => distribute(ls, 'x')), n < 3),
+        btn('Distribute ↕', 'Even gaps down (3 or more)', () => this.arrange((ls) => distribute(ls, 'y')), n < 3),
+      ),
+      h('div.sbd-arrange-row', {}, btn('Same width', 'Width of the first selected', () => this.arrange((ls, c) => sameSize(ls, 'w', c))), btn('Same height', 'Height of the first selected', () => this.arrange((ls, c) => sameSize(ls, 'h', c)))),
+      h('div.sbd-arrange-row', {}, btn('Delete all', 'Delete the selected visuals (Del)', () => this.deleteSelected())),
     );
   }
 
@@ -446,12 +485,80 @@ class Designer {
 
   // ---------------------------------------------------------------- visuals
 
-  select(id: string | null): void {
-    if (this.selected === id) return;
-    this.selected = id;
-    this.view.selectedVisual = id;
-    this.canvasHost.querySelectorAll('.sb-visual').forEach((el) => el.classList.toggle('sb-selected', (el as HTMLElement).dataset.id === id));
+  /** Select one visual (or none); with `add`, add it to the selection or take it out (Shift- or Ctrl/Cmd-click). */
+  select(id: string | null, opts: { add?: boolean } = {}): void {
+    if (opts.add && id) {
+      if (!this.selected) this.selected = id;
+      else if (id === this.selected) {
+        const next = [...this.group][0];
+        if (!next) return;
+        this.group.delete(next);
+        this.selected = next;
+      } else if (this.group.has(id)) this.group.delete(id);
+      else this.group.add(id);
+    } else {
+      if (this.selected === id && !this.group.size) return;
+      this.group.clear();
+      this.selected = id;
+    }
+    this.view.selectedVisual = this.selected;
+    this.paintSelection();
     this.renderPanel();
+  }
+
+  private paintSelection(): void {
+    const sel = new Set(this.selection);
+    this.canvasHost.querySelectorAll<HTMLElement>('.sb-visual').forEach((el) => {
+      el.classList.toggle('sb-selected', sel.has(el.dataset.id!));
+      el.classList.toggle('sbd-in-group', sel.size > 1 && sel.has(el.dataset.id!));
+    });
+  }
+
+  /** The selected visuals of this page, the primary first. */
+  private selectedVisuals(): Visual[] {
+    return this.selection.map((id) => this.page.visuals.find((v) => v.id === id)).filter((v): v is Visual => !!v);
+  }
+
+  /** Change the selected visuals' layouts together (align, distribute, same size, nudge). */
+  arrange(fn: (layouts: Visual['layout'][], columns: number) => Visual['layout'][]): void {
+    const vs = this.selectedVisuals();
+    if (!vs.length) return;
+    const next = fn(vs.map((v) => v.layout), pageLayout(this.session.theme, this.page).columns);
+    if (next.every((l, i) => JSON.stringify(l) === JSON.stringify(vs[i]!.layout))) return;
+    this.store.change('layout', () => vs.forEach((v, i) => (v.layout = next[i]!)), vs[0]!.id);
+  }
+
+  /** Copy the selected visuals as clipboard text (other pages, reports and tabs can paste them). */
+  copyText(): string | null {
+    const vs = this.selectedVisuals();
+    return vs.length ? clipText(vs) : null;
+  }
+
+  /** Paste visuals from clipboard text onto this page; true when the text was visuals. */
+  pasteText(text: string): boolean {
+    const vs = parseClip(text);
+    if (!vs) return false;
+    const copies = placePasted(this.page, vs, this.allVisualIds(), pageLayout(this.session.theme, this.page).columns);
+    this.store.change('page', () => this.page.visuals.push(...copies), this.page.id);
+    // Fields this report doesn't have (pasted from another report) are named, not silently dropped.
+    const missing = new Set<string>();
+    for (const v of copies) for (const list of Object.values(v.fields ?? {})) for (const f of list) {
+      const ref = typeof f === 'string' ? f : f.field;
+      if (!this.session.model.kindOf(ref)) missing.add(ref);
+    }
+    this.selected = null;
+    this.group.clear();
+    copies.forEach((c, i) => this.select(c.id, { add: i > 0 }));
+    if (copies[0] && !this.group.size) this.select(copies[0].id);
+    toast(`Pasted ${copies.length === 1 ? 'a visual' : `${copies.length} visuals`}${missing.size ? `; not in this model: ${[...missing].join(', ')}` : ''}`, missing.size ? 'error' : 'ok', missing.size ? 8000 : 2500);
+    return true;
+  }
+
+  deleteSelected(): void {
+    const ids = new Set(this.selection);
+    if (!ids.size) return;
+    this.store.change('page', () => (this.page.visuals = this.page.visuals.filter((v) => !ids.has(v.id))), this.page.id);
+    this.select(null);
   }
 
   allVisualIds(): string[] {
@@ -577,11 +684,26 @@ class Designer {
     const resize = h('div.sbd-resize', { title: 'Drag to resize' });
     const del = h('button.sbd-del', { title: 'Delete (Del)', onclick: (e: Event) => (e.stopPropagation(), this.deleteVisual(v.id)) }, '×');
     frame.append(grip, resize, del);
-    frame.addEventListener('pointerdown', () => this.select(v.id));
+    const inSel = this.selection.includes(v.id);
+    frame.classList.toggle('sb-selected', inSel);
+    frame.classList.toggle('sbd-in-group', inSel && this.selection.length > 1);
+    frame.addEventListener('pointerdown', (e) => {
+      if (e.shiftKey || e.ctrlKey || e.metaKey) {
+        e.preventDefault(); // no text selection from Shift-click
+        getSelection()?.removeAllRanges();
+        this.select(v.id, { add: true });
+      }
+      else if (!this.selection.includes(v.id)) this.select(v.id);
+    });
+    // A plain click on one of several selected visuals selects just it (unless it ended a drag).
+    frame.addEventListener('click', (e) => {
+      if (!(e.shiftKey || e.ctrlKey || e.metaKey) && this.selection.length > 1 && Date.now() - this.draggedAt > 250) this.select(v.id);
+    });
     const drag = (mode: 'move' | 'resize') => (e: PointerEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      this.select(v.id);
+      if (e.shiftKey || e.ctrlKey || e.metaKey) return this.select(v.id, { add: true });
+      if (!this.selection.includes(v.id)) this.select(v.id);
       const grid = frame.parentElement!;
       const layout = pageGeometry(this.session.theme, this.page);
       const cs = getComputedStyle(grid);
@@ -592,20 +714,53 @@ class Designer {
       const rowH = layout.rowHeight + gap;
       const start = { x: e.clientX, y: e.clientY, l: { ...v.layout } };
       let next = { ...v.layout };
+      // Moving one of several selected visuals moves them all; resizing is one at a time.
+      const members = mode === 'move' ? this.selectedVisuals() : [v];
+      const frames = new Map(members.map((m) => [m.id, grid.querySelector<HTMLElement>(`:scope > .sb-visual[data-id="${CSS.escape(m.id)}"]`)]));
+      const starts = new Map(members.map((m) => [m.id, { ...m.layout }]));
+      const lo = { x: -Math.min(...members.map((m) => m.layout.x)), y: -Math.min(...members.map((m) => m.layout.y)) };
+      const hiX = layout.columns - Math.max(...members.map((m) => m.layout.x + m.layout.w));
+      const others = this.page.visuals.filter((o) => !starts.has(o.id)).map((o) => o.layout);
+      const padL = parseFloat(cs.paddingLeft);
+      const padT = parseFloat(cs.paddingTop);
+      const guideEls: HTMLElement[] = [];
+      const showGuides = (l: Visual['layout']) => {
+        for (const el of guideEls.splice(0)) el.remove();
+        const g = guides(l, others);
+        for (const x of g.x) guideEls.push(h('div.sbd-guide.sbd-guide-x', { style: `left:${padL + x * colW - gap / 2}px` }));
+        for (const y of g.y) guideEls.push(h('div.sbd-guide.sbd-guide-y', { style: `top:${padT + y * rowH - gap / 2}px` }));
+        grid.append(...guideEls);
+      };
+      let moved = new Map(starts);
       frame.classList.add('sbd-dragging');
       const move = (ev: PointerEvent) => {
         const dx = Math.round((ev.clientX - start.x) / colW);
         const dy = Math.round((ev.clientY - start.y) / rowH);
-        if (mode === 'move') next = { ...start.l, x: Math.max(0, Math.min(layout.columns - start.l.w, start.l.x + dx)), y: Math.max(0, start.l.y + dy) };
-        else next = { ...start.l, w: Math.max(1, Math.min(layout.columns - start.l.x, start.l.w + dx)), h: Math.max(1, start.l.h + dy) };
-        frame.style.gridColumn = `${next.x + 1} / span ${next.w}`;
-        frame.style.gridRow = `${next.y + 1} / span ${next.h}`;
+        if (mode === 'move') {
+          const cx = Math.max(lo.x, Math.min(hiX, dx));
+          const cy = Math.max(lo.y, dy);
+          moved = new Map([...starts].map(([id, l]) => [id, { ...l, x: l.x + cx, y: l.y + cy }]));
+          next = moved.get(v.id)!;
+        } else {
+          next = { ...start.l, w: Math.max(1, Math.min(layout.columns - start.l.x, start.l.w + dx)), h: Math.max(1, start.l.h + dy) };
+          moved = new Map([[v.id, next]]);
+        }
+        for (const [id, l] of moved) {
+          const f = frames.get(id);
+          if (!f) continue;
+          f.style.gridColumn = `${l.x + 1} / span ${l.w}`;
+          f.style.gridRow = `${l.y + 1} / span ${l.h}`;
+        }
+        showGuides(next);
       };
       const up = () => {
         removeEventListener('pointermove', move);
         removeEventListener('pointerup', up);
+        for (const el of guideEls.splice(0)) el.remove();
         frame.classList.remove('sbd-dragging');
-        if (JSON.stringify(next) !== JSON.stringify(v.layout)) this.store.change('layout', () => (v.layout = next), v.id);
+        this.draggedAt = Date.now();
+        const changed = members.filter((m) => JSON.stringify(moved.get(m.id)) !== JSON.stringify(m.layout));
+        if (changed.length) this.store.change('layout', () => changed.forEach((m) => (m.layout = moved.get(m.id)!)), v.id);
       };
       addEventListener('pointermove', move);
       addEventListener('pointerup', up);
@@ -667,6 +822,33 @@ class Designer {
   }
 
   private bindKeys(): void {
+    // Copy, cut and paste visuals (Ctrl/Cmd+C, X, V) through the system clipboard, as text other reports can paste.
+    const clipOff = (e: Event) => {
+      const t = e.target as HTMLElement;
+      const typing = /INPUT|TEXTAREA|SELECT/.test(t?.tagName ?? '') || t?.isContentEditable;
+      return typing || this.preview || this.mode !== 'report' || !!getSelection()?.toString();
+    };
+    addEventListener('copy', (e) => {
+      if (clipOff(e)) return;
+      const text = this.copyText();
+      if (!text || !e.clipboardData) return;
+      e.clipboardData.setData('text/plain', text);
+      e.preventDefault();
+      const n = this.selection.length;
+      toast(`Copied ${n === 1 ? 'a visual' : `${n} visuals`}: paste on any page or report`, 'ok', 2000);
+    });
+    addEventListener('cut', (e) => {
+      if (clipOff(e)) return;
+      const text = this.copyText();
+      if (!text || !e.clipboardData) return;
+      e.clipboardData.setData('text/plain', text);
+      e.preventDefault();
+      this.deleteSelected();
+    });
+    addEventListener('paste', (e) => {
+      if (clipOff(e)) return;
+      if (this.pasteText(e.clipboardData?.getData('text/plain') ?? '')) e.preventDefault();
+    });
     addEventListener('keydown', (e) => {
       const t = e.target as HTMLElement;
       const typing = /INPUT|TEXTAREA|SELECT/.test(t.tagName) || t.isContentEditable;
@@ -693,7 +875,26 @@ class Designer {
         this.store.redo();
       } else if (mod && e.key.toLowerCase() === 'd' && this.selected) {
         e.preventDefault();
-        this.duplicateVisual(this.selected);
+        if (this.selection.length > 1) this.pasteText(this.copyText()!);
+        else this.duplicateVisual(this.selected);
+      } else if (mod && e.key.toLowerCase() === 'a' && this.mode === 'report' && !this.preview) {
+        // Select every visual on the page.
+        e.preventDefault();
+        const ids = this.page.visuals.map((v) => v.id);
+        this.selected = null;
+        this.group.clear();
+        ids.forEach((id, i) => this.select(id, { add: i > 0 }));
+      } else if (e.key.startsWith('Arrow') && this.selected && this.mode === 'report' && !this.preview && !mod) {
+        // Arrows move the selection a cell; Shift+arrows resize the first selected.
+        e.preventDefault();
+        const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key] ?? [0, 0];
+        const [dx, dy] = d as [number, number];
+        this.arrange((ls, cols) => {
+          if (e.shiftKey) return ls.map((l, i) => (i ? l : { ...l, w: Math.max(1, Math.min(cols - l.x, l.w + dx)), h: Math.max(1, l.h + dy) }));
+          const okX = ls.every((l) => l.x + dx >= 0 && l.x + l.w + dx <= cols);
+          const okY = ls.every((l) => l.y + dy >= 0);
+          return ls.map((l) => ({ ...l, x: l.x + (okX ? dx : 0), y: l.y + (okY ? dy : 0) }));
+        });
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && this.mode === 'model' && !this.preview && this.modelSel?.kind === 'rel') {
         e.preventDefault();
         const i = this.modelSel.index;
@@ -702,7 +903,7 @@ class Designer {
       } else if (e.key === 'Escape' && this.mode === 'model' && !this.preview) this.selectModel(null);
       else if ((e.key === 'Delete' || e.key === 'Backspace') && this.selected) {
         e.preventDefault();
-        this.deleteVisual(this.selected);
+        this.deleteSelected();
       } else if (e.key === 'Escape') this.select(null);
     });
   }

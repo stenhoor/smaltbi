@@ -275,3 +275,15 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-mv-link:hover { border-color: var(--d-accent); }
 .sbd-mv-relcard { border: 1px solid var(--d-border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; background: var(--d-bg); }
 .sbd-mv-relcard code { font-size: 12px; }
+
+/* Several visuals selected; arranging them; snap guides while dragging */
+.sb-report[data-mode-ui='edit'] .sb-page { position: relative; }
+.sb-visual.sbd-in-group { outline: 2px solid color-mix(in oklab, var(--d-accent) 55%, transparent); outline-offset: 1px; }
+.sbd-guide { position: absolute; pointer-events: none; z-index: 20; background: var(--d-accent); }
+.sbd-guide-x { top: 0; bottom: 0; width: 1px; }
+.sbd-guide-y { left: 0; right: 0; height: 1px; }
+.sbd-arrange { padding: 10px 12px; border-bottom: 1px solid var(--d-border); display: flex; flex-direction: column; gap: 6px; }
+.sbd-arrange-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.sbd-arrange-row:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, 1fr); }
+.sbd-arrange-row:has(> :only-child) { grid-template-columns: 1fr; }
+.sbd-arrange-btn { padding: 4px 6px; font-size: 12px; white-space: nowrap; }

@@ -17,7 +17,7 @@ export interface ViewOptions {
   /** Called whenever the view state changes (to persist it in the URL). */
   onState?: (s: ViewState) => void;
   /** Edit mode: a visual frame was clicked. */
-  onSelectVisual?: (id: string | null) => void;
+  onSelectVisual?: (id: string | null, e?: MouseEvent) => void;
   /** Edit mode: extra frame decorations (move / resize handles). */
   decorate?: (frame: HTMLElement, v: Visual) => void;
   /** Edit mode: an option changed on the visual itself (a table's column widths dragged): keep it with the visual. */
@@ -612,7 +612,7 @@ export class ReportView {
         if (this.opts.mode === 'view' && (e.target as Element).closest('.sb-page') && !(e.target as Element).closest('.sb-visual')) this.clearSelections();
         return;
       }
-      if (this.opts.mode === 'edit') this.opts.onSelectVisual?.(m.v.id);
+      if (this.opts.mode === 'edit') this.opts.onSelectVisual?.(m.v.id, e);
       const def = visualDef(m.v.type);
       if (def?.selfInteractive) return;
       if (m.row !== null && Number.isFinite(m.row)) this.select(m.v, m.row, e.ctrlKey || e.metaKey || e.shiftKey);
