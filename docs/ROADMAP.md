@@ -21,7 +21,7 @@ tests and the Chromium end-to-end test green.
 - ✓ Brand, round 2: the smaltbi mark in the viewer header, the designer on the brand's `tokens.css`, and
   visual-type, field-type and colour-mode icons in the brand's Chevron style.
 
-## 0.2: Depth in the model and the designer
+## 0.2: Depth in the model and the designer (done)
 
 Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 

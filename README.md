@@ -23,9 +23,11 @@ browser.
   </picture>
 </a>
 
-> **Status: 0.1.0, a working skeleton.** The designer, viewer, semantic model, query compiler,
-> 18 visual types, cross-filtering, drill down/through, themes and static publishing work end to
-> end. See [docs/ROADMAP.md](docs/ROADMAP.md) for what is next on the way to 1.0.
+> **Status: 0.2.0, in development.** The designer, viewer, semantic model, query compiler, 18 visual
+> types, cross-filtering, drill down/through, themes and static publishing work end to end. 0.2 adds a date
+> table and time-intelligence quick measures, conditional formatting, a stepped matrix, chart axis options,
+> fixed page sizes, phone layouts and designer tools. See [docs/ROADMAP.md](docs/ROADMAP.md) for what is next
+> on the way to 1.0.
 
 ## Mandates
 
