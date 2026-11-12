@@ -29,7 +29,8 @@ npm run serve      # http://localhost:8080/designer.html
    or run SQL to create views. Steps run in order each time the report opens.
 2. **Model.** Switch to *Model* for the diagram of your tables. Drag a column onto another table's key to relate them,
    and add measures (`SUM(sales.quantity * sales.unit_price)`) and calculated columns. Measures can use each other:
-   `[Revenue] - [Cost]`. *Add date table* creates a calendar related to a date column, with Year › Quarter › Month ›
+   `[Revenue] - [Cost]`. The editor completes tables, `table.` columns and `[` measures from the model, underlines
+   references that don't exist, and Ctrl+Enter tests the expression. *Add date table* creates a calendar related to a date column, with Year › Quarter › Month ›
    Date to drill, and optionally fiscal years, Sunday weeks and ISO weeks. Then right-click a measure, *Quick
    measure…*, for year to date, same period last year (and the change vs it), previous month or quarter, or rolling
    months: no SQL to write.

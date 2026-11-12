@@ -297,6 +297,28 @@ try {
     s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== 'c-fy')), pg.id);
   });
 
+  // The measure editor (smaltkit's SQL editor): highlighting, completion from the model, reference warnings, errors.
+  await page.locator('.sbd-field:has(.sbd-flabel:text-is("Avg Order Value"))').click({ button: 'right' });
+  await page.click('.sk-menu-item:has-text("Edit measure…")');
+  await page.waitForSelector('.sk-dialog .sk-editor .sk-ed-input');
+  const editorHl = await page.locator('.sk-dialog .sk-ed-hl').innerHTML();
+  const input = page.locator('.sk-dialog .sk-ed-input');
+  await input.focus();
+  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.type(' + [Gro');
+  const completes = await until(page, () => [...document.querySelectorAll('.sk-dialog .sk-ed-complete:not([hidden]) [data-i]')].some((li) => /Gross Margin/.test(li.textContent)), undefined, 5000);
+  // Typing on narrows the list (Escape would close the dialog if the list had already gone).
+  await page.keyboard.type('ss Mragin]');
+  const warned = await until(page, () => [...document.querySelectorAll('.sk-dialog mark.sk-ed-warn')].some((m) => /Mragin/.test(m.textContent)), undefined, 5000);
+  check(/sk-tk-/.test(editorHl) && completes && warned, `measure editor: highlighting, [ completes measures, unknown references are marked (${completes}, ${warned})`);
+  // Testing a broken expression marks the error and keeps the dialog open; Cancel leaves the measure as it was.
+  await input.fill('SUM(sales.quanity)');
+  await page.keyboard.press('ControlOrMeta+Enter');
+  const errMarked = await until(page, () => !!document.querySelector('.sk-dialog mark.sk-ed-err') && /quanity/.test(document.querySelector('.sk-dialog .sbd-test')?.textContent ?? ''), undefined, 10000);
+  await page.click('.sk-dialog-foot button:has-text("Cancel")');
+  const aov = await page.evaluate(() => window.smaltbi.store.report.model.measures.find((m) => m.name === 'Avg Order Value').sql);
+  check(errMarked && aov === '[Revenue] / NULLIF([Orders], 0)', `measure editor: a failed test marks the error; Cancel keeps the measure (${errMarked}, ${aov})`);
+
   // Quick measure (time intelligence): Revenue, same period last year, from the Fields pane's menu.
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Revenue"))').click({ button: 'right' });
   await page.click('.sk-menu-item:has-text("Quick measure…")');

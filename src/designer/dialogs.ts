@@ -12,6 +12,8 @@ import { localFiles } from '../kit/files.js';
 import { normalizeDataUrl } from 'smaltkit/urls';
 import { publishZip } from '../publish/publish.js';
 import { checkbox, field, textInput } from './panel.js';
+import { Editor } from 'smaltkit/editor';
+import { errorRange, measureLanguage, modelSchema, referenceWarnings } from './measurelang.js';
 import type { DocStore } from './store.js';
 import type { ReportSession } from '../report/session.js';
 
@@ -161,7 +163,24 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
   const existing = name ? list.find((m) => m.table === table && m.name === name) : undefined;
   const nameIn = h('input.sbd-input', { value: existing?.name ?? '', placeholder: kind === 'measure' ? 'Revenue' : 'Order Month' }) as HTMLInputElement;
   const tableSel = h('select.sbd-input', {}, ...[...ctx.session.model.tables.keys()].map((t) => h('option', { value: t, selected: t === table }, t))) as HTMLSelectElement;
-  const sql = h('textarea.sbd-input.sbd-code', { rows: 5, spellcheck: false, placeholder: kind === 'measure' ? 'SUM(sales.amount)   or   [Revenue] / NULLIF([Orders], 0)' : "strftime('%Y-%m', sales.order_date)" }, existing?.sql ?? '') as HTMLTextAreaElement;
+  // The expression: smaltkit's SQL editor, completing from the model (measureLang.ts), checking [references] as you
+  // type, and marking where a failed test points. Ctrl/Cmd+Enter tests.
+  const sqlHost = h('div.sbd-code-editor');
+  const sm = ctx.session.model;
+  const sql: Editor = new Editor(sqlHost, {
+    value: existing?.sql ?? '',
+    language: measureLanguage(sm, table),
+    schema: () => modelSchema(sm),
+    label: kind === 'measure' ? 'Measure SQL' : 'Calculated column SQL',
+    keys: { 'Mod+Enter': () => void test() },
+    onChange: () => scheduleCheck(),
+  });
+  let checkTimer: ReturnType<typeof setTimeout> | undefined;
+  const scheduleCheck = () => {
+    clearTimeout(checkTimer);
+    checkTimer = setTimeout(() => sql.setWarnings(referenceWarnings(sql.value, sm, tableSel.value)), 300);
+  };
+  sql.setWarnings(referenceWarnings(sql.value, sm, table));
   const fmt = formatSelect(existing?.format);
   const desc = h('input.sbd-input', { value: existing?.description ?? '' }) as HTMLInputElement;
   const result = h('div.sbd-test');
@@ -188,6 +207,8 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
     } catch (e) {
       result.className = 'sbd-test sbd-bad';
       result.textContent = (e as Error).message;
+      const at = errorRange(sql.value, (e as Error).message);
+      if (at) sql.highlightRange(at.start, at.end);
       return false;
     }
   };
@@ -195,8 +216,8 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
     'div.sbd-form',
     {},
     h('div.sbd-row', {}, field('Name', nameIn), field('Table', tableSel)),
-    field(kind === 'measure' ? 'SQL aggregate expression' : 'SQL row expression', sql),
-    h('div.sbd-hint', {}, kind === 'measure' ? 'Any SQL aggregate over the model’s tables: SUM, AVG, COUNT(DISTINCT …), FILTER (WHERE …). Write [Other Measure] to reuse a measure.' : 'A value per row of the table. Reference other columns as table.column, or [Calculated Column].'),
+    h('div.sbd-field-row', {}, h('span', {}, kind === 'measure' ? 'SQL aggregate expression' : 'SQL row expression'), sqlHost),
+    h('div.sbd-hint', {}, kind === 'measure' ? 'Any SQL aggregate over the model’s tables: SUM, AVG, COUNT(DISTINCT …), FILTER (WHERE …). Type [ for measures to reuse, table. for its columns, Ctrl+Space to complete, Ctrl+Enter to test.' : 'A value per row of the table. Type table. for its columns, or [ for calculated columns; Ctrl+Space completes, Ctrl+Enter tests.'),
     h('div.sbd-row', {}, field('Format', fmt), field('Description', desc)),
     h('button.sbd-btn', { onclick: () => void test() }, 'Test'),
     result,
