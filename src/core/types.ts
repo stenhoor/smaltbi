@@ -67,9 +67,25 @@ export interface Measure {
   name: string;
   /** An aggregate SQL expression. `[Other Measure]` inlines another measure of the model. */
   sql: string;
+  /**
+   * A time-intelligence quick measure: `of` (another measure) over a period worked out from the model's date table,
+   * instead of `sql`, which then only describes it. ADR 0006; see core/timeintel.ts.
+   */
+  time?: TimeCalc;
   format?: Format;
   description?: string;
   folder?: string;
+}
+
+/** What a time-intelligence measure computes for each row's period. */
+export type TimeCalcKind = 'ytd' | 'qtd' | 'mtd' | 'py' | 'yoy' | 'yoy%' | 'pm' | 'pq' | 'rolling';
+
+export interface TimeCalc {
+  /** The base measure: `table.Name`, or a measure name. */
+  of: string;
+  calc: TimeCalcKind;
+  /** Rolling: the number of months, ending with the period's month. Default 3. */
+  months?: number;
 }
 
 export interface CalcColumn {

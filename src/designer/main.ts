@@ -15,6 +15,7 @@ import { DocStore, emptyReport, freeSpot, newId, type ChangeKind } from './store
 import { FIELD_MIME, fieldsPane } from './fields.js';
 import { defaultFilter, panel } from './panel.js';
 import { dataDialog, measureDialog, publishDialog, themeDialog, type DialogContext } from './dialogs.js';
+import { quickMeasureDialog } from './quickmeasure.js';
 import { ModelView, type ModelSelection } from './modelview.js';
 import { modelPanel } from './modelpanel.js';
 
@@ -301,7 +302,8 @@ class Designer {
           add: (ref) => this.addField(ref),
           newMeasure: (t) => void measureDialog(this.dctx, t),
           newColumn: (t) => void measureDialog(this.dctx, t, undefined, 'column'),
-          editMeasure: (t, n) => void measureDialog(this.dctx, t, n),
+          editMeasure: (t, n) => void this.editMeasure(t, n),
+          quickMeasure: (t, n, of) => void quickMeasureDialog(this.dctx, t, n, of),
           editColumn: (t, n) => void measureDialog(this.dctx, t, n, 'column'),
           filter: (ref) => {
             const sel = this.selected ? this.store.visual(this.selected)?.visual : undefined;
@@ -323,7 +325,7 @@ class Designer {
         modelPanel({
           ...this.modelContext(),
           diagram: this.modelView,
-          editMeasure: (t, n) => void measureDialog(this.dctx, t, n),
+          editMeasure: (t, n) => void (n ? this.editMeasure(t, n) : measureDialog(this.dctx, t)),
           editColumn: (t, n) => void measureDialog(this.dctx, t, n, 'column'),
         }),
       );
@@ -636,6 +638,13 @@ class Designer {
   }
 
   // ---------------------------------------------------------------- changes
+
+  /** Edit a measure: the SQL dialog, or the quick-measure dialog for a time-intelligence measure. */
+  private editMeasure(table: string, name: string): void {
+    const m = this.store.report.model.measures?.find((x) => x.table === table && x.name === name);
+    if (m?.time) void quickMeasureDialog(this.dctx, table, name);
+    else void measureDialog(this.dctx, table, name);
+  }
 
   private async onChange(kind: ChangeKind, id?: string): Promise<void> {
     try {

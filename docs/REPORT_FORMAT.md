@@ -73,6 +73,13 @@ environment manifests. To report on an existing OPFS database, use
   hierarchy of that table. The first dot separates the table.
 - **`[Name]`** inside measure or column SQL inlines a measure (searched model-wide) or a calculated
   column (of the same table, or `[table.Name]`). Other bracketed text is left alone.
+- **Quick measures** for time intelligence carry `time` instead of SQL (`sql` stays empty):
+  `{ "table": "sales", "name": "Revenue YTD", "sql": "", "time": { "of": "sales.Revenue", "calc": "ytd" } }`.
+  `calc` is `ytd`, `qtd` or `mtd` (to date; years and quarters follow the date table's fiscal year), `py` (the same
+  dates last year), `yoy` / `yoy%` (change vs last year), `pm` / `pq` (the period moved back one or three months,
+  whole months), or `rolling` (the last `months` months, default 3). They need `dateTable`, a base measure over its
+  source's table, and a date-table field on the visual or a date-table filter to give each row its period. They
+  can't be used inside another measure's SQL, and filters on them are not applied.
 - **Measures** must be aggregates. A plain column dropped on a value well is aggregated implicitly
   (`SUM` for numbers, `COUNT` otherwise; changeable per visual).
 - **`sortBy`** sorts a column by another column of the same table (month names by month number).

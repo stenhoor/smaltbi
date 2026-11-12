@@ -11,6 +11,8 @@ export interface FieldsPaneHandlers {
   newMeasure(table: string): void;
   newColumn(table: string): void;
   editMeasure(table: string, name: string): void;
+  /** A time-intelligence quick measure: a new one over `of`, or edit `name`. */
+  quickMeasure(table: string, name?: string, of?: string): void;
   editColumn(table: string, name: string): void;
   filter(ref: string): void;
 }
@@ -50,7 +52,19 @@ export function fieldsPane(model: Model, handlers: FieldsPaneHandlers, collapsed
         items.push(el);
       };
       for (const m of t.measures.values())
-        item(`${t.name}.${m.name}`, m.name, 'ƒx', '.sbd-measure', [{ label: 'Edit measure…', action: () => handlers.editMeasure(t.name, m.name) }], m.description ?? m.sql);
+        item(
+          `${t.name}.${m.name}`,
+          m.name,
+          'ƒx',
+          '.sbd-measure' + (m.time ? '.sbd-time' : ''),
+          m.time
+            ? [{ label: 'Edit quick measure…', action: () => handlers.quickMeasure(t.name, m.name) }]
+            : [
+                { label: 'Edit measure…', action: () => handlers.editMeasure(t.name, m.name) },
+                { label: 'Quick measure…', action: () => handlers.quickMeasure(t.name, undefined, `${t.name}.${m.name}`) },
+              ],
+          m.description ?? m.sql,
+        );
       for (const hi of t.hierarchies.values()) item(`${t.name}.${hi.name}`, hi.name, '⋮', '.sbd-hier', [], hi.levels.join(' › '));
       for (const c of t.columns.values()) {
         if (c.hidden && !q) continue;

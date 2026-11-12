@@ -9,6 +9,7 @@
 import type { Filter, SqlValue } from './types.js';
 import { type Model, ModelError, type ResolvedField } from './model.js';
 import { quoteIdent, quoteLiteral } from './sql.js';
+import { compileTimeQuery } from './timeintel.js';
 
 export interface QuerySpec {
   dims: ResolvedField[];
@@ -19,6 +20,8 @@ export interface QuerySpec {
   limit?: number;
   /** Name output columns after the fields' labels instead of d0…/m0… (for SQL shown to people). */
   labelAliases?: boolean;
+  /** Internal: no ORDER BY or LIMIT (the query is a CTE inside another; core/timeintel.ts). */
+  inner?: boolean;
 }
 
 export interface OutputColumn {
@@ -37,6 +40,8 @@ export interface CompiledQuery {
 export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
   const { dims, measures } = q;
   if (!dims.length && !measures.length) throw new ModelError('nothing to query: add a field');
+  // Time-intelligence measures work per period of each row: a query of its own shape (core/timeintel.ts).
+  if (measures.some((m) => m.time)) return compileTimeQuery(model, q);
 
   // Tables: measures decide the root (the fact table); dimensions and filters must hang off it.
   const needed = new Set<string>();
@@ -104,14 +109,7 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
     columns.push({ key: 'm' + i, field: m });
   });
 
-  const order = (q.sort?.length ? q.sort : defaultSort(dims, measures))
-    .map(({ key, dir }) => {
-      const i = Number(key.slice(1));
-      const d = key[0] === 'd' ? dims[i] : undefined;
-      const col = d?.sortExpr ? 's' + i : (names.get(key) ?? key);
-      return `${quoteIdent(col)} ${dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST`;
-    })
-    .join(', ');
+  const order = q.inner ? '' : orderClause(q, dims, measures, names);
 
   const sql = [
     `SELECT ${select.join(', ')}`,
@@ -121,11 +119,23 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
     groupBy.length ? `GROUP BY ${groupBy.join(', ')}` : '',
     having.length ? `HAVING ${having.join('\n  AND ')}` : '',
     order ? `ORDER BY ${order}` : '',
-    q.limit ? `LIMIT ${Math.max(0, Math.floor(q.limit))}` : '',
+    q.limit && !q.inner ? `LIMIT ${Math.max(0, Math.floor(q.limit))}` : '',
   ]
     .filter(Boolean)
     .join('\n');
   return { sql, columns, root, ignored };
+}
+
+/** ORDER BY over the output columns (dimensions with a sortBy column sort by it, as `s<i>`). */
+export function orderClause(q: QuerySpec, dims: ResolvedField[], measures: ResolvedField[], names: Map<string, string>): string {
+  return (q.sort?.length ? q.sort : defaultSort(dims, measures))
+    .map(({ key, dir }) => {
+      const i = Number(key.slice(1));
+      const d = key[0] === 'd' ? dims[i] : undefined;
+      const col = d?.sortExpr ? 's' + i : (names.get(key) ?? key);
+      return `${quoteIdent(col)} ${dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST`;
+    })
+    .join(', ');
 }
 
 function defaultSort(dims: ResolvedField[], _measures: ResolvedField[]): { key: string; dir: 'asc' | 'desc' }[] {
@@ -133,7 +143,7 @@ function defaultSort(dims: ResolvedField[], _measures: ResolvedField[]): { key: 
 }
 
 /** Tables a filter reads (empty when its fields do not resolve). */
-function filterTables(model: Model, f: Filter): Set<string> {
+export function filterTables(model: Model, f: Filter): Set<string> {
   try {
     if (f.op === 'sql') return model.tablesIn(model.expandRefs(f.sql ?? '1', '', new Set()));
     const refs = f.op === 'tuples' ? (f.fields ?? []) : f.field ? [f.field] : [];
@@ -169,6 +179,8 @@ export function compileFilter(model: Model, f: Filter, root: string, all: Filter
   if (!f.field) return null;
   const isMeasure = model.kindOf(f.field) === 'measure';
   const field = model.resolve(f.field, isMeasure ? 'measure' : 'dimension');
+  // A time-intelligence measure has no single SQL expression to filter on: the filter is reported as not applied.
+  if (field.time) return null;
   if ([...field.tables].some((t) => !model.canReach(root, t))) return null;
   const x = field.expr;
   const v = f.values ?? [];

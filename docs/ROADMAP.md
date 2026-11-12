@@ -28,8 +28,9 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - Next, after catching up with the family's engine and smaltkit ([ADR 0006](adr/0006-outside-code-smaltdf-pages-calendar.md)):
   - ✓ "Add date table" in the model view (calendar table, relationship, Year › Quarter › Month › Day), with a
     fiscal year start, a week start day and ISO weeks.
-  - Quick measures for time intelligence, written as plain SQL: previous period, year-to-date, same
-    period last year, rolling N (generated from a date column; no new language).
+  - ✓ Quick measures for time intelligence, compiled to plain SQL from the date table (no new language): year,
+    quarter and month to date, same period last year and the change vs it, previous month and quarter, rolling N
+    months.
 - ✓ Unambiguous models: the model view flags tables reachable by more than one active path, and the
   compiler errors instead of guessing; marking a relationship inactive resolves it.
 - ✓ Relevant values: dimensions filter each other through the fact table (slicers list only values

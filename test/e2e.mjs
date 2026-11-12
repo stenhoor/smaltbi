@@ -297,6 +297,27 @@ try {
     s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== 'c-fy')), pg.id);
   });
 
+  // Quick measure (time intelligence): Revenue, same period last year, from the Fields pane's menu.
+  await page.locator('.sbd-field:has(.sbd-flabel:text-is("Revenue"))').click({ button: 'right' });
+  await page.click('.sk-menu-item:has-text("Quick measure…")');
+  await page.selectOption('.sbd-quick select >> nth=1', 'py');
+  const quickName = await page.locator('.sbd-quick input:not([type=number])').inputValue();
+  await page.click('.sk-dialog-foot button:has-text("Add measure")');
+  await until(page, () => (window.smaltbi.store.report.model.measures ?? []).some((m) => m.time?.calc === 'py'));
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.report.pages[0];
+    s.change('page', () => pg.visuals.push({ id: 't-ly', type: 'table', layout: { x: 0, y: 40, w: 6, h: 4 }, fields: { columns: ['calendar.year'], values: ['sales.Revenue', 'sales.Revenue LY'] }, sort: [{ by: 'columns:0', dir: 'asc' }] }), pg.id);
+  });
+  await until(page, () => document.querySelectorAll('.sb-visual[data-id=t-ly] tbody tr').length === 2, undefined, 20000);
+  const ly = await page.evaluate(() => [...document.querySelectorAll('.sb-visual[data-id=t-ly] tbody tr')].map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent)));
+  check(quickName === 'Revenue LY' && ly.length === 2 && ly[0][2] === '(Blank)' && ly[1][2] === ly[0][1], `a quick measure shows last year's revenue beside this year's (${quickName}: ${JSON.stringify(ly)})`);
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.report.pages[0];
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== 't-ly')), pg.id);
+  });
+
   // Theme: switch to Midnight.
   await page.click('.sbd-tbtn:has-text("Theme")');
   await page.click('.sbd-theme-card:has-text("Midnight")');
