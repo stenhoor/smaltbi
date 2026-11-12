@@ -1,6 +1,6 @@
 // The resolved semantic model: the database schema (from introspection) overlaid with the report's
 // model spec (relationships, measures, calculated columns, hierarchies, display settings).
-import type { Aggregation, ColumnType, FieldRef, Format, Hierarchy, Measure, ModelSpec, Relationship } from './types.js';
+import type { Aggregation, ColumnType, FieldRef, Format, Hierarchy, Measure, ModelSpec, Relationship, TimeCalcKind } from './types.js';
 import { quoteIdent, splitRef } from './sql.js';
 
 /** What introspection of the database returns. */
@@ -58,6 +58,8 @@ export interface ResolvedField {
   agg?: Aggregation;
   /** Tables the expression reads. */
   tables: Set<string>;
+  /** A time-intelligence measure: its calculation and resolved base measure (its `expr` is a placeholder). */
+  time?: { calc: TimeCalcKind; months: number; base: ResolvedField };
 }
 
 export class ModelError extends Error {}
@@ -190,6 +192,14 @@ export class Model {
     const tab = this.tables.get(t);
     if (!tab) throw new ModelError(`unknown table "${t}" in ${spec.field}`);
     const m = tab.measures.get(n);
+    if (m?.time) {
+      const of = m.time.of.includes('.') ? m.time.of : `${t}.${m.time.of}`;
+      const baseMeasure = this.tables.get(splitRef(of)[0])?.measures.get(splitRef(of)[1]) ?? this.measureIndex.get(m.time.of.toLowerCase());
+      if (!baseMeasure) throw new ModelError(`${n}: its base measure ${m.time.of} does not exist`);
+      if (baseMeasure.time) throw new ModelError(`${n}: its base measure ${baseMeasure.name} is a time-intelligence measure too; use a regular measure`);
+      const base = this.resolve(`${baseMeasure.table}.${baseMeasure.name}`, 'measure');
+      return { ref: spec.field, kind: 'measure', table: t, name: n, label: spec.label ?? n, expr: 'NULL', type: 'number', format: spec.format ?? m.format ?? base.format, tables: base.tables, time: { calc: m.time.calc, months: m.time.months ?? 3, base } };
+    }
     if (m) {
       const expr = this.expandRefs(m.sql, t, new Set([m.name.toLowerCase()]));
       return { ref: spec.field, kind: 'measure', table: t, name: n, label: spec.label ?? n, expr: `(${expr})`, type: 'number', format: spec.format ?? m.format, tables: this.tablesIn(expr, t) };
@@ -236,6 +246,7 @@ export class Model {
       if (name.includes('.') && this.tables.has(splitRef(name)[0])) [table, field] = splitRef(name);
       const tab = this.tables.get(table);
       const m = tab?.measures.get(field) ?? (name.includes('.') ? undefined : this.measureIndex.get(name.toLowerCase()));
+      if (m?.time) throw new ModelError(`[${m.name}] is a time-intelligence measure, which works per period and can't be used inside another measure's SQL; use it in a visual directly`);
       if (m) {
         const key = m.name.toLowerCase();
         if (seen.has(key)) throw new ModelError(`measure ${m.name} refers to itself`);

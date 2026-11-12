@@ -26,6 +26,7 @@ bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worke
 | `core/types.ts` | The report document: data steps, model spec, pages, visuals, filters, view state, theme. |
 | `core/model.ts` | `Model`: the schema (from introspection) overlaid with the spec. Resolves field references to SQL expressions, expands `[Measure]` / `[Column]` references, finds join paths. |
 | `core/compile.ts` | `compileQuery()`: dimensions + measures + filters → one SQL statement. `wrapCustomSql()` applies filters to custom SQL. |
+| `core/datetable.ts`, `core/timeintel.ts` | The generated date table, and time-intelligence measures compiled over it. |
 | `core/format.ts` | Display formats, re-exported from `smaltkit/format` (presets, Intl options, small patterns, dates without time-zone shifts). |
 | `smaltkit/manifest` | Data steps (the environment manifest format, shared with smaltui and smaltnb): import, link, SQL, inline rows, connections. |
 | `data/introspect.ts` | Tables, columns and BI types (dates are detected from ISO strings), keys, foreign keys. |
@@ -63,7 +64,12 @@ A visual has data **roles** (axis, legend, values, …), each declared by its `V
      the fix is to mark a relationship inactive, and the model view flags such paths;
    - emits `LEFT JOIN`s along the paths found, `WHERE` for column filters, `GROUP BY` the dimensions,
      `HAVING` for measure filters, `ORDER BY`, `LIMIT`;
-   - reports filters on tables it cannot reach (they are ignored, like a single-direction relationship).
+   - reports filters on tables it cannot reach (they are ignored, like a single-direction relationship);
+   - with **time-intelligence measures** (`core/timeintel.ts`), wraps the query in CTEs: the query itself (plus each
+     time measure's base measure), the periods of the visual's date-table fields under the date-table filters, each
+     period's window of days (the year so far, the same days last year, the last N months, …), and the base measure
+     over the facts on those days under the other filters, joined back on the period and the other fields. The base
+     measure is aggregated afresh over each window, so distinct counts and ratios come out right.
 5. **Runs** through the `QueryRunner`. Identical SQL is answered from the cache, so re-rendering,
    switching pages back and forth, and undo are free.
 6. **Renders.** The `VisualDef` receives the columnar result tagged with roles and formatters, the
