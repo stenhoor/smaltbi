@@ -180,6 +180,29 @@ export interface Visual {
   interactions?: { filterOthers?: boolean; filteredByOthers?: boolean };
   /** Per-visual style overrides of theme tokens (e.g. { "surface": "#fff" }). */
   style?: Record<string, string | number>;
+  /** Conditional formatting of measure values (tables, matrices, KPI cards): the first rule that matches wins. */
+  conditional?: ConditionalRule[];
+}
+
+/**
+ * A conditional-formatting rule: when a value matches, show it with a tone, a filled background and an icon.
+ * `{ "apply": "sales.Revenue", "op": "lt", "compare": "sales.Revenue LY", "tone": "bad", "icon": "down" }`
+ */
+export interface ConditionalRule {
+  /** The measure values it formats: a field reference of the visual, or "*" for every measure. */
+  apply: string;
+  /** What is tested: the formatted value (default), or another measure in the same row. */
+  test?: string;
+  op: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'ne' | 'between' | 'blank' | 'positive' | 'negative';
+  /** The number to compare with (`between`: from `value` to `value2`). */
+  value?: number;
+  value2?: number;
+  /** Or another measure to compare with, in the same row ("by measure"): fetched with the visual's data. */
+  compare?: string;
+  tone?: 'good' | 'bad' | 'warn' | 'accent';
+  /** Colour the background with the tone, not the text. */
+  fill?: boolean;
+  icon?: 'up' | 'down' | 'flat' | 'check' | 'cross' | 'warn' | 'dot';
 }
 
 /** "table.column", "table.Measure" or "table.Hierarchy", or an object with an aggregation or label. */

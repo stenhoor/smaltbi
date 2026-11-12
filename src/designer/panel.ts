@@ -1,5 +1,6 @@
 // The right-hand panel: Build (visual types and field wells), Format, Filters and SQL.
 import type { Aggregation, FieldRef, Filter, FilterOp, Page, SqlValue, Visual } from '../core/types.js';
+import { conditionalSection } from './conditional.js';
 import { aggLabel, refName } from '../core/model.js';
 import { quoteIdent } from '../core/sql.js';
 import { type OptionDef, type VisualDef, visualDef, visualDefs } from '../visuals/index.js';
@@ -202,6 +203,7 @@ function formatTab(ctx: PanelContext, v: Visual): HTMLElement {
       checkbox('Filtered by other visuals', v.interactions?.filteredByOthers !== false, (on) => set(() => (v.interactions = { ...(v.interactions ?? {}), filteredByOthers: on }))),
     );
   }
+  if (def?.conditional) out.append(conditionalSection(ctx, v, def));
   out.append(
     h('div.sbd-section-title', {}, 'Style'),
     field(

@@ -6,6 +6,7 @@ import { type ResolvedField, ModelError, refName } from '../core/model.js';
 import { compileQuery, type CompiledQuery, type QuerySpec, wrapCustomSql } from '../core/compile.js';
 import { formatter } from '../core/format.js';
 import { pageLayout, paletteSize, themeCss } from '../theme/theme.js';
+import { CONDITIONAL_ROLE, cellFormatFor, conditionalFields } from './conditional.js';
 import { type DataColumn, dataColumn, type Plan, type PlanContext, type VisualData, type VisualDef, optionsOf, visualDef } from '../visuals/index.js';
 import type { Frame } from '../data/runner.js';
 import { download, esc, h, showMenu, type MenuItem } from 'smaltkit/dom';
@@ -247,6 +248,7 @@ export class ReportView {
         extra: rt.extra ?? {},
         palette: paletteSize(this.session.theme),
         selected: (row) => (keys && !def.slicer ? keys.has(JSON.stringify(this.rowTuple(data, row).map(norm))) : null),
+        cellFormat: def.conditional ? cellFormatFor(v, data) : undefined,
         api: {
           select: (row, additive) => this.select(v, row, !!additive),
           setFilters: (filters) => this.setSelection(v, filters),
@@ -340,7 +342,22 @@ export class ReportView {
         return r;
       },
     };
-    return { plan: def.plan ? def.plan(ctx) : defaultPlan(), roleOf, drillFilters };
+    const plan = def.plan ? def.plan(ctx) : defaultPlan();
+    // Conditional formatting may test or compare with measures the visual doesn't show: fetch them in the main query
+    // under their own role, which no visual draws.
+    const shown = new Set(plan.main.measures.map((m) => m.ref));
+    for (const ref of def.conditional ? conditionalFields(v) : []) {
+      if (shown.has(ref)) continue;
+      try {
+        const f = this.session.model.resolve(ref, 'measure');
+        roleOf.set(f, CONDITIONAL_ROLE);
+        plan.main = { ...plan.main, measures: [...plan.main.measures, f] };
+        shown.add(ref);
+      } catch {
+        // A rule naming a field that no longer exists: it never matches.
+      }
+    }
+    return { plan, roleOf, drillFilters };
   }
 
   private sortKey(by: string, dims: ResolvedField[], measures: ResolvedField[], fields: Record<string, ResolvedField[]>): string | undefined {
