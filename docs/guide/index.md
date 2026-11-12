@@ -48,6 +48,14 @@ npm run serve      # http://localhost:8080/designer.html
      one; Space selects it, and Esc clears the search.
 4. **Pages and interaction.** Add pages, slicers, drill-through targets and bookmarks. *Preview* shows the report as a
    reader sees it.
+   - **Arranging visuals:** Shift-click (or Ctrl/⌘-click) visuals to select several, or press Ctrl/⌘+A for all of
+     them. The side panel then aligns them (left, centre, right, top, middle, bottom), spreads them evenly, or gives
+     them the same width or height, always taking the first one you selected as the reference. Drag any one of them
+     to move them all; lines show where edges meet other visuals. The arrow keys move the selection a cell at a time,
+     and Shift+arrow resizes the first one.
+   - **Copy and paste:** Ctrl/⌘+C copies the selected visuals and Ctrl/⌘+V pastes them on any page, or into another
+     report in another tab. Pasted visuals keep their arrangement, and go below the other visuals if their place is
+     taken. Fields the other report doesn't have are named in a warning. Ctrl/⌘+X cuts, and Ctrl/⌘+D duplicates.
    - **Page size:** a page is responsive by default, fitting the window. For a slide or a printed page, click an empty
      part of the canvas and choose a *Page size* in the side panel: 16:9, 4:3, US Letter, A4 (portrait or landscape)
      or a custom size. The page becomes a sheet of that size, with its rows fitted to it. Visuals that reach below it

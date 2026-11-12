@@ -49,7 +49,7 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - ✓ Table: pages with a pager, column widths (drag a header's edge; saved with the visual), frozen first columns.
 - ✓ Chart axes: continuous date/number axis (gaps and uneven dates), log scale, reference lines (value or
   average/median/min/max), axis titles, min/max overrides, small multiples.
-- Copy/paste visuals between pages and reports; align/distribute tools; snap guides.
+- ✓ Copy/paste visuals between pages and reports; align/distribute tools; snap guides.
 - Mobile layout per page.
 
 ## 0.3: Plugins and data

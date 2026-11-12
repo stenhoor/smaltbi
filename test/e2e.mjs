@@ -347,6 +347,67 @@ try {
   await page.keyboard.press('Delete');
   await page.locator('.sbd-field-sel button:has-text("Clear")').click().catch(() => {});
 
+  // Arranging: Shift-click several visuals, align them, nudge with the arrows, drag them together with snap guides,
+  // copy them and paste them on another page.
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    const s = d.store;
+    const visuals = [
+      { id: 'arr-a', type: 'text', layout: { x: 1, y: 0, w: 4, h: 2 }, fields: {}, options: { text: 'A' } },
+      { id: 'arr-b', type: 'text', layout: { x: 6, y: 3, w: 3, h: 2 }, fields: {}, options: { text: 'B' } },
+      { id: 'arr-c', type: 'text', layout: { x: 2, y: 7, w: 5, h: 2 }, fields: {}, options: { text: 'C' } },
+      // Not selected: its left edge (4) is where the group is dragged to, so a guide shows.
+      { id: 'arr-d', type: 'text', layout: { x: 4, y: 12, w: 3, h: 1 }, fields: {}, options: { text: 'D' } },
+    ];
+    s.change('pages', () => s.report.pages.push({ id: 'e2e-arrange', name: 'Arrange', visuals }, { id: 'e2e-paste', name: 'Paste here', visuals: [] }));
+    d.goToPage('e2e-arrange');
+  });
+  await until(page, () => document.querySelectorAll('.sb-page > .sb-visual').length === 4);
+  const lay = () => page.evaluate(() => Object.fromEntries(window.smaltbi.store.page('e2e-arrange').visuals.map((v) => [v.id, v.layout])));
+  await page.locator('.sb-visual[data-id="arr-a"]').click({ position: { x: 30, y: 30 } });
+  await page.locator('.sb-visual[data-id="arr-b"]').click({ position: { x: 30, y: 30 }, modifiers: ['Shift'] });
+  await page.locator('.sb-visual[data-id="arr-c"]').click({ position: { x: 30, y: 30 }, modifiers: ['Shift'] });
+  const grouped = await until(page, () => /3 visuals selected/.test(document.querySelector('.sbd-arrange')?.textContent ?? '') && document.querySelectorAll('.sb-visual.sbd-in-group').length === 3);
+  await page.click('.sbd-arrange-btn:has-text("Left")');
+  const aligned = await until(page, () => window.smaltbi.store.page('e2e-arrange').visuals.filter((v) => v.id !== 'arr-d').every((v) => v.layout.x === 1));
+  await page.click('.sbd-arrange-btn:has-text("Distribute ↕")');
+  const spread = await until(page, () => window.smaltbi.store.page('e2e-arrange').visuals.find((v) => v.id === 'arr-b').layout.y === 4);
+  check(grouped && aligned && spread, `arrange: Shift-click three visuals, align left, distribute down (${JSON.stringify(await lay())})`);
+  await page.keyboard.press('ArrowRight');
+  const nudged = await until(page, () => window.smaltbi.store.page('e2e-arrange').visuals.filter((v) => v.id !== 'arr-d').every((v) => v.layout.x === 2));
+  check(nudged, 'arrange: the arrow keys move every selected visual a cell');
+  // Drag A by its header two cells right: all three move, and a guide shows while dragging.
+  const grip = await page.locator('.sb-visual[data-id="arr-a"] .sbd-grip').boundingBox();
+  const cellW = await page.evaluate(() => {
+    const g = document.querySelector('.sb-page');
+    const cs = getComputedStyle(g);
+    return (g.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) + parseFloat(cs.columnGap)) / 12;
+  });
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + grip.width / 2 + cellW, grip.y + grip.height / 2, { steps: 4 });
+  await page.mouse.move(grip.x + grip.width / 2 + cellW * 2, grip.y + grip.height / 2, { steps: 4 });
+  const guideShown = await page.evaluate(() => document.querySelectorAll('.sbd-guide').length);
+  await page.mouse.up();
+  const groupMoved = await until(page, () => window.smaltbi.store.page('e2e-arrange').visuals.every((v) => v.layout.x === 4) && !document.querySelector('.sbd-guide'));
+  check(groupMoved && guideShown > 0, `arrange: dragging one moves the selection, with snap guides (${guideShown}) (${JSON.stringify(await lay())})`);
+  // Copy, then paste on the other page: three new visuals, same arrangement, new ids.
+  await page.keyboard.press('ControlOrMeta+c');
+  await page.evaluate(() => window.smaltbi.goToPage('e2e-paste'));
+  await until(page, () => window.smaltbi.view.state.page === 'e2e-paste');
+  await page.keyboard.press('ControlOrMeta+v');
+  const pasted = await until(page, () => {
+    const vs = window.smaltbi.store.page('e2e-paste').visuals;
+    return vs.length === 3 && vs.every((v) => !v.id.startsWith('arr-') && v.layout.x === 4) && document.querySelectorAll('.sb-page > .sb-visual.sb-selected').length === 3;
+  });
+  check(pasted, `copy and paste: three visuals onto another page, arranged as copied, new ids, selected (${await page.evaluate(() => JSON.stringify(window.smaltbi.store.page('e2e-paste').visuals.map((v) => [v.id, v.layout])))})`);
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.goToPage(d.store.report.pages[0].id);
+    d.store.change('pages', () => (d.store.report.pages = d.store.report.pages.filter((p) => !p.id.startsWith('e2e-'))));
+  });
+  await until(page, () => !window.smaltbi.store.report.pages.some((p) => p.id.startsWith('e2e-')) && document.querySelectorAll('.sb-page > .sb-visual').length > 3);
+
   // Table depth: rows per page with a pager, a frozen first column, a column width dragged and saved.
   await page.evaluate(() => {
     const s = window.smaltbi.store;
