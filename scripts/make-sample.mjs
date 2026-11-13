@@ -47,9 +47,18 @@ const geo = [
   ['Asia Pacific', 'Japan', ['Tokyo', 'Osaka']],
   ['Asia Pacific', 'Australia', ['Sydney', 'Melbourne']],
 ];
+// Where each city is (degrees, rounded), for the map of stores.
+const place = {
+  'New York': [40.71, -74.01], Seattle: [47.61, -122.33], Austin: [30.27, -97.74], Chicago: [41.88, -87.63],
+  Toronto: [43.65, -79.38], Vancouver: [49.28, -123.12], Berlin: [52.52, 13.41], Munich: [48.14, 11.58],
+  Paris: [48.86, 2.35], Lyon: [45.76, 4.84], London: [51.51, -0.13], Manchester: [53.48, -2.24],
+  Tokyo: [35.68, 139.69], Osaka: [34.69, 135.5], Sydney: [-33.87, 151.21], Melbourne: [-37.81, 144.96],
+};
 const stores = [];
-for (const [region, country, cities] of geo) for (const city of cities) stores.push({ id: stores.length + 1, name: `${city} ${pick(['Roastery', 'Corner', 'Market', 'Station'])}`, city, country, region, channel: 'Store' });
-stores.push({ id: stores.length + 1, name: 'Online Shop', city: 'Online', country: 'Online', region: 'Online', channel: 'Online' });
+for (const [region, country, cities] of geo)
+  for (const city of cities)
+    stores.push({ id: stores.length + 1, name: `${city} ${pick(['Roastery', 'Corner', 'Market', 'Station'])}`, city, country, region, channel: 'Store', latitude: place[city][0], longitude: place[city][1] });
+stores.push({ id: stores.length + 1, name: 'Online Shop', city: 'Online', country: 'Online', region: 'Online', channel: 'Online', latitude: '', longitude: '' });
 
 const first = ['Ada', 'Alan', 'Grace', 'Linus', 'Radia', 'Ken', 'Barbara', 'Edsger', 'Frances', 'Tim', 'Margaret', 'Dennis', 'Hedy', 'Guido', 'Sophie', 'Niklaus', 'Katherine', 'John', 'Annie', 'Donald'];
 const last = ['Lovelace', 'Turing', 'Hopper', 'Torvalds', 'Perlman', 'Thompson', 'Liskov', 'Dijkstra', 'Allen', 'Berners', 'Hamilton', 'Ritchie', 'Lamarr', 'Rossum', 'Wilson', 'Wirth', 'Johnson', 'Backus', 'Easley', 'Knuth'];
