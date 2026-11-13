@@ -128,7 +128,7 @@ environment manifests. To report on an existing OPFS database, use
   - Revenue by tag counts each sale once in each of its tags, through the link's distinct pairs. Totals count it once.
   - A filter on a tag is a semi-join, so no sale is counted twice.
   - Part-to-whole visuals by a field beyond a link (pie, donut, treemap, funnel, waterfall, 100% stacked) say that
-    their parts overlap, and a donut leaves out its centre total.
+    their parts overlap. A donut's centre shows the true total, from a query of its own.
   - The model view marks a link table "⇄ link".
 - A relationship's `to` column must be **unique** (one row per value), or each `from` row would be counted once per
   repeat. When the data loads, each relationship's target column is checked (declared primary keys pass without
