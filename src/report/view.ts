@@ -2,7 +2,7 @@
 // drill down / up, drill-through, tooltips, focus mode, "show data" and CSV export.
 // The designer and the published viewer both use it.
 import type { FieldRef, Filter, Page, Report, SqlValue, ViewState, Visual } from '../core/types.js';
-import { type ResolvedField, ModelError, refName } from '../core/model.js';
+import { type ResolvedField, ModelError, bindParams, paramRefs, paramValue, refName, showParams } from '../core/model.js';
 import { compileQuery, type CompiledQuery, type QuerySpec, wrapCustomSql } from '../core/compile.js';
 import { formatter } from '../core/format.js';
 import { pageGeometry, pageSize, paletteSize, themeCss } from '../theme/theme.js';
@@ -341,6 +341,9 @@ export class ReportView {
           filters: () => this.state.selections?.[v.id] ?? [],
           query: async (spec) => (await this.runSpec(v, spec, [])).data,
           drill: (row) => this.drillDown(v, row),
+          parameters: () => this.session.report.model.parameters ?? [],
+          param: (name) => this.param(name),
+          setParam: (name, value) => this.setParam(name, value),
         },
       });
     } catch (e) {
@@ -482,13 +485,14 @@ export class ReportView {
   private async runSpec(_v: Visual, spec: QuerySpec, filters: Filter[], roleOf = new Map<ResolvedField, string>()): Promise<{ data: VisualData; sql: string }> {
     if (!spec.dims.length && !spec.measures.length) return { data: emptyData(), sql: '' };
     const q = compileQuery(this.session.model, { ...spec, filters: [...(spec.filters ?? []), ...filters] });
-    const frame = await this.session.runner.run(q.sql);
-    return { data: toVisualData(frame, q, roleOf), sql: q.sql };
+    const frame = await this.session.runner.run(this.bind(q.sql));
+    return { data: toVisualData(frame, q, roleOf), sql: showParams(q.sql, this.session.model) };
   }
 
   private async runCustom(v: Visual, plan: Plan, roleOf: Map<ResolvedField, string>, filters: Filter[]): Promise<{ data: VisualData; sql: string }> {
-    const cols = await this.session.runner.columnsOf(v.sql!);
-    const { sql } = wrapCustomSql(v.sql!, cols, filters, this.session.model);
+    const custom = this.bind(paramRefs(v.sql!, this.session.model));
+    const cols = await this.session.runner.columnsOf(custom);
+    const { sql } = wrapCustomSql(custom, cols, filters, this.session.model);
     const frame = await this.session.runner.run(sql);
     // Output columns map to the visual's fields in order (dimensions, then measures); without
     // fields, the first column is the category and numeric columns are values.
@@ -514,7 +518,31 @@ export class ReportView {
     const { plan, drillFilters } = this.plan(v, def);
     const filters = [...this.filtersFor(v), ...drillFilters];
     const q = compileQuery(this.session.model, { ...plan.main, filters: forPeople ? [...(v.filters ?? [])] : filters, labelAliases: forPeople });
-    return q.sql;
+    return showParams(q.sql, this.session.model);
+  }
+
+  /** Compiled SQL with the parameters' current values (the reader's, else the defaults). */
+  bind(sql: string): string {
+    return bindParams(sql, this.session.model, this.state.params);
+  }
+
+  /** A parameter's current value. */
+  param(name: string): number | string | undefined {
+    const p = this.session.model.parameters.get(name.toLowerCase());
+    return p ? paramValue(p, Object.entries(this.state.params ?? {}).find(([k]) => k.toLowerCase() === name.toLowerCase())?.[1]) : undefined;
+  }
+
+  /** Set a parameter (a Parameter control): every visual runs its queries again. */
+  setParam(name: string, value: number | string): void {
+    const p = this.session.model.parameters.get(name.toLowerCase());
+    if (!p) return;
+    const params = { ...(this.state.params ?? {}) };
+    for (const k of Object.keys(params)) if (k.toLowerCase() === p.name.toLowerCase()) delete params[k];
+    const v = paramValue(p, value);
+    if (v !== paramValue(p, undefined)) params[p.name] = v;
+    this.state = { ...this.state, params: Object.keys(params).length ? params : undefined };
+    this.emit();
+    this.refreshAll();
   }
 
   // ---------------------------------------------------------------- interactions

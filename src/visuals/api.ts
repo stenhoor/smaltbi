@@ -1,6 +1,6 @@
 // The visual plugin API. Every built-in visual is written against this API, so a third-party
 // visual is a peer of the built-ins: register a VisualDef and it appears in the designer.
-import type { Aggregation, Filter, SqlValue, Visual } from '../core/types.js';
+import type { Parameter, Aggregation, Filter, SqlValue, Visual } from '../core/types.js';
 import type { ResolvedField } from '../core/model.js';
 import type { QuerySpec } from '../core/compile.js';
 import type { CellFormat, ChartColumn, ChartContext } from 'smaltkit/charts';
@@ -98,6 +98,12 @@ export interface VisualApi {
   query(spec: QuerySpec): Promise<VisualData>;
   /** Drill down on row `i`. */
   drill(row: number): void;
+  /** What-if parameters of the model (for a Parameter control). */
+  parameters(): Parameter[];
+  /** A parameter's current value. */
+  param(name: string): number | string | undefined;
+  /** Change a parameter: every visual runs again. */
+  setParam(name: string, value: number | string): void;
 }
 
 export interface VisualDef {

@@ -12,6 +12,7 @@ import { h, toast } from 'smaltkit/dom';
 import { typeIcon } from '../visuals/icons.js';
 import type { DocStore } from './store.js';
 import { dateTableDialog } from './datetable.js';
+import { parametersDialog } from './parameters.js';
 import type { ReportSession } from '../report/session.js';
 
 export type ModelSelection = { kind: 'table'; table: string } | { kind: 'rel'; index: number } | null;
@@ -166,6 +167,11 @@ export class ModelView {
         'button.sbd-btn.sbd-mv-datetable',
         { title: 'A calendar table related to a date column: Year › Quarter › Month › Date, fiscal years and weeks', onclick: () => void dateTableDialog(this.ctx.store, this.model) },
         this.report.model.dateTable ? 'Date table…' : 'Add date table',
+      ),
+      h(
+        'button.sbd-btn.sbd-mv-params',
+        { title: 'What-if values readers change with a Parameter control; measures use them as [@Name]', onclick: () => void parametersDialog(this.ctx.store) },
+        (this.report.model.parameters?.length ? `Parameters (${this.report.model.parameters.length})…` : 'Parameters…'),
       ),
       h(
         'span.sbd-mv-zoom',

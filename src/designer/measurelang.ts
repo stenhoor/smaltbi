@@ -44,7 +44,7 @@ export function measureLanguage(model: Model, home: string): EditorLanguage {
       const open = openBracket(text, pos);
       if (open >= 0) {
         const typed = text.slice(open + 1, pos).toLowerCase();
-        const items = bracketNames(model, home).filter((i) => i.label.toLowerCase().includes(typed) && (explicit || i.label.toLowerCase() !== typed));
+        const items = [...bracketNames(model, home), ...[...model.parameters.values()].map((p) => ({ label: `@${p.name}`, kind: 'variable', detail: `parameter · ${p.type}` }) as CompletionItem)].filter((i) => i.label.toLowerCase().includes(typed) && (explicit || i.label.toLowerCase() !== typed));
         items.sort((a, b) => Number(!a.label.toLowerCase().startsWith(typed)) - Number(!b.label.toLowerCase().startsWith(typed)) || a.label.localeCompare(b.label));
         return { items: items.slice(0, 60), start: open + 1 };
       }
@@ -66,10 +66,11 @@ export function referenceWarnings(text: string, model: Model, home: string): Edi
   const known = new Set(bracketNames(model, home).map((i) => i.label.toLowerCase()));
   for (const t of model.tables.values()) for (const c of t.columns.values()) if (c.calc) known.add(`${t.name}.${c.name}`.toLowerCase());
   for (const t of model.tables.values()) for (const m of t.measures.values()) known.add(`${t.name}.${m.name}`.toLowerCase());
+  for (const p of model.parameters.values()) known.add(`@${p.name}`.toLowerCase());
   const out: EditorWarning[] = [];
   for (const m of text.matchAll(/\[([^\[\]\n]+)\]/g)) {
     const name = m[1]!.trim();
-    if (!known.has(name.toLowerCase())) out.push({ start: m.index!, end: m.index! + m[0].length, message: `No measure or calculated column named ${name}` });
+    if (!known.has(name.toLowerCase())) out.push({ start: m.index!, end: m.index! + m[0].length, message: name.startsWith('@') ? `No parameter named ${name.slice(1)}` : `No measure or calculated column named ${name}` });
   }
   return out;
 }
