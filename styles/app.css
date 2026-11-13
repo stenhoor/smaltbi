@@ -294,3 +294,10 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-phone-view .sb-visual .sbd-grip, .sbd-phone-view .sb-visual .sbd-resize { display: none; }
 .sbd-tbtn.sbd-on { background: var(--d-accent-soft); color: var(--d-accent); }
 .sbd-phone-view .sb-report[data-mode-ui='edit'] .sb-page { min-height: 0; background-image: none; }
+
+/* File → Plugins… */
+.sbd-plugins { display: flex; flex-direction: column; gap: 6px; }
+.sbd-plugin { display: flex; align-items: center; gap: 8px; border: 1px solid var(--d-border); border-radius: 8px; padding: 6px 8px; }
+.sbd-plugin-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sbd-plugin-url { font-size: 11px; color: var(--d-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbd-plugin-input { flex: 1; }

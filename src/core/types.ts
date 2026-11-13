@@ -18,11 +18,21 @@ export interface Report {
   filters?: Filter[];
   pages: Page[];
   bookmarks?: Bookmark[];
+  /** Plugins (ADR 0008): ES module files that add visuals; loaded before the report renders. */
+  plugins?: PluginRef[];
   /** Published-report branding. */
   branding?: {
     /** Show the "Powered by smaltbi" badge (from stenhoor/smalt-brand) in the viewer. Default true. */
     poweredBy?: boolean;
   };
+}
+
+/** A plugin: one ES module file, by URL (absolute, or relative to the report), and its SRI hash (`sha384-…`). */
+export interface PluginRef {
+  url: string;
+  integrity: string;
+  /** A name to show (else the plugin's own, else the file name). */
+  name?: string;
 }
 
 // ------------------------------------------------------------------ data

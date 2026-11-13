@@ -55,8 +55,9 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 
 ## 0.3: Plugins and data
 
-- Plugin loading by URL (with integrity hashes) in designer and viewer; plugin manifest; the
-  "plugin" gallery group.
+- ✓ Plugin loading by URL (with integrity hashes) in designer and viewer; plugin manifest; the
+  "plugin" gallery group ([ADR 0008](adr/0008-plugin-loading.md)): File → Plugins…, asking before plugins from another
+  site run, and plugins copied into published sites.
 - A maps plugin (choropleth and points, GeoJSON/TopoJSON shapes as data files).
 - Data: refresh button and freshness indicator; optional auto-refresh interval per report;
   incremental reload; materialized views as a "cache this table" switch; parameters (what-if

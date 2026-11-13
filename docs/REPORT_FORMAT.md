@@ -15,11 +15,14 @@ The sample, [`examples/sales/report.json`](../examples/sales/report.json), uses 
   "filters": [ … ],             // report-level filters (every page)
   "pages": [ … ],
   "bookmarks": [ … ],
+  "plugins": [ { "url": "plugins/bullet.js", "integrity": "sha384-…" } ],   // optional: ADR 0008, docs/PLUGINS.md
   "branding": { "poweredBy": true }   // the "Powered by smaltbi" badge in the viewer (default true)
 }
 ```
 
-Relative paths (data files, theme files) resolve against the report file's URL.
+Relative paths (data files, theme files, plugins) resolve against the report file's URL. Each plugin is one ES module
+file pinned by its SRI hash: it loads only if the file matches, and a report from another site asks before its
+plugins run ([PLUGINS](PLUGINS.md)).
 
 ## data
 

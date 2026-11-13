@@ -9,6 +9,7 @@ import { stateFromHash, writeHash } from '../report/state.js';
 import { applyTheme } from '../theme/theme.js';
 import { h } from 'smaltkit/dom';
 import { corsHint } from 'smaltkit/urls';
+import { preparePlugins } from '../plugins/ui.js';
 
 async function main(): Promise<void> {
   const app = document.getElementById('app')!;
@@ -21,6 +22,11 @@ async function main(): Promise<void> {
     if (!r.ok) throw new Error(`cannot load ${url}: HTTP ${r.status}`);
     const report = (await r.json()) as Report;
     document.title = report.name;
+    // Plugins first (ADR 0008): their visuals must be registered before the page draws.
+    if (report.plugins?.length) {
+      say('Loading plugins…');
+      await preparePlugins(report.plugins, url);
+    }
     say('Loading data…');
     const session = await ReportSession.open(report, url, { log: (_l, t) => say(t) });
     applyTheme(session.theme, document, 'sb-theme-chrome');

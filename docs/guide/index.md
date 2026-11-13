@@ -46,6 +46,9 @@ npm run serve      # http://localhost:8080/designer.html
      table; double-click the edge to fit the column to its contents again.
    - **Field search:** press `/` and type to find a field. Use ↓ and ↑ to move through the matches and Enter to add
      one; Space selects it, and Esc clears the search.
+   - **Plugins:** *File → Plugins…* adds a visual plugin by the URL of its file. smaltbi records the file's hash, so a
+     changed file no longer loads. Plugin visuals appear at the end of the visual gallery. Writing one:
+     [plugins](/PLUGINS).
 4. **Pages and interaction.** Add pages, slicers, drill-through targets and bookmarks. *Preview* shows the report as a
    reader sees it.
    - **Arranging visuals:** Shift-click (or Ctrl/⌘-click) visuals to select several, or press Ctrl/⌘+A for all of
