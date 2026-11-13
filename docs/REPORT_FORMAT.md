@@ -114,6 +114,11 @@ environment manifests. To report on an existing OPFS database, use
 - Relationships must be **unambiguous**: two active paths between the same tables (for example
   `sales → customers` and `sales → stores → customers`) make queries that cross them fail with an
   explanation. Set `"active": false` on one of them.
+- A relationship's `to` column must be **unique** (one row per value), or each `from` row would be counted once per
+  repeat. When the data loads, each relationship's target column is checked (declared primary keys pass without
+  looking). The model view marks one with repeated values, and visuals with measures through it fail with an
+  explanation; lists of values (slicers) still work. ADR 0009 has the fix for a different grain (a budget by
+  category): a table with one row per value.
 
 ### Formats
 

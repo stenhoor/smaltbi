@@ -957,6 +957,38 @@ try {
     s.change('model', (r) => r.model.relationships.splice(i, 1));
   }, relIndex);
 
+  // A relationship to a column that isn't unique (ADR 0009): customers.country repeats, so stores counted through it
+  // would be counted many times. The model view marks it and explains; a visual with a measure through it refuses.
+  await page.click('.sbd-seg-btn:has-text("Model")');
+  const badIndex = await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('model', (r) => {
+      r.model.relationships.push({ from: 'stores.country', to: 'customers.country' });
+      r.model.measures.push({ table: 'stores', name: 'Store count', sql: 'COUNT(*)' });
+    });
+    return d.store.report.model.relationships.length - 1;
+  });
+  const marked = await until(page, () => !!document.querySelector('.sbd-mv-rel.sbd-mv-notunique') && /not unique/.test(document.querySelector('.sbd-mv-notuniquelabel')?.textContent ?? '') && /isn’t unique/.test(document.querySelector('.sbd-mv-warn-notunique')?.textContent ?? ''), undefined, 15000);
+  await page.evaluate((i) => window.smaltbi.selectModel({ kind: 'rel', index: i }), badIndex);
+  const explained = await until(page, () => /customers\.country is not unique: the relationship stores\.country → customers\.country would count stores rows more than once/.test(document.querySelector('.sbd-rel-notunique')?.textContent ?? ''));
+  await page.click('.sbd-seg-btn:has-text("Report")');
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.report.pages[0];
+    s.change('page', () => pg.visuals.push({ id: 'e2e-fanout', type: 'column', layout: { x: 0, y: 40, w: 6, h: 4 }, fields: { category: ['customers.region'], values: ['stores.Store count'] } }), pg.id);
+  });
+  const refused = await until(page, () => /customers\.country is not unique/.test(document.querySelector('.sb-visual[data-id=e2e-fanout] .sb-visual-body')?.textContent ?? '') && !document.querySelector('.sb-visual[data-id=e2e-fanout] .sk-bar'), undefined, 15000);
+  check(marked && explained && refused, `a relationship to a column that isn't unique is marked in the model view, explained, and refused by a visual with a measure (${marked}, ${explained}, ${refused})`);
+  await page.evaluate((i) => {
+    const s = window.smaltbi.store;
+    const pg = s.report.pages[0];
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== 'e2e-fanout')), pg.id);
+    s.change('model', (r) => {
+      r.model.relationships.splice(i, 1);
+      r.model.measures = r.model.measures.filter((m) => m.name !== 'Store count');
+    });
+  }, badIndex);
+
   // The measure editor (smaltkit's SQL editor): highlighting, completion from the model, reference warnings, errors.
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Avg Order Value"))').click({ button: 'right' });
   await page.click('.sk-menu-item:has-text("Edit measure…")');

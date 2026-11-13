@@ -309,4 +309,7 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 
 /* Model view: a role-playing relationship (dashed, labelled with its role) */
 .sbd-mv-role .sbd-mv-path { stroke-dasharray: 6 4; }
+/* A relationship to a column with repeated values (ADR 0009): queries with measures refuse it. */
+.sbd-mv-notunique .sbd-mv-path { stroke: var(--danger); }
+.sbd-mv-notuniquelabel { font-size: 11px; fill: var(--danger); }
 .sbd-mv-rolelabel { font-size: 11px; font-weight: 600; fill: var(--d-accent); paint-order: stroke; stroke: var(--d-bg); stroke-width: 3px; }

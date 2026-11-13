@@ -161,6 +161,7 @@ export class ModelView {
     this.pos = {};
     for (const t of this.model.tables.keys()) this.pos[t] = saved[t] ?? auto[t] ?? { x: 40, y: 40 };
     const amb = ambiguousPaths(this.model);
+    const notUnique = (this.report.model.relationships ?? []).filter((r) => r.active !== false && this.model.notUnique.has(r.to)).map((r) => `${r.from} → ${r.to}`);
     const toolbar = h(
       'div.sbd-mv-toolbar',
       {},
@@ -184,6 +185,7 @@ export class ModelView {
         h('button.sbd-btn', { title: 'Zoom in (Ctrl+wheel)', onclick: () => this.setZoom(this.zoom * 1.2) }, '+'),
         h('button.sbd-btn', { title: 'Fit the whole model on screen', onclick: () => this.fit() }, 'Fit'),
       ),
+      notUnique.length ? h('span.sbd-mv-warn.sbd-mv-warn-notunique', { title: notUnique.join('\n') }, `⚠ ${notUnique.length} relationship${notUnique.length > 1 ? 's' : ''} to a column that isn’t unique: its numbers would be counted more than once`) : null,
       amb.length ? h('span.sbd-mv-warn', { title: amb.map(([a, b]) => `${a} → ${b}`).join('\n') }, `⚠ ${amb.length} ambiguous path${amb.length > 1 ? 's' : ''}: mark a relationship inactive`) : null,
       h('span.sbd-mv-legend', {}, 'Drag a column onto another table’s column to relate them. ', h('b', {}, '*'), ' many · ', h('b', {}, '1'), ' one · ▸ filter direction'),
     );
@@ -311,12 +313,15 @@ export class ModelView {
       const ty = p2.y + c2.y - c1.y - p1.y;
       const ang = (Math.atan2(-ty, -tx) * 180) / Math.PI;
       const on = sel?.kind === 'rel' && sel.index === i;
-      const cls = `sbd-mv-rel${r.active === false ? ' sbd-mv-inactive' : ''}${r.role ? ' sbd-mv-role' : ''}${on ? ' sbd-on' : ''}`;
+      // A target with repeated values: queries with measures refuse this relationship (ADR 0009).
+      const notUnique = r.active !== false && this.model.notUnique.has(r.to);
+      const cls = `sbd-mv-rel${r.active === false ? ' sbd-mv-inactive' : ''}${r.role ? ' sbd-mv-role' : ''}${notUnique ? ' sbd-mv-notunique' : ''}${on ? ' sbd-on' : ''}`;
       out += `<g class="${cls}" data-rel="${i}"><path class="sbd-mv-hit" d="${d}"/><path class="sbd-mv-path" d="${d}"/>`;
       out += `<path class="sbd-mv-arrow" d="M-6,-5 L6,0 L-6,5 Z" transform="translate(${mx.toFixed(1)},${my.toFixed(1)}) rotate(${ang.toFixed(1)})"/>`;
       out += `<text class="sbd-mv-mark" x="${p1.x + d1 * 12}" y="${p1.y - 5}" text-anchor="middle">*</text>`;
       out += `<text class="sbd-mv-mark" x="${p2.x + d2 * 12}" y="${p2.y - 5}" text-anchor="middle">1</text>`;
       if (r.role) out += `<text class="sbd-mv-rolelabel" x="${mx.toFixed(1)}" y="${(my - 9).toFixed(1)}" text-anchor="middle">as ${r.role.replace(/[<&"]/g, '')}</text>`;
+      if (notUnique) out += `<text class="sbd-mv-notuniquelabel" x="${mx.toFixed(1)}" y="${(my + 18).toFixed(1)}" text-anchor="middle">⚠ not unique</text>`;
       out += '</g>';
     });
     this.svg.innerHTML = out + (this.temp ? this.temp.outerHTML : '');

@@ -124,6 +124,7 @@ export function compileTimeQuery(model: Model, q: QuerySpec): CompiledQuery {
     });
     needed.delete(cal);
     model.assertUnambiguous(factTable, needed);
+    model.assertCountable(factTable, needed);
     const groupBy = [...calDims.map((_, k) => `${w}.${Q('k' + k)}`), ...others.map((o) => o.expr)];
     ctes.push(
       `${a} AS (\n` +

@@ -3,6 +3,7 @@
 import type { Report, Theme } from '../core/types.js';
 import { Model, type SchemaInfo } from '../core/model.js';
 import { hash } from '../core/sql.js';
+import { repeatsValues } from '../data/keys.js';
 import { loadTheme } from '../theme/theme.js';
 import { type Database, type Engine, loadEngine } from './engine.js';
 import { applySteps, type FileStore } from 'smaltkit/manifest';
@@ -26,6 +27,9 @@ export class ReportSession {
   private rowCounts = new Map<string, Promise<number | null>>();
   /** Settled row counts, for showing a count without waiting (null: the source can't be read). */
   readonly knownRowCounts = new Map<string, number | null>();
+  /** Relationship targets ("table.column") with repeated values in the data (ADR 0009), checked once per data load. */
+  readonly notUnique = new Set<string>();
+  private keyChecks = new Map<string, Promise<void>>();
 
   private constructor(
     public report: Report,
@@ -50,12 +54,26 @@ export class ReportSession {
   /** Re-read the schema and rebuild the model (after data or model changes). */
   async refreshSchema(): Promise<void> {
     this.schema = await introspect(this.db);
-    this.rebuildModel();
+    await this.rebuildModel();
   }
 
-  rebuildModel(): void {
-    this.model = new Model(this.schema, this.report.model);
+  /** Rebuild the model (after a model change), checking any relationship target not checked since the data loaded. */
+  async rebuildModel(): Promise<void> {
+    await Promise.all((this.report.model.relationships ?? []).filter((r) => r.active !== false).map((r) => this.checkKey(r.to)));
+    this.model = new Model(this.schema, this.report.model, this.notUnique);
     this.runner.invalidate();
+  }
+
+  /** Check a relationship target for repeated values (ADR 0009), once per data load. */
+  private checkKey(ref: string): Promise<void> {
+    let p = this.keyChecks.get(ref);
+    if (!p) {
+      p = repeatsValues(this.db, this.schema, ref).then((repeats) => {
+        if (repeats) this.notUnique.add(ref);
+      });
+      this.keyChecks.set(ref, p);
+    }
+    return p;
   }
 
   async setTheme(theme: Theme | string | undefined): Promise<void> {
@@ -72,6 +90,8 @@ export class ReportSession {
     this.db = await openDatabase(this.engine, this.report, this.base, { ...this.opts, force: true });
     this.rowCounts.clear();
     this.knownRowCounts.clear();
+    this.keyChecks.clear();
+    this.notUnique.clear();
     this.runner = new QueryRunner(this.db);
     await this.refreshSchema();
     this.loadedAt = new Date();

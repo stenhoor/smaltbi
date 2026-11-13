@@ -212,7 +212,7 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
     const others = list.filter((x) => x !== existing);
     const spec = { ...model, [listKey]: [...others, m] };
     try {
-      const tmp = new Model(ctx.session.schema, spec);
+      const tmp = new Model(ctx.session.schema, spec, ctx.session.notUnique);
       const f = tmp.resolve(`${m.table}.${m.name}`);
       const q = compileQuery(tmp, kind === 'measure' ? { dims: [], measures: [f] } : { dims: [f], measures: [], limit: 5 });
       const frame = await ctx.session.runner.run(q.sql);
