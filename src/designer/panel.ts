@@ -669,6 +669,26 @@ function phoneSection(ctx: PanelContext, v: Visual): HTMLElement {
 function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
   const set = (repeat: Visual['repeat']) => ctx.store.change('visual', () => (repeat ? (v.repeat = repeat) : delete v.repeat), v.id);
   const r = v.repeat;
+  // A whole-number option of the repeat, empty for none.
+  type NumKey = 'maxColumns' | 'maxRows' | 'minWidth' | 'minHeight';
+  const num = (label: string, key: NumKey, min: number, max: number, placeholder: string) =>
+    field(
+      label,
+      h(`input.sbd-input.sbd-repeat-${key}`, {
+        type: 'number',
+        min,
+        max,
+        value: r?.[key] ?? '',
+        placeholder,
+        onchange: (e: Event) => {
+          const n = Math.round(Number((e.target as HTMLInputElement).value));
+          const next = { ...r! };
+          if (n >= min && n <= max) next[key] = n;
+          else delete next[key];
+          set(next);
+        },
+      }),
+    );
   let label = r?.field ?? '';
   if (r) {
     try {
@@ -723,6 +743,28 @@ function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
               ),
             ),
           ),
+          h(
+            'div.sbd-row.sbd-repeat-opts',
+            {},
+            num('Max columns', 'maxColumns', 1, 12, 'none'),
+            num('Max rows', 'maxRows', 1, 100, 'none'),
+          ),
+          h(
+            'div.sbd-row.sbd-repeat-opts',
+            {},
+            num('Min width (px)', 'minWidth', 40, 2000, 'none'),
+            num('Min height (px)', 'minHeight', 40, 2000, '90'),
+          ),
+          field(
+            'When copies don’t fit',
+            h(
+              'select.sbd-input.sbd-repeat-overflow',
+              { onchange: (e: Event) => set({ ...r, overflow: (e.target as HTMLSelectElement).value === 'expand' ? 'expand' : undefined }) },
+              h('option', { value: 'scroll', selected: r.overflow !== 'expand' }, 'Scroll inside the visual'),
+              h('option', { value: 'expand', selected: r.overflow === 'expand' }, 'Expand the visual (moves the ones below)'),
+            ),
+          ),
+          ...(r.overflow === 'expand' ? [h('div.sbd-hint', {}, 'The visual grows in Preview and the viewer; on the canvas, and on fixed-size pages, it scrolls.')] : []),
         ]
       : [h('div.sbd-drop', {}, 'Drop a field: a copy of this visual for each of its values')]),
   );

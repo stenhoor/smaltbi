@@ -129,6 +129,13 @@ try {
       document.querySelectorAll('[data-id=r-cards] .sk-kpi-value').length === 7 &&
       document.querySelectorAll('[data-id=r-cats] .sk-bar').length === 12, undefined, 30000);
     check(regions, 'sample Regions page: a country map, a store map, seven repeated cards and three repeated charts');
+    // The country cards expand: the visual grows to show every row of cards and the charts below move down.
+    const grown = await until(landing, () => {
+      const cards = document.querySelector('[data-id=r-cards]');
+      const grid = cards.querySelector('.sb-repeat');
+      return /span ([4-9]|\d\d)/.test(cards.style.gridRow) && grid.scrollHeight <= grid.clientHeight + 1 && document.querySelector('[data-id=r-cats]').getBoundingClientRect().top >= cards.getBoundingClientRect().bottom;
+    });
+    check(grown, `sample Regions page: Expand grows the country cards and moves the charts below (${await landing.evaluate(() => document.querySelector('[data-id=r-cards]').style.gridRow)})`);
     await landing.close();
   } else {
     check(!process.env.E2E_SITE, 'product site checks skipped: _site/ is missing (run npm run site)');
@@ -550,6 +557,28 @@ try {
   await page.selectOption('.sbd-repeat-opts select', 'desc');
   const reversed = await until(page, () => [...document.querySelectorAll('.sb-visual[data-id="e2e-rcard"] .sb-repeat-title')].map((t) => t.textContent).join() === 'Tea,Equipment,Coffee,Accessories');
   check(reversed, 'repeat: Z → A reverses the copies');
+  // The grid: at most 2 columns and 1 row shows the first two copies and says how many more there are.
+  const rcard = '.sb-visual[data-id="e2e-rcard"]';
+  for (const [cls, val] of [['maxColumns', '2'], ['maxRows', '1']]) {
+    await page.locator(`.sbd-repeat-${cls}`).fill(val);
+    await page.locator(`.sbd-repeat-${cls}`).dispatchEvent('change');
+  }
+  const capped = await until(page, (sel) => [...document.querySelectorAll(`${sel} .sb-repeat-title`)].map((t) => t.textContent).join() === 'Tea,Equipment' && /^2 more not shown/.test(document.querySelector(`${sel} .sb-repeat-more`)?.textContent ?? ''), rcard);
+  // A minimum width wider than the visual leaves one column.
+  await page.locator('.sbd-repeat-minWidth').fill('2000');
+  await page.locator('.sbd-repeat-minWidth').dispatchEvent('change');
+  const narrow = await until(page, (sel) => document.querySelectorAll(`${sel} .sb-repeat-panel`).length === 1 && /^3 more not shown/.test(document.querySelector(`${sel} .sb-repeat-more`)?.textContent ?? ''), rcard);
+  const spec = await page.evaluate(() => window.smaltbi.store.visual('e2e-rcard').visual.repeat);
+  check(capped && narrow && spec.maxColumns === 2 && spec.maxRows === 1 && spec.minWidth === 2000, `repeat: max columns, max rows and min width shape the grid (${JSON.stringify(spec)})`);
+  // Expand is kept with the visual; on the canvas the visual keeps its size (it grows in Preview and the viewer).
+  for (const cls of ['maxRows', 'minWidth']) {
+    await page.locator(`.sbd-repeat-${cls}`).fill('');
+    await page.locator(`.sbd-repeat-${cls}`).dispatchEvent('change');
+  }
+  await page.selectOption('.sbd-repeat-overflow', 'expand');
+  const expandSet = await until(page, () => window.smaltbi.store.visual('e2e-rcard').visual.repeat?.overflow === 'expand' && !!document.querySelector('.sbd-repeat .sbd-hint'));
+  const canvasRow = await page.evaluate((sel) => document.querySelector(sel).style.gridRow, rcard);
+  check(expandSet && /span 3$/.test(canvasRow), `repeat: Expand is set from the panel; the canvas keeps the visual's size (${canvasRow})`);
   await page.evaluate(() => {
     const d = window.smaltbi;
     d.store.change('page', () => (d.page.visuals = d.page.visuals.filter((v) => !['e2e-rcard', 'e2e-rbar'].includes(v.id))), d.page.id);

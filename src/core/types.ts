@@ -234,9 +234,22 @@ export interface Visual {
   conditional?: ConditionalRule[];
   /**
    * Repeat the visual for each value of a field (a dimension): a grid of copies, each filtered to its value and
-   * titled with it. `columns` (else automatic), `max` copies (default 24), values in `order` (default asc).
+   * titled with it. `columns` (else automatic), `max` copies (default 24), values in `order` (default asc). The grid:
+   * `maxColumns` and `maxRows` cap it (copies past them are not shown), a copy is never narrower than `minWidth` or
+   * lower than `minHeight` (px; default 90), and copies that don't fit `scroll` inside the visual (the default) or
+   * `expand` it: it grows to show them all and the visuals below move down (in the viewer; fixed-size pages scroll).
    */
-  repeat?: { field: string; columns?: number; max?: number; order?: 'asc' | 'desc' };
+  repeat?: {
+    field: string;
+    columns?: number;
+    max?: number;
+    order?: 'asc' | 'desc';
+    maxColumns?: number;
+    maxRows?: number;
+    minWidth?: number;
+    minHeight?: number;
+    overflow?: 'scroll' | 'expand';
+  };
   /** On phones (narrow screens) the page is one column: hide this visual there, or give it its own height in rows. */
   phone?: { hidden?: boolean; h?: number };
 }
