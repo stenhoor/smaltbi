@@ -11,6 +11,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 export function dateColumns(model: Model): string[] {
   const out: string[] = [];
   for (const t of model.tables.values()) {
+    if (t.source) continue; // a role is another table's columns again
     for (const c of t.columns.values()) if (!c.calc && (c.type === 'date' || c.type === 'datetime')) out.push(`${t.name}.${c.name}`);
   }
   return out;

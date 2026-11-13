@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { addDateTable } from '../src/core/datetable.js';
 import { compileQuery } from '../src/core/compile.js';
 import { Model } from '../src/core/model.js';
+import { dateColumns } from '../src/designer/datetable.js';
+import { autoLayout } from '../src/designer/modelview.js';
 import { introspect } from '../src/data/introspect.js';
 import type { Report } from '../src/core/types.js';
 import { sampleSession } from './helpers.js';
@@ -30,6 +32,13 @@ test('a role is the table again, under its name, with its columns and drill path
   assert.ok(t.columns.has('year') && t.columns.has('month_name'));
   assert.ok(t.hierarchies.size > 0, 'the calendar drill paths come along');
   assert.deepEqual(model.validate(), []);
+});
+
+test('the designer leaves roles out where only real tables belong', () => {
+  // No date-table source from a role's columns, and no card (so no gap) for a role in the diagram's layout.
+  assert.ok(!dateColumns(model).some((c) => c.startsWith('Joined.')));
+  assert.ok(dateColumns(model).includes('customers.joined'));
+  assert.ok(!('Joined' in autoLayout(model)));
 });
 
 test('revenue by the year customers joined, and by order year and joined year together', async () => {

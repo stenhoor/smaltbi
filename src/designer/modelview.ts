@@ -49,20 +49,23 @@ function cardHeight(t: TableInfo): number {
  * hop; unrelated tables go in a row underneath.
  */
 export function autoLayout(model: Model): Record<string, Pos> {
-  const tables = [...model.tables.values()];
+  // A role table has no card of its own: its lines go to the table it plays.
+  const tables = [...model.tables.values()].filter((t) => !t.source);
+  const card = (name: string) => model.tables.get(name)?.source ?? name;
+  const edges = model.edges.map((e) => ({ from: card(e.from.table), to: card(e.to.table) }));
   const level = new Map<string, number>();
-  const into = new Set(model.edges.map((e) => e.to.table));
-  const related = new Set(model.edges.flatMap((e) => [e.from.table, e.to.table]));
+  const into = new Set(edges.map((e) => e.to));
+  const related = new Set(edges.flatMap((e) => [e.from, e.to]));
   for (const t of tables) if (related.has(t.name) && !into.has(t.name)) level.set(t.name, 0);
   if (!level.size && related.size) level.set([...related][0]!, 0);
   // Longest path from a fact (relaxation, bounded by the table count so cycles terminate).
   for (let pass = 0; pass < tables.length; pass++) {
     let changed = false;
-    for (const e of model.edges) {
-      const l = level.get(e.from.table);
-      if (l === undefined || e.from.table === e.to.table) continue;
-      if ((level.get(e.to.table) ?? -1) < l + 1 && l + 1 <= tables.length) {
-        level.set(e.to.table, l + 1);
+    for (const e of edges) {
+      const l = level.get(e.from);
+      if (l === undefined || e.from === e.to) continue;
+      if ((level.get(e.to) ?? -1) < l + 1 && l + 1 <= tables.length) {
+        level.set(e.to, l + 1);
         changed = true;
       }
     }
