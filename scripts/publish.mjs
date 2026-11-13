@@ -45,6 +45,26 @@ for (const step of report.data?.steps ?? []) {
     step[key] = to;
   }
 }
+// Plugins are copied into the site, their hashes checked (ADR 0008).
+if (report.plugins?.length) {
+  const { createHash } = await import('node:crypto');
+  mkdirSync(join(out, 'plugins'), { recursive: true });
+  const names = new Set();
+  for (const ref of report.plugins) {
+    const remote = /^[a-z][a-z0-9+.-]*:/i.test(ref.url);
+    const bytes = remote ? Buffer.from(await (await fetch(ref.url)).arrayBuffer()) : readFileSync(resolve(dirname(src), ref.url));
+    const ok = String(ref.integrity ?? '').split(/\s+/).some((w) => {
+      const algo = w.slice(0, w.indexOf('-'));
+      return ['sha256', 'sha384', 'sha512'].includes(algo) && `${algo}-${createHash(algo).update(bytes).digest('base64')}` === w;
+    });
+    if (!ok) throw new Error(`the plugin ${ref.url} does not match its integrity hash`);
+    let name = 'plugins/' + basename(remote ? new URL(ref.url).pathname : ref.url).replace(/[^\w.-]+/g, '_');
+    while (names.has(name)) name = name.replace(/(\.\w+)?$/, '-2$1');
+    names.add(name);
+    writeFileSync(join(out, name), bytes);
+    ref.url = name;
+  }
+}
 // A theme given as a relative file is inlined.
 if (typeof report.theme === 'string' && /\.json$/i.test(report.theme)) report.theme = JSON.parse(readFileSync(resolve(dirname(src), report.theme), 'utf8'));
 

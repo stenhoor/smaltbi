@@ -4,6 +4,7 @@
 import type { DataStep, Report } from '../core/types.js';
 import { quoteIdent } from '../core/sql.js';
 import { BUILTIN_THEMES } from '../theme/theme.js';
+import { checkIntegrity } from '../plugins/loader.js';
 import { referencedFiles, type FileStore } from 'smaltkit/manifest';
 import { zip, type ZipEntry } from '../kit/zip.js';
 import type { ReportSession } from '../report/session.js';
@@ -55,6 +56,7 @@ Files:
   report.json                         the report: data steps, model, pages, theme
   brand/                              favicon, the smaltbi mark and the "Powered by smaltbi" badge
   data/                               the data files the report loads
+  plugins/                            the report's plugins, if it has any
 `;
 
 async function fetchBytes(url: string): Promise<Uint8Array> {
@@ -123,6 +125,24 @@ export async function publishEntries(session: ReportSession, opts: PublishOption
       steps.push(s as DataStep);
     }
     report.data = { ...report.data, steps, database: { name: report.data.database?.name ?? 'report', storage: report.data.database?.storage ?? 'memory' } };
+  }
+  // Plugins are copied into the site (ADR 0008): the published report then loads them from its own site, so readers
+  // are not asked, and it keeps working if the plugin's host goes away. The hash is checked on the way.
+  if (report.plugins?.length) {
+    const names = new Set<string>();
+    report.plugins = await Promise.all(
+      report.plugins.map(async (ref) => {
+        const url = new URL(ref.url, session.base).href;
+        log(url);
+        const bytes = await fetchBytes(url);
+        if (!(await checkIntegrity(bytes.slice().buffer, ref.integrity))) throw new Error(`the plugin ${url} no longer matches its integrity hash: add it again (File → Plugins…)`);
+        let name = `plugins/${(new URL(url).pathname.split('/').pop() || 'plugin.js').replace(/[^\w.-]+/g, '_')}`;
+        for (let i = 2; names.has(name); i++) name = name.replace(/(\.\w+)?$/, `-${i}$1`);
+        names.add(name);
+        entries.push({ path: name, data: bytes });
+        return { ...ref, url: name };
+      }),
+    );
   }
   entries.push({ path: 'report.json', data: JSON.stringify(report, null, 2) + '\n' });
   entries.push({ path: 'index.html', data: VIEWER_HTML(report.name) });

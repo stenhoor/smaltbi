@@ -19,6 +19,8 @@ import { dataDialog, measureDialog, publishDialog, themeDialog, type DialogConte
 import { quickMeasureDialog } from './quickmeasure.js';
 import { ModelView, type ModelSelection } from './modelview.js';
 import { modelPanel } from './modelpanel.js';
+import { preparePlugins } from '../plugins/ui.js';
+import { pluginsDialog } from './plugins.js';
 
 const SAMPLE = 'examples/sales/report.json';
 const appBase = document.baseURI;
@@ -275,6 +277,7 @@ class Designer {
       { label: 'Open the sample report', action: () => void this.openUrlString(SAMPLE) },
       { label: '', separator: true },
       { label: 'Save report file', hint: 'Ctrl+S', action: () => this.save() },
+      { label: 'Plugins…', action: () => void pluginsDialog(this.dctx, () => this.renderPanel()) },
       { label: 'Copy report JSON', action: () => void navigator.clipboard?.writeText(JSON.stringify(this.store.report, null, 2)).then(() => toast('Copied', 'ok')) },
     ]);
   }
@@ -314,6 +317,7 @@ class Designer {
 
   async openReport(report: Report, base: string): Promise<void> {
     if (report.smaltbi !== 1 || !Array.isArray(report.pages)) throw new Error('not a smaltbi report');
+    await preparePlugins(report.plugins, base);
     toast('Loading data…');
     const session = await ReportSession.open(report, base, { engine: this.engine, files: localFiles });
     this.store = new DocStore(report, base);
@@ -1010,6 +1014,7 @@ async function boot(): Promise<void> {
     base = new URL(SAMPLE, appBase).href;
     report = (await (await fetch(base)).json()) as Report;
   }
+  await preparePlugins(report.plugins, base);
   let session: ReportSession;
   try {
     session = await ReportSession.open(report, base, { engine, files: localFiles, log: (_l, t) => {

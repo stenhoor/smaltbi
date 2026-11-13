@@ -12,37 +12,50 @@ used, it is evaluated as a **plugin**:
 3. Server-side features (refresh schedules, sharing, sign-in, row-level security) are plugins or a
    wrapper environment around the static app, never core.
 
-## Visual plugins (available now)
+## Visual plugins
 
-A visual is a `VisualDef` registered with `registerVisual()`. The built-ins use exactly this API
-(`src/visuals/`), so a plugin visual is a peer of a bar chart.
+A plugin is **one ES module file** with no imports ([ADR 0008](adr/0008-plugin-loading.md)). It exports `setup(api)`,
+and smaltbi calls it with everything the plugin needs. A visual is a `VisualDef`, the same definition the built-in
+visuals use (`src/visuals/`), so a plugin visual is a peer of a bar chart. A complete example is
+[`examples/plugins/bullet.js`](https://github.com/stenhoor/smaltbi/blob/main/examples/plugins/bullet.js).
 
-```ts
-// Today: import from src/visuals/api.ts (a published 'smaltbi/visuals' entry point is planned).
-import { registerVisual, type VisualDef } from 'smaltbi/visuals';
-
-const bullet: VisualDef = {
-  type: 'acme.bullet',
-  label: 'Bullet chart',
-  group: 'plugin',
-  icon: '<svg viewBox="0 0 24 24"><path d="M3 9h14v6H3zM19 7h2v10h-2z"/></svg>',
-  roles: [
-    { name: 'category', label: 'Category', kind: 'dimension', max: 1 },
-    { name: 'values', label: 'Value', kind: 'measure', max: 1 },
-    { name: 'target', label: 'Target', kind: 'measure', max: 1 },
-  ],
-  options: [{ key: 'labels', label: 'Data labels', type: 'bool', default: true }],
-  sort: 'value',
-  render(ctx) {
-    const cat = ctx.data.role('category')[0];
-    const val = ctx.data.role('values')[0];
-    // … build an SVG string using ctx.width / ctx.height; marks get class "sk-mark sk-c0"
-    // and data-row="<row index>" to take part in cross-filtering, tooltips and drill.
-    ctx.el.innerHTML = '<svg class="sk-svg" …>…</svg>';
+```js
+export default {
+  name: 'Acme visuals',
+  apiVersion: 1,
+  setup(api) {
+    const { esc, columnChart } = api.kit;
+    api.registerVisual({
+      type: 'acme.bullet', // namespaced: "<your name>.<visual>"
+      label: 'Bullet chart',
+      icon: '<svg viewBox="0 0 24 24">…</svg>',
+      roles: [
+        { name: 'category', label: 'Category', kind: 'dimension', max: 1 },
+        { name: 'values', label: 'Value', kind: 'measure', max: 1 },
+        { name: 'target', label: 'Target', kind: 'measure', max: 1 },
+      ],
+      options: [api.options.labels],
+      sort: 'value',
+      render(ctx) {
+        // Build SVG for ctx.width × ctx.height. Marks get class "sk-mark sk-c0" and data-row="<row index>" to take
+        // part in cross-filtering, tooltips and drill.
+        ctx.el.innerHTML = '<svg class="sk-svg" …>…</svg>';
+        // Or reuse a smaltkit chart: columnChart(api.chartContext(ctx));
+      },
+    });
   },
 };
-registerVisual(bullet);
 ```
+
+What `api` holds:
+
+| Field | Meaning |
+|---|---|
+| `apiVersion` | The plugin API version smaltbi offers (1). A plugin that sets a higher `apiVersion` is not loaded. |
+| `registerVisual(def)` | Add a visual. Its `type` must be namespaced (`acme.bullet`) and new; it shows at the end of the gallery. |
+| `kit` | smaltkit: charts (`columnChart`, …), tables, formatting, SVG helpers (`esc`, `linear`, `band`, `r2`), DOM helpers. |
+| `chartContext(ctx)` | The smaltkit chart context for a render context, to draw with a smaltkit chart. |
+| `options.legend`, `options.labels` | The shared Legend and Data labels options. |
 
 What a visual gets in `render(ctx)`:
 
@@ -64,20 +77,25 @@ role), `ctx.pick(...roles)`, and `ctx.aggregate(field, agg)`. Without it, the de
 all dimension roles and aggregates all measure roles.
 
 Style marks with the theme's variables (`var(--c)` is the series color on `sk-cN` elements, plus
-`--sk-text`, `--sk-muted`, `--sk-grid`, …) so the visual follows every theme and dark mode. A visual can
-also reuse a smaltkit renderer: `render: (ctx) => columnChart(chartContext(ctx))` with `columnChart`
-from `smaltkit/charts` and `chartContext` from the plugin API.
+`--sk-text`, `--sk-muted`, `--sk-grid`, …) so the visual follows every theme and dark mode.
 
-### Loading plugins (planned for 0.3)
+### Loading plugins
 
-Reports will list plugins by URL; the viewer imports them before rendering:
+In the designer, **File → Plugins…** adds a plugin by URL: smaltbi fetches it, records its hash and loads it. In the
+report it is listed as:
 
 ```json
-"plugins": [{ "url": "https://cdn.example.com/acme-visuals@1.2.0/index.js", "integrity": "sha384-…" }]
+"plugins": [{ "url": "https://plugins.example.com/acme-visuals-1.2.0.js", "integrity": "sha384-…" }]
 ```
 
-The designer will show plugin visuals in the gallery's "plugin" group. Until then, plugins can be
-registered by bundling them into a custom build (import the module next to `src/visuals/index.ts`).
+- **Pinned:** the file must match its hash; if it changes, it no longer loads. Publish a new file (a new name) for a
+  new version.
+- **CORS:** the plugin's host must allow cross-origin requests (`Access-Control-Allow-Origin`), since smaltbi fetches
+  the file to check it.
+- **Asking:** a report from another site asks the reader before its plugins run (the answer is remembered for that
+  URL and hash). A published report carries copies of its plugins (`plugins/` in the site), so its readers are not
+  asked.
+- **Failures:** a plugin that fails to load never stops the report; its visuals say the plugin is missing.
 
 ## Other plugin kinds (planned)
 

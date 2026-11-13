@@ -1,7 +1,8 @@
 // End-to-end test in Chromium (Playwright): the designer builds visuals, the viewer interacts,
 // and a published ZIP runs on its own. Run after `npm run build`: node test/e2e.mjs
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, symlinkSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdtempSync, symlinkSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -135,6 +136,44 @@ try {
     const cards = await pq.evaluate(() => [...document.querySelectorAll('.sk-kpi-value')].map((e) => e.textContent));
     check(ok && cards[0] === '4,000' && cards[1] === '2,000', `Parquet import and link run in the browser engine (${cards})`);
     await pq.close();
+  }
+
+  // ---------------------------------------------------------------- plugins (ADR 0008)
+  // A report on another site that uses the example bullet-chart plugin: the viewer asks first, loads it after a yes
+  // (and next time without asking), and a plugin whose file no longer matches its hash is refused.
+  {
+    const pluginDir = mkdtempSync(join(tmpdir(), 'smaltbi-plugin-'));
+    const code = readFileSync(join(root, 'examples/plugins/bullet.js'));
+    writeFileSync(join(pluginDir, 'bullet.js'), code);
+    const integrity = `sha384-${createHash('sha384').update(code).digest('base64')}`;
+    const report = (plugin) => ({
+      smaltbi: 1,
+      name: 'Plugin fixture',
+      plugins: [plugin],
+      data: { database: { name: 'plugin-fixture', storage: 'memory' }, steps: [{ import: `http://localhost:${port}/test/fixtures/sales-gzip.parquet`, table: 'imported' }] },
+      model: { measures: [{ table: 'imported', name: 'Rows', sql: 'COUNT(*)', format: 'integer' }, { table: 'imported', name: 'Target', sql: '1100', format: 'integer' }] },
+      pages: [{ id: 'p', name: 'Plugin', visuals: [{ id: 'b', type: 'example.bullet', layout: { x: 0, y: 0, w: 8, h: 5 }, fields: { category: ['imported.region'], values: ['imported.Rows'], target: ['imported.Target'] } }] }],
+    });
+    writeFileSync(join(pluginDir, 'report.json'), JSON.stringify(report({ url: 'bullet.js', integrity })));
+    writeFileSync(join(pluginDir, 'tampered.json'), JSON.stringify(report({ url: 'bullet.js', integrity: 'sha384-' + 'A'.repeat(64) })));
+    const pluginPort = port + 3;
+    await serve(pluginDir, pluginPort);
+    const pv = await newPage(browser, { viewport: { width: 1200, height: 700 } });
+    pv.on('pageerror', (e) => errors.push('plugin viewer: ' + e.message));
+    await pv.goto(`http://localhost:${port}/viewer.html?report=http://localhost:${pluginPort}/report.json`);
+    const asked = await until(pv, () => /This report uses plugins/.test(document.querySelector('.sk-dialog[open]')?.textContent ?? ''), undefined, 20000);
+    await pv.click('.sk-dialog[open] button:has-text("Load plugins")');
+    const drawn = await until(pv, () => document.querySelectorAll('.sb-visual[data-id=b] rect.sk-bar').length > 0 && document.querySelectorAll('.sb-visual[data-id=b] .ex-bullet-target').length > 0, undefined, 30000);
+    check(asked && drawn, 'plugins: a report from another site asks first, then the plugin visual draws');
+    await pv.reload();
+    const again = await until(pv, () => document.querySelectorAll('.sb-visual[data-id=b] rect.sk-bar').length > 0 && !document.querySelector('.sk-dialog[open]'), undefined, 30000);
+    check(again, 'plugins: once allowed, the same plugin (URL and hash) loads without asking');
+    await pv.goto(`http://localhost:${port}/viewer.html?report=http://localhost:${pluginPort}/tampered.json`);
+    await until(pv, () => !!document.querySelector('.sk-dialog[open]'), undefined, 20000);
+    await pv.click('.sk-dialog[open] button:has-text("Load plugins")');
+    const refused = await until(pv, () => /Is its plugin loaded/.test(document.querySelector('.sb-visual[data-id=b]')?.textContent ?? '') && /did not load.*do not match/.test(document.querySelector('.sk-toasts')?.textContent ?? ''), undefined, 30000);
+    check(refused, 'plugins: a file that no longer matches its hash is refused; the report still opens and says why');
+    await pv.close();
   }
 
   // ---------------------------------------------------------------- designer
@@ -346,6 +385,22 @@ try {
   check(twoSelected && multiAdded && made === 'bar {"category":["stores.channel"],"values":["sales.Revenue"]}', `fields: multi-select adds both to one new chart (${made})`);
   await page.keyboard.press('Delete');
   await page.locator('.sbd-field-sel button:has-text("Clear")').click().catch(() => {});
+
+  // Plugins in the designer: File → Plugins…, add the example by URL (its hash is recorded), and draw its visual.
+  await page.click('.sbd-tbtn:has-text("File")');
+  await page.click('.sk-menu-item:has-text("Plugins…")');
+  await page.locator('.sbd-plugin-input').fill(`http://localhost:${port}/examples/plugins/bullet.js`);
+  await page.click('.sbd-plugin-add');
+  const addedPlugin = await until(page, () => /^sha384-/.test(window.smaltbi.store.report.plugins?.[0]?.integrity ?? '') && !!document.querySelector('.sbd-plugin'));
+  await page.click('.sk-dialog[open] button:has-text("Done")');
+  const inGallery = await until(page, () => [...document.querySelectorAll('.sbd-vtype')].some((b) => b.title.startsWith('Bullet chart')));
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('page', () => d.page.visuals.push({ id: 'e2e-bullet', type: 'example.bullet', layout: { x: 0, y: 60, w: 6, h: 5 }, fields: { category: ['products.category'], values: ['sales.Revenue'] } }), d.page.id);
+  });
+  const bulletDrawn = await until(page, () => document.querySelectorAll('.sb-visual[data-id="e2e-bullet"] rect.sk-bar').length === 4);
+  check(addedPlugin && inGallery && bulletDrawn, 'plugins: File → Plugins… adds one by URL with its hash; its visual is in the gallery and draws');
+  // The plugin and its visual stay: the published site below must carry the plugin.
 
   // Phone view: the page as one column in reading order; a visual hidden on phones, another moved up; a fixed-size
   // page reflows into the column too.
@@ -749,6 +804,10 @@ try {
   await until(viewer, (sel) => document.querySelectorAll(sel).length >= 4, '.sk-kpi-value');
   const units = await viewer.locator('.sk-kpi-value').count();
   check(units >= 4, `published report has its cards (${units})`);
+  // The plugin travelled with the site: loaded from the site itself, so the reader is not asked.
+  const publishedPlugin = existsSync(join(site, 'plugins/bullet.js')) && JSON.parse(readFileSync(join(site, 'report.json'), 'utf8')).plugins?.[0]?.url === 'plugins/bullet.js';
+  const publishedBullet = await until(viewer, () => document.querySelectorAll('.sb-visual[data-id="e2e-bullet"] rect.sk-bar').length === 4 && !document.querySelector('.sk-dialog[open]'), undefined, 20000);
+  check(publishedPlugin && publishedBullet, 'plugins: publishing copies the plugin into the site; the published report draws it without asking');
   // On a phone the published report is one column in reading order, its tabs above.
   const phoneViewer = await newPage(browser, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   phoneViewer.on('pageerror', (e) => errors.push('phone viewer: ' + e.message));
