@@ -46,9 +46,10 @@ there are 17 stores. The model's own check reports nothing.
 
 ### A. Through a link table
 
-A link table is a table with two or more many → one relationships out and no measures: `product_tags` →
-`products`, `product_tags` → `tags`. A query may pass through one from either side. It still never reaches an
-aggregate as a fan-out:
+A link table is a table with two or more many → one relationships out, no measures, and no number columns besides
+its keys: `product_tags` → `products`, `product_tags` → `tags`. A query may pass through one from either side, where
+no plain relationship reaches the table it needs (so links never change a query that works without them). It still
+never reaches an aggregate as a fan-out:
 
 - **Grouping by a field beyond the link** (Revenue by tag): join through the link's distinct pairs. Duplicate pairs
   in the file can't double count, and each sale counts once in each of its tags.
@@ -66,13 +67,17 @@ aggregate as a fan-out:
   ```sql
   WHERE products.id IN (SELECT product_id FROM product_tags JOIN tags ON … WHERE tags.name IN ('Organic'))
   ```
+  A selection that mixes a field beyond the link with one before it (a tag and a region together) is a correlated
+  `EXISTS (…)`.
 - **Totals stay exact for free.** Table and matrix totals are already their own queries without the tag. "Organic
   60, Gift 50, total 90" is what the data says.
 - **Part-to-whole visuals** (pie, donut, treemap, 100% stacked, waterfall) add their parts in the browser, which
   overstates the whole when categories overlap. When a visual's category comes through a link table, it gets a note:
-  "A sale can have several tags: the parts add up to more than the total". A donut's centre shows the true total from
-  its own query.
-- **Relevant values** (decision 10) work unchanged: a tag slicer under a category selection lists the tags with sales.
+  "Some rows count under more than one of the tags (linked many-to-many): the parts add up to more than the total".
+  A donut leaves out its centre total, which would be the sum of the overlapping slices. Showing the true total there
+  needs smaltkit's donut to accept one (a follow-up).
+- **Relevant values** (decision 10) work unchanged: a tag slicer under a selection lists the tags of the selected
+  rows.
 - **Ambiguity** counts paths through links like any other path: two links between the same tables are an error until
   one is inactive.
 - **Model view:** a link table is drawn as a link, a small card between the two tables with a ⇄ mark. A pure link
@@ -82,7 +87,10 @@ aggregate as a fan-out:
 
 - **(a) Inferred (recommended; chosen):** any table with two or more relationships out and no measures can link. There is
   nothing to set. A fact table has measures, so it never links two dimensions behind the user's back. The model view
-  shows which tables link, so it isn't hidden.
+  shows which tables link, so it isn't hidden. *As built (step 3):* a link also has no number columns besides its
+  keys. Without that rule, a fact table with no measures written yet (a model being built) became a link, and paths
+  through it made plain models look ambiguous. A factless fact, such as attendance (student, course, date), is still
+  a link.
 - **(b) Marked:** a "Link table" switch on the table, which the model view suggests for a table of keys only. This is
   one click, and the intent is explicit. A link table with a measure added later (Tag count) keeps linking.
 

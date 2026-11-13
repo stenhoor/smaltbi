@@ -133,7 +133,7 @@ test('custom SQL is wrapped so matching filters still apply', async () => {
 test('relationship suggestions by naming convention', () => {
   const bare = new Model(s.schema, {});
   const sug = bare.suggestRelationships().map((r) => `${r.from}->${r.to}`).sort();
-  assert.deepEqual(sug, ['sales.customer_id->customers.id', 'sales.product_id->products.id', 'sales.store_id->stores.id']);
+  assert.deepEqual(sug, ['product_tags.product_id->products.id', 'product_tags.tag_id->tags.id', 'sales.customer_id->customers.id', 'sales.product_id->products.id', 'sales.store_id->stores.id']);
 });
 
 test('self-referencing measures are rejected', () => {

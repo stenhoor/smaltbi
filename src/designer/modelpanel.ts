@@ -83,6 +83,10 @@ function tablePanel(ctx: ModelPanelContext, table: string): HTMLElement {
     h('div.sbd-mv-tname', {}, table),
     field('Display name', textInput(settings().label ?? '', (v) => setSettings({ label: v || undefined }))),
     checkbox('Hidden in the fields list', !!settings().hidden, (on) => setSettings({ hidden: on || undefined })),
+    // ADR 0009: a table of keys with two or more relationships out links its tables many-to-many.
+    ctx.session.model.links.has(table)
+      ? hint(`A link table: ${[...new Set(ctx.session.model.edges.filter((e) => e.from.table === table).map((e) => e.to.table))].join(' and ')} are related many-to-many through it. A visual can group by either side's fields: each row counts once in each group it links to, and totals count it once.`)
+      : null,
     h('div.sbd-section-title', {}, `Relationships (${rels.length})`),
     ...rels.map(({ r, i }) => h('button.sbd-mv-link', { onclick: () => ctx.select({ kind: 'rel', index: i }) }, `${r.from} → ${r.to}`, r.active === false ? ' (inactive)' : '')),
     rels.length ? null : hint('None. Drag a column onto another table’s column to relate them.'),

@@ -66,6 +66,15 @@ export interface ResolvedField {
   time?: { calc: TimeCalcKind; months: number; base: ResolvedField };
 }
 
+/**
+ * How a query reaches a table: along a many → one edge, or through a link table (ADR 0009, shape A): from a table
+ * it has reached (`back.to`), back along the link's edge to it, then out along the link's `edge` to the next table.
+ */
+export interface Step {
+  edge: Edge;
+  link?: { table: string; back: Edge };
+}
+
 export class ModelError extends Error {}
 
 export class Model {
@@ -75,6 +84,12 @@ export class Model {
   private measureIndex = new Map<string, Measure>();
   /** What-if parameters by lowercased name. */
   readonly parameters = new Map<string, Parameter>();
+  /**
+   * Link tables (ADR 0009, decision 1: inferred): two or more relationships out, no measures, and no numbers besides
+   * keys, like product_tags (product_id → products, tag_id → tags). A query may pass through one from either side,
+   * where no plain relationship reaches the table it needs.
+   */
+  readonly links = new Set<string>();
 
   /**
    * `notUnique`: relationship target columns ("table.column") found to have repeated values in the data (the session
@@ -153,6 +168,16 @@ export class Model {
       if (!src || src.source || !this.tables.has(ft) || this.tables.has(role) || role.includes('.')) continue;
       this.tables.set(role, roleOf(src, role));
       this.edges.push({ from: { table: ft, column: fc }, to: { table: role, column: tc }, ...(notUnique.has(`${tt}.${tc}`) ? { notUnique: true } : {}) });
+    }
+    for (const t of this.tables.values()) {
+      if (t.source || t.measures.size) continue;
+      const out = this.edges.filter((e) => e.from.table === t.name);
+      if (out.length < 2) continue;
+      // A table of keys: no numbers besides its relationship columns and primary key. A fact table has quantities
+      // to add up (even before its measures are written), so it never links its dimensions behind the author's back.
+      const keys = new Set(out.map((e) => e.from.column));
+      if ([...t.columns.values()].some((c) => !c.calc && c.type === 'number' && !c.pk && !keys.has(c.name))) continue;
+      this.links.add(t.name);
     }
   }
 
@@ -316,20 +341,66 @@ export class Model {
 
   // ---------------------------------------------------------------- joins
 
-  /** BFS along many→one edges. Returns, for each reachable table, the edge used to reach it. */
-  private reach(root: string): Map<string, Edge | null> {
-    const seen = new Map<string, Edge | null>([[root, null]]);
-    const queue = [root];
-    while (queue.length) {
-      const t = queue.shift()!;
-      for (const e of this.edges) {
-        if (e.from.table === t && !seen.has(e.to.table)) {
-          seen.set(e.to.table, e);
-          queue.push(e.to.table);
+  /**
+   * BFS along many → one edges; then, for tables still out of reach, through link tables (and on from there). Returns,
+   * for each reachable table, the step used to reach it. A link is used only where no plain path exists, so links never
+   * change a query that plain relationships answer.
+   */
+  private reach(root: string): Map<string, Step | null> {
+    const seen = new Map<string, Step | null>([[root, null]]);
+    const plain = (queue: string[]) => {
+      while (queue.length) {
+        const t = queue.shift()!;
+        for (const e of this.edges) {
+          if (e.from.table === t && !seen.has(e.to.table)) {
+            seen.set(e.to.table, { edge: e });
+            queue.push(e.to.table);
+          }
+        }
+      }
+    };
+    plain([root]);
+    for (let grew = this.links.size > 0; grew; ) {
+      grew = false;
+      for (const t of [...seen.keys()]) {
+        for (const [back, edge] of this.linkHops(t)) {
+          if (seen.has(edge.to.table)) continue;
+          seen.set(edge.to.table, { edge, link: { table: back.from.table, back } });
+          plain([edge.to.table]);
+          grew = true;
         }
       }
     }
     return seen;
+  }
+
+  /** From table `t`, the hops through link tables: [the link's edge to t, the link's edge on to another table]. */
+  private linkHops(t: string): [Edge, Edge][] {
+    const out: [Edge, Edge][] = [];
+    for (const back of this.edges) {
+      if (back.to.table !== t || !this.links.has(back.from.table)) continue;
+      for (const edge of this.edges) if (edge !== back && edge.from.table === back.from.table && edge.to.table !== t) out.push([back, edge]);
+    }
+    return out;
+  }
+
+  /** The table a step comes from. */
+  private static prev(s: Step): string {
+    return s.link ? s.link.back.to.table : s.edge.from.table;
+  }
+
+  /** The first link the path from `root` to `table` passes through (closest to root), or undefined. */
+  linkOnPath(root: string, table: string, r = this.reach(root)): Step | undefined {
+    let first: Step | undefined;
+    const seen = new Set<string>();
+    for (let t = table; t !== root && !seen.has(t); ) {
+      seen.add(t);
+      const s = r.get(t);
+      if (!s) break;
+      if (s.link) first = s;
+      t = Model.prev(s);
+    }
+    return first;
   }
 
   canReach(root: string, table: string): boolean {
@@ -352,18 +423,34 @@ export class Model {
     throw new ModelError(`no relationship path from ${first} to ${missing.join(', ')}; add a relationship in the model`);
   }
 
-  /** Number of distinct active relationship paths from `root` to each table it reaches. */
+  /**
+   * Number of distinct active relationship paths from `root` to each table it reaches. Tables plain relationships
+   * reach count those paths only; the others count their paths through link tables (two links between the same tables
+   * are ambiguous), as reach() uses links only where no plain path exists.
+   */
   pathCounts(root: string): Map<string, number> {
-    const count = new Map<string, number>();
-    const walk = (t: string, seen: Set<string>) => {
-      for (const e of this.edges) {
-        if (e.from.table !== t || seen.has(e.to.table)) continue;
-        count.set(e.to.table, (count.get(e.to.table) ?? 0) + 1);
-        walk(e.to.table, new Set([...seen, e.to.table]));
-      }
+    const walk = (links: boolean) => {
+      const count = new Map<string, number>();
+      const go = (t: string, seen: Set<string>) => {
+        for (const e of this.edges) {
+          if (e.from.table !== t || seen.has(e.to.table)) continue;
+          count.set(e.to.table, (count.get(e.to.table) ?? 0) + 1);
+          go(e.to.table, new Set([...seen, e.to.table]));
+        }
+        if (!links) return;
+        for (const [back, edge] of this.linkHops(t)) {
+          if (seen.has(edge.to.table) || seen.has(back.from.table)) continue;
+          count.set(edge.to.table, (count.get(edge.to.table) ?? 0) + 1);
+          go(edge.to.table, new Set([...seen, back.from.table, edge.to.table]));
+        }
+      };
+      go(root, new Set([root]));
+      return count;
     };
-    walk(root, new Set([root]));
-    return count;
+    const plain = walk(false);
+    if (!this.links.size) return plain;
+    for (const [t, n] of walk(true)) if (!plain.has(t)) plain.set(t, n);
+    return plain;
   }
 
   /**
@@ -398,9 +485,11 @@ export class Model {
     const walk = (t: string): Edge | undefined => {
       if (seen.has(t)) return undefined;
       seen.add(t);
-      const e = r.get(t);
-      if (!e) return undefined;
-      return e.notUnique ? e : walk(e.from.table);
+      const s = r.get(t);
+      if (!s) return undefined;
+      if (s.edge.notUnique) return s.edge;
+      if (s.link?.back.notUnique) return s.link.back;
+      return walk(Model.prev(s));
     };
     for (const t of needed) {
       const bad = walk(t);
@@ -408,24 +497,86 @@ export class Model {
     }
   }
 
-  /** The LEFT JOIN clauses that bring `needed` tables in, starting from `root`. */
+  /**
+   * The LEFT JOIN clauses that bring `needed` tables in, starting from `root`. Through a link table, the join goes
+   * through the link's distinct pairs: each row of the root counts once in each group it links to, and duplicate
+   * pairs in the link can't count it twice.
+   */
   joins(root: string, needed: Iterable<string>): string[] {
-    const r = this.reach(root);
-    const used: Edge[] = [];
-    const added = new Set([root]);
+    return this.joinChain(root, needed, this.reach(root));
+  }
+
+  private joinChain(start: string, needed: Iterable<string>, r: Map<string, Step | null>): string[] {
+    const out: string[] = [];
+    const added = new Set([start]);
+    const Q = quoteIdent;
     const add = (t: string) => {
       if (added.has(t)) return;
-      const e = r.get(t);
-      if (!e) throw new ModelError(`${t} cannot be reached from ${root}`);
-      add(e.from.table);
+      const s = r.get(t);
+      if (!s) throw new ModelError(`${t} cannot be reached from ${start}`);
+      add(Model.prev(s));
       added.add(t);
-      used.push(e);
+      const e = s.edge;
+      if (s.link) {
+        const { back } = s.link;
+        const a = Model.linkAlias(s);
+        out.push(`LEFT JOIN (SELECT DISTINCT ${Q(back.from.column)}, ${Q(e.from.column)} FROM ${Q(s.link.table)}) AS ${Q(a)} ON ${Q(a)}.${Q(back.from.column)} = ${Q(back.to.table)}.${Q(back.to.column)}`);
+        out.push(`LEFT JOIN ${this.tableSql(e.to.table)} ON ${Q(a)}.${Q(e.from.column)} = ${Q(e.to.table)}.${Q(e.to.column)}`);
+      } else {
+        out.push(`LEFT JOIN ${this.tableSql(e.to.table)} ON ${Q(e.from.table)}.${Q(e.from.column)} = ${Q(e.to.table)}.${Q(e.to.column)}`);
+      }
     };
     for (const t of needed) add(t);
-    return used.map(
-      (e) =>
-        `LEFT JOIN ${this.tableSql(e.to.table)} ON ${quoteIdent(e.from.table)}.${quoteIdent(e.from.column)} = ${quoteIdent(e.to.table)}.${quoteIdent(e.to.column)}`,
-    );
+    return out;
+  }
+
+  private static linkAlias(s: Step): string {
+    return `${s.link!.table}:${s.edge.to.table}`;
+  }
+
+  /**
+   * A filter condition over tables beyond a link table, as a semi-join (ADR 0009): `EXISTS (…)` correlated with the
+   * table the link hangs off, so the rows being counted are never multiplied, whatever the visual groups by. Returns
+   * the condition and the tables the outer query still needs (those before the link). Unchanged when no table of the
+   * filter is beyond a link, or when the query already joins those tables to group by them (`joined`).
+   */
+  throughLinks(root: string, cond: string, tables: Iterable<string>, joined: ReadonlySet<string> = new Set()): { sql: string; tables: Set<string> } {
+    // Already joined to group by (Revenue by tag, filtered to one tag): the condition applies to the joined rows, so
+    // the other groups are left out, and each row is still counted once in each group that remains.
+    const all = [...tables];
+    if (all.every((t) => joined.has(t) || !this.linkOnPath(root, t))) return { sql: cond, tables: new Set(all) };
+    const r = this.reach(root);
+    const near = new Set<string>();
+    const far: string[] = [];
+    let hop: Step | undefined;
+    for (const t of tables) {
+      const s = this.linkOnPath(root, t, r);
+      if (!s) {
+        near.add(t);
+        continue;
+      }
+      if (hop && Model.linkAlias(hop) !== Model.linkAlias(s)) throw new ModelError(`a filter over ${s.edge.to.table} and ${hop.edge.to.table} goes through two link tables; filter by each on its own`);
+      hop = s;
+      far.push(t);
+    }
+    if (!hop) return { sql: cond, tables: near };
+    const Q = quoteIdent;
+    const { back, table } = hop.link!;
+    const a = Model.linkAlias(hop);
+    const from = [
+      `FROM (SELECT DISTINCT ${Q(back.from.column)}, ${Q(hop.edge.from.column)} FROM ${Q(table)}) AS ${Q(a)}`,
+      `JOIN ${this.tableSql(hop.edge.to.table)} ON ${Q(a)}.${Q(hop.edge.from.column)} = ${Q(hop.edge.to.table)}.${Q(hop.edge.to.column)}`,
+      ...this.joinChain(hop.edge.to.table, far, r),
+    ].join(' ');
+    const key = `${Q(back.to.table)}.${Q(back.to.column)}`;
+    const mixed = near.size > 0;
+    near.add(back.to.table);
+    // Only tables beyond the link (a tag slicer, a click on a tag): the keys that link to them, uncorrelated. A
+    // condition that also reads this side's tables (a selection of tag and region together) is correlated: EXISTS.
+    // (The uncorrelated form is also the one smaltdb gets right when the link's pairs are a derived table: a
+    // correlated EXISTS over a derived table joined to another table comes back empty there.)
+    if (!mixed) return { sql: `${key} IN (SELECT ${Q(a)}.${Q(back.from.column)} ${from} WHERE ${cond})`, tables: near };
+    return { sql: `EXISTS (SELECT 1 ${from} WHERE ${Q(a)}.${Q(back.from.column)} = ${key} AND (${cond}))`, tables: near };
   }
 
   /**

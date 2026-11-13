@@ -68,10 +68,12 @@ export function compileDrillAcross(model: Model, q: QuerySpec): CompiledQuery {
   const isMeasureFilter = (f: Filter) => !!f.field && model.kindOf(f.field) === 'measure';
   const rowFilters = (q.filters ?? []).filter((f) => !isMeasureFilter(f));
   const ignored: Filter[] = [];
+  const overlap: string[] = [];
   const ctes: string[] = [];
   facts.forEach((f, i) => {
     const sub = compileQuery(model, { dims, measures: f.parts, filters: rowFilters, inner: true });
     for (const x of sub.ignored) if (!ignored.includes(x)) ignored.push(x);
+    for (const k of sub.overlap ?? []) if (!overlap.includes(k)) overlap.push(k);
     ctes.push(`f${i} AS (\n${sub.sql}\n)`);
   });
 
@@ -134,7 +136,7 @@ export function compileDrillAcross(model: Model, q: QuerySpec): CompiledQuery {
   ]
     .filter(Boolean)
     .join('\n');
-  return { sql, columns, root: facts[0]!.root, ignored };
+  return { sql, columns, root: facts[0]!.root, ignored, ...(overlap.length ? { overlap } : {}) };
 }
 
 /**

@@ -132,6 +132,15 @@ try {
     // The online shop has no position and the most revenue: the store map's colour scale leaves it out (smaltkit#28).
     const storeScale = await landing.evaluate(() => [...document.querySelectorAll('[data-id=r-stores] .sk-map-legend > span')].map((s) => Number(s.textContent.replace(/[^\d.]/g, ''))).filter(Boolean));
     check(storeScale.length === 2 && storeScale[1] < 100000, `sample store map: the colour scale covers the stores drawn, not the online shop (${storeScale})`);
+    // Many-to-many through a link table (ADR 0009): revenue by tag, each sale once in each of its tags; the donut by tag
+    // says its slices overlap and leaves out its centre total; a click on a tag in the slicer filters by it.
+    await landing.click('.sbv-tab:text-is("Products")');
+    const tagged = await until(landing, () => document.querySelectorAll('[data-id=p-tagbar] .sk-bar').length === 6 && /count under more than one of the tags/.test(document.querySelector('[data-id=p-tagdonut] .sb-overlap-note')?.textContent ?? '') && !document.querySelector('[data-id=p-tagdonut] .sk-donut-total') && !document.querySelector('[data-id=p-tagbar] .sb-overlap-note'), undefined, 30000);
+    await landing.locator('[data-id=p-tag] label:has-text("Gift idea") input').check();
+    const giftOnly = await until(landing, () => document.querySelectorAll('[data-id=p-tagbar] .sk-bar').length === 1 && /Gift idea/.test(document.querySelector('[data-id=p-tagbar] .sk-tick.sk-cat')?.textContent ?? ''), undefined, 20000);
+    check(tagged && giftOnly, `sample Products page: revenue by tag through the link table, the overlap note, and a tag slicer (${tagged}, ${giftOnly})`);
+    await landing.locator('[data-id=p-tag] label:has-text("Gift idea") input').uncheck();
+    await landing.click('.sbv-tab:text-is("Regions")');
     // The country cards expand: the visual grows to show every row of cards and the charts below move down.
     const grown = await until(landing, () => {
       const cards = document.querySelector('[data-id=r-cards]');
@@ -820,8 +829,16 @@ try {
 
   // Model view: the ER diagram of tables and relationships.
   await page.click('.sbd-seg-btn:has-text("Model")');
-  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 5 && document.querySelectorAll('.sbd-mv-rel').length === 5);
-  check((await page.locator('.sbd-mv-card').count()) === 5 && (await page.locator('.sbd-mv-rel').count()) === 5, 'model view shows 5 tables and 5 relationships (one of them a role)');
+  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 7 && document.querySelectorAll('.sbd-mv-rel').length === 7);
+  check((await page.locator('.sbd-mv-card').count()) === 7 && (await page.locator('.sbd-mv-rel').count()) === 7, 'model view shows 7 tables and 7 relationships (one of them a role)');
+  // product_tags links products and tags many-to-many (ADR 0009): a dashed card marked "⇄ link", explained in its panel.
+  const linkCard = await page.evaluate(() => {
+    const c = document.querySelector('.sbd-mv-card[data-table=product_tags]');
+    return !!c?.classList.contains('sbd-mv-linktable') && /⇄ link/.test(c.textContent) && document.querySelectorAll('.sbd-mv-card.sbd-mv-linktable').length === 1;
+  });
+  await page.evaluate(() => window.smaltbi.selectModel({ kind: 'table', table: 'product_tags' }));
+  const linkHint = await until(page, () => /A link table: products and tags are related many-to-many through it/.test(document.querySelector('.sbd-panel')?.textContent ?? ''));
+  check(linkCard && linkHint, `the model view marks the link table and explains it (${linkCard}, ${linkHint})`);
   const rels = () => page.evaluate(() => window.smaltbi.store.report.model.relationships.map((r) => `${r.from}>${r.to}`));
   // Select the stores relationship by its line and delete it.
   const storeRel = (await rels()).indexOf('sales.store_id>stores.id');
@@ -829,8 +846,8 @@ try {
   await until(page, () => /sales\.store_id/.test(document.querySelector('.sbd-mv-relcard')?.textContent ?? ''));
   check(/sales\.store_id/.test((await page.locator('.sbd-mv-relcard').textContent()) ?? ''), 'clicking a line selects the relationship');
   await page.click('.sbd-btn.sbd-danger:has-text("Delete")');
-  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 4);
-  check((await rels()).length === 4, 'a relationship can be deleted');
+  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 6);
+  check((await rels()).length === 6, 'a relationship can be deleted');
   // Re-create it by dragging sales.store_id onto stores.id.
   const src = await page.locator('.sbd-mv-card[data-table=sales] .sbd-mv-col[data-col=store_id]').boundingBox();
   const dst = await page.locator('.sbd-mv-card[data-table=stores] .sbd-mv-col[data-col=id]').boundingBox();
@@ -839,7 +856,7 @@ try {
   await page.mouse.move((src.x + dst.x) / 2, (src.y + dst.y) / 2, { steps: 5 });
   await page.mouse.move(dst.x + 30, dst.y + dst.height / 2, { steps: 5 });
   await page.mouse.up();
-  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 5);
+  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 7);
   check((await rels()).includes('sales.store_id>stores.id'), 'dragging a column onto a key creates the relationship (many → one)');
   // Move a card: its position is saved in the report.
   const head = await page.locator('.sbd-mv-card[data-table=products] .sbd-mv-head').boundingBox();
@@ -856,7 +873,7 @@ try {
     document.querySelector('.sbd-mv-rel[data-rel="0"]').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     return [...document.querySelectorAll('.sbd-mv-count')].map((c) => c.textContent);
   });
-  check(countsAfterClick.length === 5 && countsAfterClick.every((t) => /rows/.test(t)), `row counts stay visible when the diagram re-renders (${countsAfterClick})`);
+  check(countsAfterClick.length === 7 && countsAfterClick.every((t) => /rows/.test(t)), `row counts stay visible when the diagram re-renders (${countsAfterClick})`);
 
   // An ambiguous model is an error, not a guess (ADR 0004, decision 9): add a second path
   // sales → stores → customers, look at a visual that crosses it, then undo.
@@ -871,7 +888,7 @@ try {
   check(restored, 'undoing the extra relationship restores the visual');
   await page.click('.sbd-page-tab:has-text("Overview")');
   await page.click('.sbd-seg-btn:has-text("Model")');
-  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 5);
+  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 7);
 
   // Preview from Model view (review on #5): Delete must not remove the relationship that was
   // selected in the hidden diagram, and returning must bring back the diagram and both side panes.

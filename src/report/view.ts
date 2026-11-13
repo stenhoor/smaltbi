@@ -41,6 +41,8 @@ interface VisualRuntime {
   repeat?: { field: DataColumn; panels: RepeatPanel[]; more: number };
   /** Grid rows this visual grows by to show all its copies (repeat overflow: expand). */
   grow?: number;
+  /** Labels of its fields reached through a link table: their groups overlap (ADR 0009). */
+  overlap?: string[];
 }
 
 interface RepeatPanel {
@@ -358,6 +360,7 @@ export class ReportView {
     const tupleSel = own?.find((f) => f.op === 'tuples');
     const keys = tupleSel ? new Set((tupleSel.tuples ?? []).map((t) => JSON.stringify(t.map(norm)))) : null;
     const data = rt.data;
+    this.overlapNote(v, rt);
     if (rt.repeat) return this.drawRepeat(v, def, rt, keys);
     try {
       def.render({
@@ -365,7 +368,8 @@ export class ReportView {
         width: Math.max(10, rt.body.clientWidth),
         height: Math.max(10, rt.body.clientHeight),
         visual: v,
-        options: optionsOf(def, v),
+        // A donut's centre adds up its slices: with overlapping slices (ADR 0009) that isn't the total, so it's left out.
+        options: rt.overlap?.length && v.type === 'donut' ? { ...optionsOf(def, v), center: false } : optionsOf(def, v),
         data,
         extra: rt.extra ?? {},
         palette: paletteSize(this.session.theme),
@@ -387,6 +391,19 @@ export class ReportView {
     } catch (e) {
       rt.body.innerHTML = `<div class="sb-error">${esc((e as Error).message)}</div>`;
     }
+  }
+
+  /**
+   * Parts of a whole by a field reached through a link table (ADR 0009): a sale with two tags is in both slices, so
+   * the slices add up to more than the whole. Those visuals say so under the chart; the others need no note.
+   */
+  private overlapNote(v: Visual, rt: VisualRuntime): void {
+    const partsOfWhole = ['pie', 'donut', 'treemap', 'funnel', 'waterfall'].includes(v.type) || v.options?.stack === 'percent';
+    const text = partsOfWhole && rt.overlap?.length ? `Some rows count under more than one of the ${[...new Set(rt.overlap)].join(' and ')} (linked many-to-many): the parts add up to more than the total.` : '';
+    let note = rt.frame.querySelector<HTMLElement>(':scope > .sb-overlap-note');
+    if (!text) return note?.remove();
+    if (!note) rt.frame.append((note = h('div.sb-overlap-note')));
+    note.textContent = text;
   }
 
   /**
@@ -630,6 +647,7 @@ export class ReportView {
         extra[k] = (await this.runSpec(v, spec, filters, roleOf)).data;
       }),
     );
+    rt.overlap = main.overlap;
     if (repeatField) return { ...this.splitRepeat(v, rt, main.data, extra), sql: main.sql };
     return { data: main.data, extra, sql: main.sql };
   }
@@ -671,11 +689,16 @@ export class ReportView {
     return { data: combined, extra: {} };
   }
 
-  private async runSpec(_v: Visual, spec: QuerySpec, filters: Filter[], roleOf = new Map<ResolvedField, string>()): Promise<{ data: VisualData; sql: string }> {
+  private async runSpec(_v: Visual, spec: QuerySpec, filters: Filter[], roleOf = new Map<ResolvedField, string>()): Promise<{ data: VisualData; sql: string; overlap?: string[] }> {
     if (!spec.dims.length && !spec.measures.length) return { data: emptyData(), sql: '' };
     const q = compileQuery(this.session.model, { ...spec, filters: [...(spec.filters ?? []), ...filters] });
     const frame = await this.session.runner.run(this.bind(q.sql));
-    return { data: toVisualData(frame, q, roleOf), sql: showParams(q.sql, this.session.model) };
+    // Named by the field's table (tags), the clearer word for what a row can belong to several of.
+    const overlap = q.overlap?.map((k) => {
+      const f = q.columns.find((c) => c.key === k)?.field;
+      return (f && this.session.model.tables.get(f.table)?.label) ?? f?.label ?? k;
+    });
+    return { data: toVisualData(frame, q, roleOf), sql: showParams(q.sql, this.session.model), ...(overlap?.length ? { overlap } : {}) };
   }
 
   private async runCustom(v: Visual, plan: Plan, roleOf: Map<ResolvedField, string>, filters: Filter[]): Promise<{ data: VisualData; sql: string }> {

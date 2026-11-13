@@ -252,6 +252,9 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-mv-head { display: flex; align-items: baseline; gap: 6px; height: 38px; padding: 10px 12px 0; cursor: move; border-bottom: 1px solid var(--d-border); background: linear-gradient(var(--d-accent-soft), var(--d-surface)); }
 .sbd-mv-title { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sbd-mv-kind { font-size: 10px; color: var(--d-accent); text-transform: uppercase; letter-spacing: 0.04em; }
+/* A link table (ADR 0009): products and tags related many-to-many through it. */
+.sbd-mv-card.sbd-mv-linktable { border-style: dashed; }
+.sbd-mv-linkmark { text-transform: none; letter-spacing: 0; }
 .sbd-mv-count { margin-left: auto; font-size: 11px; color: var(--d-muted); white-space: nowrap; }
 .sbd-mv-cols { overflow-y: auto; padding: 4px 0; scrollbar-width: thin; }
 .sbd-mv-col { display: flex; align-items: center; gap: 7px; height: 22px; padding: 0 12px; cursor: crosshair; font-size: 12px; }
