@@ -281,7 +281,7 @@ try {
   await page.click('.sbd-add-rule');
   await page.selectOption('.sbd-rule select >> nth=0', 'sales.Revenue');
   await page.selectOption('.sbd-rule select >> nth=2', 'gt');
-  await page.locator('.sbd-rule input[type=number]').fill('150000');
+  await page.locator('.sbd-rule input[type=number]').fill('320000');
   await page.locator('.sbd-rule input[type=number]').press('Enter');
   await page.locator('.sbd-rule input[type=number]').blur();
   await page.selectOption('.sbd-rule select >> nth=4', 'good');
@@ -290,7 +290,7 @@ try {
   const cfCells = await until(page, (id) => document.querySelectorAll(`.sb-visual[data-id="${id}"] td.sk-tone-good.sk-fill`).length === 2, cfId, 10000);
   const cf = await page.evaluate((id) => [...document.querySelectorAll(`.sb-visual[data-id="${id}"] tbody tr`)].map((tr) => [tr.cells[0].textContent, tr.cells[1].className, !!tr.cells[1].querySelector('.sk-cf-icon')]), cfId);
   const rule = await page.evaluate((id) => window.smaltbi.store.visual(id).visual.conditional, cfId);
-  check(cfCells && cf.filter(([, cls, icon]) => /sk-tone-good sk-fill/.test(cls) && icon).map(([c]) => c).sort().join() === 'Coffee,Tea' && cf.filter(([, cls]) => /sk-tone/.test(cls)).length === 2, `conditional formatting: revenue above 150,000 is good, filled, with an icon (${JSON.stringify(cf)} ${JSON.stringify(rule)})`);
+  check(cfCells && cf.filter(([, cls, icon]) => /sk-tone-good sk-fill/.test(cls) && icon).map(([c]) => c).sort().join() === 'Coffee,Tea' && cf.filter(([, cls]) => /sk-tone/.test(cls)).length === 2, `conditional formatting: revenue above 320,000 is good, filled, with an icon (${JSON.stringify(cf)} ${JSON.stringify(rule)})`);
   // A rule may test a measure the table doesn't show (Orders): it is fetched, not drawn.
   await page.evaluate((id) => {
     const s = window.smaltbi.store;
@@ -342,9 +342,9 @@ try {
     return id;
   });
   const ax = (sel) => `.sb-visual[data-id="${axId}"] ${sel}`;
-  const timeAxis = await until(page, (sel) => [...document.querySelectorAll(sel)].some((t) => /^Jan 2025$/.test(t.textContent)), ax('.sk-tick.sk-cat'));
+  const timeAxis = await until(page, (sel) => [...document.querySelectorAll(sel)].some((t) => /^2025$/.test(t.textContent)), ax('.sk-tick.sk-cat'));
   const days = await page.locator(ax('circle.sk-mark')).count();
-  check(timeAxis && days > 300, `chart axis: continuous dates with calendar ticks (${days} days)`);
+  check(timeAxis && days > 300, `chart axis: continuous dates with calendar ticks (${days} days; ${await page.evaluate((sel) => [...document.querySelectorAll(sel)].map((t) => t.textContent).join(), ax('.sk-tick.sk-cat'))})`);
   await page.locator(`.sb-visual[data-id="${axId}"]`).click({ position: { x: 20, y: 12 } });
   await until(page, (id) => document.querySelector(`.sb-visual.sb-selected[data-id="${id}"]`), axId);
   await page.click('.sbd-tab:has-text("Format")');
@@ -352,8 +352,8 @@ try {
   const refLine = await until(page, ([line, label]) => document.querySelectorAll(line).length === 1 && /^Average: \$\d/.test(document.querySelector(label)?.textContent ?? ''), [ax('line.sk-ref'), ax('text.sk-ref-label')]);
   check(refLine, 'chart axis: a reference line at the average, added from the Format tab');
   await page.selectOption('.sbd-field-row:has(span:text-is("Y axis scale")) select', 'log');
-  const logTicks = await until(page, (sel) => [...document.querySelectorAll(sel)].map((t) => t.textContent).join() === '$100,$200,$500,$1K,$2K,$5K,$10K', ax('text.sk-tick:not(.sk-cat)'));
-  check(logTicks, 'chart axis: log scale');
+  const logTicks = await until(page, (sel) => [...document.querySelectorAll(sel)].map((t) => t.textContent).join() === '$10,$100,$1K,$10K', ax('text.sk-tick:not(.sk-cat)'));
+  check(logTicks, `chart axis: log scale (${await page.evaluate((sel) => [...document.querySelectorAll(sel)].map((t) => t.textContent).join(), ax('text.sk-tick:not(.sk-cat)'))})`);
   await page.evaluate((id) => {
     const s = window.smaltbi.store;
     s.change('visual', () => Object.assign(s.visual(id).visual, { type: 'column', options: { legend: 'none' }, fields: { category: ['products.category'], values: ['sales.Revenue'], multiples: ['customers.region'] } }), id);
@@ -460,20 +460,20 @@ try {
   await page.click('.sbd-seg-btn:has-text("Model")');
   await page.click('.sbd-mv-params');
   await page.click('.sbd-param-add');
-  await page.locator('.sbd-param-name').fill('Growth');
-  await page.locator('.sbd-param-name').dispatchEvent('change');
+  await page.locator('.sbd-param-name').last().fill('Uplift');
+  await page.locator('.sbd-param-name').last().dispatchEvent('change');
   for (const [cls, v] of [['sbd-param-value', '0.1'], ['sbd-param-min', '0'], ['sbd-param-max', '1'], ['sbd-param-step', '0.1']]) {
-    await page.locator(`.${cls}`).fill(v);
-    await page.locator(`.${cls}`).dispatchEvent('change');
+    await page.locator(`.${cls}`).last().fill(v);
+    await page.locator(`.${cls}`).last().dispatchEvent('change');
   }
   await page.click('.sk-dialog[open] button:has-text("Apply")');
-  const paramAdded = await until(page, () => JSON.stringify(window.smaltbi.store.report.model.parameters) === '[{"name":"Growth","type":"number","value":0.1,"min":0,"max":1,"step":0.1}]');
+  const paramAdded = await until(page, () => JSON.stringify(window.smaltbi.store.report.model.parameters.at(-1)) === '{"name":"Uplift","type":"number","value":0.1,"min":0,"max":1,"step":0.1}');
   await page.click('.sbd-seg-btn:has-text("Report")');
   await page.evaluate(() => {
     const d = window.smaltbi;
-    d.store.change('model', (r) => r.model.measures.push({ table: 'sales', name: 'Revenue grown', sql: '[Revenue] * (1 + [@Growth])', format: 'currency' }));
+    d.store.change('model', (r) => r.model.measures.push({ table: 'sales', name: 'Revenue grown', sql: '[Revenue] * (1 + [@Uplift])', format: 'currency' }));
     d.store.change('page', () => d.page.visuals.push(
-      { id: 'e2e-param', type: 'parameter', layout: { x: 0, y: 70, w: 4, h: 2 }, fields: {}, options: { param: 'Growth' } },
+      { id: 'e2e-param', type: 'parameter', layout: { x: 0, y: 70, w: 4, h: 2 }, fields: {}, options: { param: 'Uplift' } },
       { id: 'e2e-grown', type: 'card', layout: { x: 4, y: 70, w: 3, h: 2 }, fields: { values: ['sales.Revenue grown'] } },
       { id: 'e2e-plain', type: 'card', layout: { x: 7, y: 70, w: 3, h: 2 }, fields: { values: ['sales.Revenue'] } },
     ), d.page.id);
@@ -489,18 +489,18 @@ try {
     return Math.abs(t - p * 1.5) <= 1;
   }, plain, 15000);
   const at50 = await money('.sb-visual[data-id="e2e-grown"] .sk-kpi-value');
-  check(paramAdded && Math.abs(at10 - plain * 1.1) <= 1 && paramMoved, `parameters: Growth added in the model; the card follows the slider (${plain} → ${at10} at 10% → ${at50} at 50%)`);
+  check(paramAdded && Math.abs(at10 - plain * 1.1) <= 1 && paramMoved, `parameters: Uplift added in the model; the card follows the slider (${plain} → ${at10} at 10% → ${at50} at 50%)`);
   // The measure editor completes [@ with the parameters, and knows them (no warning).
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Revenue grown"))').click({ button: 'right' });
   await page.click('.sk-menu-item:has-text("Edit measure…")');
   await page.waitForSelector('.sk-dialog .sk-editor .sk-ed-input');
   await page.locator('.sk-dialog .sk-ed-input').focus();
   await page.keyboard.press('ControlOrMeta+End');
-  await page.keyboard.type(' + [@Gr');
-  const paramCompletes = await until(page, () => [...document.querySelectorAll('.sk-dialog .sk-ed-complete:not([hidden]) [data-i]')].some((li) => /@Growth/.test(li.textContent)), undefined, 5000);
-  const noWarn = await page.evaluate(() => ![...document.querySelectorAll('.sk-dialog mark.sk-ed-warn')].some((m) => /@Growth/.test(m.textContent)));
+  await page.keyboard.type(' + [@Up');
+  const paramCompletes = await until(page, () => [...document.querySelectorAll('.sk-dialog .sk-ed-complete:not([hidden]) [data-i]')].some((li) => /@Uplift/.test(li.textContent)), undefined, 5000);
+  const noWarn = await page.evaluate(() => ![...document.querySelectorAll('.sk-dialog mark.sk-ed-warn')].some((m) => /@Uplift/.test(m.textContent)));
   await page.click('.sk-dialog[open] button:has-text("Cancel")');
-  check(paramCompletes && noWarn, 'parameters: the measure editor completes [@ with them and does not flag [@Growth]');
+  check(paramCompletes && noWarn, 'parameters: the measure editor completes [@ with them and does not flag [@Uplift]');
   await page.evaluate(() => {
     const d = window.smaltbi;
     d.store.change('page', () => (d.page.visuals = d.page.visuals.filter((v) => !['e2e-param', 'e2e-grown', 'e2e-plain'].includes(v.id))), d.page.id);
@@ -747,8 +747,8 @@ try {
 
   // Model view: the ER diagram of tables and relationships.
   await page.click('.sbd-seg-btn:has-text("Model")');
-  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4 && document.querySelectorAll('.sbd-mv-rel').length === 3);
-  check((await page.locator('.sbd-mv-card').count()) === 4 && (await page.locator('.sbd-mv-rel').count()) === 3, 'model view shows 4 tables and 3 relationships');
+  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 5 && document.querySelectorAll('.sbd-mv-rel').length === 5);
+  check((await page.locator('.sbd-mv-card').count()) === 5 && (await page.locator('.sbd-mv-rel').count()) === 5, 'model view shows 5 tables and 5 relationships (one of them a role)');
   const rels = () => page.evaluate(() => window.smaltbi.store.report.model.relationships.map((r) => `${r.from}>${r.to}`));
   // Select the stores relationship by its line and delete it.
   const storeRel = (await rels()).indexOf('sales.store_id>stores.id');
@@ -756,8 +756,8 @@ try {
   await until(page, () => /sales\.store_id/.test(document.querySelector('.sbd-mv-relcard')?.textContent ?? ''));
   check(/sales\.store_id/.test((await page.locator('.sbd-mv-relcard').textContent()) ?? ''), 'clicking a line selects the relationship');
   await page.click('.sbd-btn.sbd-danger:has-text("Delete")');
-  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 2);
-  check((await rels()).length === 2, 'a relationship can be deleted');
+  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 4);
+  check((await rels()).length === 4, 'a relationship can be deleted');
   // Re-create it by dragging sales.store_id onto stores.id.
   const src = await page.locator('.sbd-mv-card[data-table=sales] .sbd-mv-col[data-col=store_id]').boundingBox();
   const dst = await page.locator('.sbd-mv-card[data-table=stores] .sbd-mv-col[data-col=id]').boundingBox();
@@ -766,7 +766,7 @@ try {
   await page.mouse.move((src.x + dst.x) / 2, (src.y + dst.y) / 2, { steps: 5 });
   await page.mouse.move(dst.x + 30, dst.y + dst.height / 2, { steps: 5 });
   await page.mouse.up();
-  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 3);
+  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 5);
   check((await rels()).includes('sales.store_id>stores.id'), 'dragging a column onto a key creates the relationship (many → one)');
   // Move a card: its position is saved in the report.
   const head = await page.locator('.sbd-mv-card[data-table=products] .sbd-mv-head').boundingBox();
@@ -783,7 +783,7 @@ try {
     document.querySelector('.sbd-mv-rel[data-rel="0"]').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     return [...document.querySelectorAll('.sbd-mv-count')].map((c) => c.textContent);
   });
-  check(countsAfterClick.length === 4 && countsAfterClick.every((t) => /rows/.test(t)), `row counts stay visible when the diagram re-renders (${countsAfterClick})`);
+  check(countsAfterClick.length === 5 && countsAfterClick.every((t) => /rows/.test(t)), `row counts stay visible when the diagram re-renders (${countsAfterClick})`);
 
   // An ambiguous model is an error, not a guess (ADR 0004, decision 9): add a second path
   // sales → stores → customers, look at a visual that crosses it, then undo.
@@ -798,7 +798,7 @@ try {
   check(restored, 'undoing the extra relationship restores the visual');
   await page.click('.sbd-page-tab:has-text("Overview")');
   await page.click('.sbd-seg-btn:has-text("Model")');
-  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 4);
+  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 5);
 
   // Preview from Model view (review on #5): Delete must not remove the relationship that was
   // selected in the hidden diagram, and returning must bring back the diagram and both side panes.
@@ -831,23 +831,24 @@ try {
   await page.selectOption('.sbd-datetable select >> nth=0', 'sales.order_date');
   await page.selectOption('.sbd-datetable select >> nth=1', '7');
   await page.locator('.sbd-datetable label.sbd-check input').check();
-  await page.click('.sk-dialog-foot button:has-text("Add date table")');
-  const calendarCard = await until(page, () => !!document.querySelector('.sbd-mv-card[data-table=calendar]'), undefined, 30000);
+  // The sample has a date table already: this replaces it.
+  await page.click('.sk-dialog-foot button:text-is("Update date table")');
+  const calendarCard = await until(page, () => window.smaltbi.store.report.model.dateTable?.fiscalStart === 7 && !!document.querySelector('.sbd-mv-card[data-table=calendar]'), undefined, 30000);
   const dt = await page.evaluate(() => {
     const m = window.smaltbi.store.report.model;
     return { spec: m.dateTable, rel: (m.relationships ?? []).some((r) => r.from === 'sales.order_date' && r.to === 'calendar.date'), hier: (m.hierarchies ?? []).filter((x) => x.table === 'calendar').map((x) => x.name) };
   });
   check(calendarCard && dt.rel && dt.spec?.fiscalStart === 7 && dt.spec?.isoWeeks && dt.hier.join() === 'Calendar,Fiscal calendar,ISO weeks', `Add date table builds a related calendar with its hierarchies (${JSON.stringify(dt)})`);
-  // A visual over the calendar: revenue by fiscal year (FY2024 … FY2026 around 2024-01 … 2025-11).
+  // A visual over the calendar: revenue by fiscal year (FY2021 … FY2026 around 2021-01 … 2025-12).
   await page.click('.sbd-seg-btn:has-text("Report")');
   await page.evaluate(() => {
     const s = window.smaltbi.store;
     const pg = s.report.pages[0];
     s.change('page', () => pg.visuals.push({ id: 'c-fy', type: 'column', title: 'Revenue by fiscal year', layout: { x: 0, y: 40, w: 6, h: 4 }, fields: { category: ['calendar.Fiscal calendar'], values: ['sales.Revenue'] } }), pg.id);
   });
-  const fyBars = await until(page, () => document.querySelectorAll('.sb-visual[data-id=c-fy] .sk-bar').length === 3, undefined, 20000);
+  const fyBars = await until(page, () => document.querySelectorAll('.sb-visual[data-id=c-fy] .sk-bar').length === 6, undefined, 20000);
   const fyLabels = await page.evaluate(() => [...document.querySelectorAll('.sb-visual[data-id=c-fy] .sk-tick.sk-cat')].map((t) => t.textContent));
-  check(fyBars && fyLabels.join() === 'FY2024,FY2025,FY2026', `a visual queries through the date table (${fyLabels})`);
+  check(fyBars && fyLabels.join() === 'FY2021,FY2022,FY2023,FY2024,FY2025,FY2026', `a visual queries through the date table (${fyLabels})`);
   await page.evaluate(() => {
     const s = window.smaltbi.store;
     const pg = s.report.pages[0];
@@ -910,16 +911,18 @@ try {
   await page.click('.sk-menu-item:has-text("Quick measure…")');
   await page.selectOption('.sbd-quick select >> nth=1', 'py');
   const quickName = await page.locator('.sbd-quick input:not([type=number])').inputValue();
+  // The sample has a Revenue LY already: name this one.
+  await page.locator('.sbd-quick input:not([type=number])').fill('Revenue last year');
   await page.click('.sk-dialog-foot button:has-text("Add measure")');
-  await until(page, () => (window.smaltbi.store.report.model.measures ?? []).some((m) => m.time?.calc === 'py'));
+  await until(page, () => (window.smaltbi.store.report.model.measures ?? []).some((m) => m.time?.calc === 'py' && m.name === 'Revenue last year'));
   await page.evaluate(() => {
     const s = window.smaltbi.store;
     const pg = s.report.pages[0];
-    s.change('page', () => pg.visuals.push({ id: 't-ly', type: 'table', layout: { x: 0, y: 40, w: 6, h: 4 }, fields: { columns: ['calendar.year'], values: ['sales.Revenue', 'sales.Revenue LY'] }, sort: [{ by: 'columns:0', dir: 'asc' }] }), pg.id);
+    s.change('page', () => pg.visuals.push({ id: 't-ly', type: 'table', layout: { x: 0, y: 40, w: 6, h: 4 }, fields: { columns: ['calendar.year'], values: ['sales.Revenue', 'sales.Revenue last year'] }, sort: [{ by: 'columns:0', dir: 'asc' }] }), pg.id);
   });
-  await until(page, () => document.querySelectorAll('.sb-visual[data-id=t-ly] tbody tr').length === 2, undefined, 20000);
+  await until(page, () => document.querySelectorAll('.sb-visual[data-id=t-ly] tbody tr').length === 5, undefined, 20000);
   const ly = await page.evaluate(() => [...document.querySelectorAll('.sb-visual[data-id=t-ly] tbody tr')].map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent)));
-  check(quickName === 'Revenue LY' && ly.length === 2 && ly[0][2] === '(Blank)' && ly[1][2] === ly[0][1], `a quick measure shows last year's revenue beside this year's (${quickName}: ${JSON.stringify(ly)})`);
+  check(quickName === 'Revenue LY' && ly.length === 5 && ly[0][2] === '(Blank)' && ly.slice(1).every((r, i) => r[2] === ly[i][1]), `a quick measure shows last year's revenue beside this year's (${quickName}: ${JSON.stringify(ly)})`);
   await page.evaluate(() => {
     const s = window.smaltbi.store;
     const pg = s.report.pages[0];

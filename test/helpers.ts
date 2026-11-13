@@ -65,6 +65,7 @@ export async function sampleSession() {
   const db = clientDb();
   for (const s of report.data.steps ?? []) {
     if ('import' in s) await nodeIo.importCSV(db, s.table, readFileSync(join(root, 'examples/sales', s.import), 'utf8'), { create: true });
+    else if ('sql' in s) await db.exec(s.sql);
   }
   const schema = await introspect(db);
   const model = new Model(schema, report.model);

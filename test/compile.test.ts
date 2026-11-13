@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compileQuery, wrapCustomSql } from '../src/core/compile.js';
-import { Model } from '../src/core/model.js';
+import { Model, bindParams } from '../src/core/model.js';
 import { sampleSession } from './helpers.js';
 
 const s = await sampleSession();
@@ -39,8 +39,8 @@ test('measures inline other measures and cross-table expressions', async () => {
 test('calculated columns expand [refs] and group correctly', async () => {
   const q = compileQuery(model, { dims: [R('sales.Year Quarter')], measures: [R('sales.Orders')] });
   const f = await run(q.sql);
-  assert.equal((f.data.d0 as ArrayLike<string>)[0], '2024 Q1');
-  assert.equal(f.length, 8);
+  assert.equal((f.data.d0 as ArrayLike<string>)[0], '2021 Q1');
+  assert.equal(f.length, 20);
 });
 
 test('implicit aggregation of a column used as a measure', async () => {
@@ -162,7 +162,7 @@ test('every visual of the sample report compiles and runs', async () => {
       const measures = def.roles.filter((r) => r.kind === 'measure').flatMap((r) => fields[r.name]!);
       if (!dims.length && !measures.length) continue;
       const q = compileQuery(model, { dims, measures, limit: 100 });
-      await assert.doesNotReject(run(q.sql), `${page.id}/${v.id}: ${q.sql}`);
+      await assert.doesNotReject(run(bindParams(q.sql, model)), `${page.id}/${v.id}: ${q.sql}`);
     }
   }
 });

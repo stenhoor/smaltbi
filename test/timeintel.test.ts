@@ -71,7 +71,7 @@ test('same period last year, change and % change, previous month and quarter, ro
   close(mar.m5, await direct('2024-12-01', '2024-12-31'), 'previous quarter (three months back)');
   close(mar.m6, await direct('2025-01-01', '2025-03-31'), 'rolling 3 months');
   // The first year has nothing to compare with.
-  assert.equal(r.find((x) => x.d0 === '2024-03')!.m1, null);
+  assert.equal(r.find((x) => x.d0 === '2021-03')!.m1, null);
 });
 
 test('non-additive measures are aggregated over the window, not summed', async () => {
@@ -111,7 +111,7 @@ test('the SQL is one statement, and errors explain themselves', async () => {
   assert.match(q.sql, /^WITH ti_q AS \(/);
   assert.equal(q.sql.match(/;/g), null);
   // Without a date table.
-  const plain = new Model(s.schema, { ...s.report.model, measures: [...(s.report.model.measures ?? []), { table: 'sales', name: 'YTD', sql: '', time: { of: 'Revenue', calc: 'ytd' } }] });
+  const plain = new Model(s.schema, { ...s.report.model, dateTable: undefined, measures: [...(s.report.model.measures ?? []), { table: 'sales', name: 'YTD', sql: '', time: { of: 'Revenue', calc: 'ytd' } }] });
   assert.throws(() => compileQuery(plain, { dims: [], measures: [plain.resolve('sales.YTD', 'measure')] }), (e: unknown) => e instanceof ModelError && /Add date table/.test((e as Error).message));
   // Used inside another measure's SQL.
   const nested = await modelWith(1, [{ table: 'sales', name: 'Bad', sql: '[Revenue ytd] * 2' }]);

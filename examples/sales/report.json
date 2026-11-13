@@ -8,14 +8,17 @@
       { "import": "data/products.csv", "table": "products" },
       { "import": "data/stores.csv", "table": "stores" },
       { "import": "data/customers.csv", "table": "customers" },
-      { "import": "data/sales.csv", "table": "sales" }
+      { "import": "data/sales.csv", "table": "sales" },
+      { "sql": "-- Date table for sales.order_date: whole years around its dates (added by \"Add date table\").\nDROP TABLE IF EXISTS \"calendar\";\nCREATE TABLE \"calendar\" (\"date\" TEXT PRIMARY KEY, \"year\" TEXT, \"quarter\" TEXT, \"month\" INTEGER, \"month_name\" TEXT, \"year_month\" TEXT, \"day\" INTEGER, \"day_of_week\" INTEGER, \"day_name\" TEXT, \"week\" INTEGER, \"week_start\" TEXT);\nINSERT INTO \"calendar\" (\"date\", \"year\", \"quarter\", \"month\", \"month_name\", \"year_month\", \"day\", \"day_of_week\", \"day_name\", \"week\", \"week_start\")\nWITH RECURSIVE days(d) AS (\n  SELECT date((SELECT min(\"sales\".\"order_date\") FROM \"sales\"), 'start of year')\n  UNION ALL SELECT date(d, '+1 day') FROM days\n  WHERE d < date(date((SELECT max(\"sales\".\"order_date\") FROM \"sales\"), 'start of year'), '+12 months', '-1 day')\n)\nSELECT d, strftime('%Y', d), 'Q' || ((CAST(strftime('%m', d) AS INTEGER) + 2) / 3), CAST(strftime('%m', d) AS INTEGER), CASE CAST(strftime('%m', d) AS INTEGER) WHEN 1 THEN 'Jan' WHEN 2 THEN 'Feb' WHEN 3 THEN 'Mar' WHEN 4 THEN 'Apr' WHEN 5 THEN 'May' WHEN 6 THEN 'Jun' WHEN 7 THEN 'Jul' WHEN 8 THEN 'Aug' WHEN 9 THEN 'Sep' WHEN 10 THEN 'Oct' WHEN 11 THEN 'Nov' WHEN 12 THEN 'Dec' END, strftime('%Y-%m', d), CAST(strftime('%d', d) AS INTEGER), ((CAST(strftime('%w', d) AS INTEGER) + 6) % 7) + 1, CASE CAST(strftime('%w', d) AS INTEGER) WHEN 0 THEN 'Sun' WHEN 1 THEN 'Mon' WHEN 2 THEN 'Tue' WHEN 3 THEN 'Wed' WHEN 4 THEN 'Thu' WHEN 5 THEN 'Fri' WHEN 6 THEN 'Sat' END, CAST(strftime('%W', d) AS INTEGER), date(d, '-' || (((CAST(strftime('%w', d) AS INTEGER) + 6) % 7) + 1 - 1) || ' days') FROM days;" }
     ]
   },
   "model": {
     "relationships": [
       { "from": "sales.customer_id", "to": "customers.id" },
       { "from": "sales.product_id", "to": "products.id" },
-      { "from": "sales.store_id", "to": "stores.id" }
+      { "from": "sales.store_id", "to": "stores.id" },
+      { "from": "sales.order_date", "to": "calendar.date" },
+      { "from": "sales.ship_date", "to": "calendar.date", "role": "Ship date" }
     ],
     "columns": [
       { "table": "sales", "name": "Year", "sql": "strftime('%Y', sales.order_date)", "type": "text" },
@@ -35,15 +38,29 @@
       { "table": "sales", "name": "Avg Order Value", "sql": "[Revenue] / NULLIF([Orders], 0)", "format": "currency" },
       { "table": "sales", "name": "Revenue 2025", "sql": "SUM([Line Revenue]) FILTER (WHERE sales.order_date >= '2025-01-01')", "format": { "currency": "USD", "decimals": 0 } },
       { "table": "sales", "name": "Revenue 2024", "sql": "SUM([Line Revenue]) FILTER (WHERE sales.order_date < '2025-01-01')", "format": { "currency": "USD", "decimals": 0 } },
-      { "table": "sales", "name": "Discount Rate", "sql": "SUM(sales.quantity * sales.unit_price * sales.discount) / NULLIF(SUM(sales.quantity * sales.unit_price), 0)", "format": "percent" }
+      { "table": "sales", "name": "Discount Rate", "sql": "SUM(sales.quantity * sales.unit_price * sales.discount) / NULLIF(SUM(sales.quantity * sales.unit_price), 0)", "format": "percent" },
+      { "table": "sales", "name": "Revenue YTD", "sql": "", "time": { "of": "sales.Revenue", "calc": "ytd" }, "description": "Year to date of Revenue", "format": "currency0" },
+      { "table": "sales", "name": "Revenue LY", "sql": "", "time": { "of": "sales.Revenue", "calc": "py" }, "description": "Same period last year of Revenue", "format": "currency0" },
+      { "table": "sales", "name": "Revenue vs LY %", "sql": "", "time": { "of": "sales.Revenue", "calc": "yoy%" }, "description": "% change vs same period last year of Revenue", "format": "percent" },
+      { "table": "sales", "name": "Revenue rolling 3 months", "sql": "", "time": { "of": "sales.Revenue", "calc": "rolling", "months": 3 }, "description": "Rolling 3 months of Revenue", "format": "currency0" },
+      { "table": "sales", "name": "Revenue next year", "sql": "[Revenue] * (1 + [@Growth])", "format": "currency0", "description": "Revenue grown by the Growth parameter" },
+      { "table": "sales", "name": "Days to ship", "sql": "AVG(julianday(sales.ship_date) - julianday(sales.order_date))", "format": { "decimals": 1, "suffix": " days" }, "description": "Average days from order to shipping" }
     ],
-    "hierarchies": [{ "table": "sales", "name": "Date", "levels": ["Year", "Quarter", "Month"] }],
+    "hierarchies": [
+      { "table": "sales", "name": "Date", "levels": ["Year", "Quarter", "Month"] },
+      { "table": "calendar", "name": "Calendar", "levels": ["year", "quarter", "month_name", "date"] }
+    ],
     "tables": {
       "sales": { "label": "Sales", "columns": { "id": { "hidden": true }, "customer_id": { "hidden": true }, "product_id": { "hidden": true }, "store_id": { "hidden": true }, "unit_price": { "format": "currency" }, "discount": { "format": "percent" } } },
       "customers": { "label": "Customers", "columns": { "id": { "hidden": true } } },
       "products": { "label": "Products", "columns": { "id": { "hidden": true }, "list_price": { "format": "currency" }, "unit_cost": { "format": "currency" } } },
-      "stores": { "label": "Stores", "columns": { "id": { "hidden": true } } }
-    }
+      "stores": { "label": "Stores", "columns": { "id": { "hidden": true } } },
+      "calendar": { "label": "Calendar", "columns": { "date": { "label": "Date", "type": "date", "format": "date" }, "year": { "label": "Year" }, "quarter": { "label": "Quarter" }, "month": { "label": "Month number" }, "month_name": { "label": "Month", "sortBy": "month" }, "year_month": { "label": "Year-month", "type": "date", "format": "month" }, "day": { "label": "Day of month" }, "day_of_week": { "label": "Day of week number" }, "day_name": { "label": "Day of week", "sortBy": "day_of_week" }, "week": { "label": "Week" }, "week_start": { "label": "Week starting", "type": "date", "format": "date" } } }
+    },
+    "dateTable": { "table": "calendar", "column": "date", "source": "sales.order_date", "fiscalStart": 1, "weekStart": 1, "isoWeeks": false },
+    "parameters": [
+      { "name": "Growth", "type": "number", "value": 0.1, "min": 0, "max": 0.5, "step": 0.05, "format": "percent", "description": "Expected growth next year" }
+    ]
   },
   "theme": "smalt",
   "pages": [
@@ -53,7 +70,7 @@
       "visuals": [
         { "id": "title", "type": "text", "layout": { "x": 0, "y": 0, "w": 6, "h": 1 }, "fields": {}, "options": { "text": "# Sales overview\nSmalt Coffee & Tea · all channels" } },
         { "id": "s-region", "type": "slicer", "layout": { "x": 6, "y": 0, "w": 6, "h": 1 }, "fields": { "field": ["stores.region"] }, "options": { "style": "buttons", "sync": true } },
-        { "id": "k-rev", "type": "card", "layout": { "x": 0, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Revenue 2025"], "target": ["sales.Revenue 2024"], "trend": ["sales.Month"] }, "options": { "caption": "Revenue 2025 (to date)" } },
+        { "id": "k-rev", "type": "card", "layout": { "x": 0, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Revenue 2025"], "target": ["sales.Revenue 2024"], "trend": ["sales.Month"] }, "options": { "caption": "Revenue 2025 vs 2024" } },
         { "id": "k-margin", "type": "card", "layout": { "x": 3, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Margin %"], "trend": ["sales.Month"] }, "options": { "caption": "Gross margin" } },
         { "id": "k-orders", "type": "card", "layout": { "x": 6, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Orders"], "trend": ["sales.Month"] } },
         { "id": "k-aov", "type": "card", "layout": { "x": 9, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Avg Order Value"], "trend": ["sales.Month"] } },
@@ -61,6 +78,48 @@
         { "id": "c-channel", "type": "donut", "title": "Revenue by channel", "layout": { "x": 8, "y": 3, "w": 4, "h": 5 }, "fields": { "category": ["stores.channel"], "values": ["sales.Revenue"] }, "options": { "labels": true } },
         { "id": "c-cat", "type": "bar", "title": "Revenue by category", "layout": { "x": 0, "y": 8, "w": 4, "h": 5 }, "fields": { "category": ["products.category", "products.subcategory", "products.name"], "values": ["sales.Revenue"] }, "options": { "labels": true } },
         { "id": "c-combo", "type": "combo", "title": "Revenue and margin by month", "layout": { "x": 4, "y": 8, "w": 8, "h": 5 }, "fields": { "category": ["sales.Month"], "columns": ["sales.Revenue"], "lines": ["sales.Margin %"] } }
+      ]
+    },
+    {
+      "id": "trends",
+      "name": "Trends",
+      "visuals": [
+        { "id": "t-title", "type": "text", "layout": { "x": 0, "y": 0, "w": 6, "h": 1 }, "fields": {}, "options": { "text": "# Trends\nFive years of sales, with a date table and quick measures" } },
+        { "id": "t-year", "type": "slicer", "layout": { "x": 6, "y": 0, "w": 6, "h": 1 }, "fields": { "field": ["calendar.year"] }, "options": { "style": "buttons", "single": true } },
+        { "id": "t-ytd", "type": "card", "layout": { "x": 0, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Revenue YTD"] }, "options": { "caption": "Year to date: the latest year, or the year you pick" } },
+        { "id": "t-yoy", "type": "card", "layout": { "x": 3, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Revenue vs LY %"] }, "conditional": [{ "apply": "*", "op": "positive", "tone": "good", "icon": "up" }, { "apply": "*", "op": "negative", "tone": "bad", "icon": "down" }] },
+        { "id": "t-roll", "type": "card", "layout": { "x": 6, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Revenue rolling 3 months"] } },
+        { "id": "t-orders", "type": "card", "layout": { "x": 9, "y": 1, "w": 3, "h": 2 }, "fields": { "values": ["sales.Orders"], "trend": ["calendar.year_month"] } },
+        { "id": "t-line", "type": "line", "title": "Revenue by month, and the same month last year", "subtitle": "Continuous time axis, with the average as a reference line", "layout": { "x": 0, "y": 3, "w": 8, "h": 5 }, "fields": { "category": ["calendar.year_month"], "values": ["sales.Revenue", "sales.Revenue LY"] }, "options": { "xAxis": "continuous", "refLines": [{ "stat": "avg", "label": "Average month" }], "yTitle": "Revenue" } },
+        { "id": "t-yoycol", "type": "column", "title": "Growth by year", "layout": { "x": 8, "y": 3, "w": 4, "h": 5 }, "fields": { "category": ["calendar.year"], "values": ["sales.Revenue vs LY %"] }, "options": { "labels": true, "refLines": [{ "value": 0.1, "label": "Target 10%", "tone": "good" }] } },
+        { "id": "t-matrix", "type": "matrix", "title": "Revenue by category and year", "subtitle": "Stepped: expand a category for its subcategories", "layout": { "x": 0, "y": 8, "w": 7, "h": 6 }, "fields": { "rows": ["products.category", "products.subcategory"], "columns": ["calendar.year"], "values": ["sales.Revenue"] }, "options": { "format": "heat", "collapsed": true } },
+        { "id": "t-table", "type": "table", "title": "Products against last year", "layout": { "x": 7, "y": 8, "w": 5, "h": 6 }, "fields": { "columns": ["products.name"], "values": ["sales.Revenue", "sales.Revenue vs LY %"] }, "options": { "pageSize": "10", "freeze": "1" }, "conditional": [{ "apply": "sales.Revenue vs LY %", "op": "lt", "value": 0, "tone": "bad", "icon": "down" }, { "apply": "sales.Revenue vs LY %", "op": "gt", "value": 0.25, "tone": "good", "icon": "up", "fill": true }] }
+      ]
+    },
+    {
+      "id": "whatif",
+      "name": "What if",
+      "size": { "preset": "16:9" },
+      "layout": { "rows": 12 },
+      "visuals": [
+        { "id": "w-title", "type": "text", "layout": { "x": 0, "y": 0, "w": 8, "h": 1 }, "fields": {}, "options": { "text": "# What if\nMove the slider: every number follows the Growth parameter" } },
+        { "id": "w-param", "type": "parameter", "layout": { "x": 8, "y": 0, "w": 4, "h": 2 }, "fields": {}, "options": { "param": "Growth" } },
+        { "id": "w-now", "type": "card", "layout": { "x": 0, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Revenue"] }, "filters": [{ "field": "calendar.year", "op": "in", "values": ["2025"] }], "options": { "caption": "2025" } },
+        { "id": "w-next", "type": "card", "layout": { "x": 4, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Revenue next year"] }, "filters": [{ "field": "calendar.year", "op": "in", "values": ["2025"] }], "options": { "caption": "2026 at the Growth rate" } },
+        { "id": "w-cats", "type": "card", "title": "Next year by category", "subtitle": "One card per category: Repeat for each", "layout": { "x": 0, "y": 3, "w": 12, "h": 3 }, "fields": { "values": ["sales.Revenue next year"] }, "filters": [{ "field": "calendar.year", "op": "in", "values": ["2025"] }], "repeat": { "field": "products.category" } },
+        { "id": "w-regions", "type": "line", "title": "Revenue by year, for each region", "layout": { "x": 0, "y": 6, "w": 12, "h": 6 }, "fields": { "category": ["calendar.year"], "values": ["sales.Revenue"] }, "options": { "markers": true }, "repeat": { "field": "customers.region", "columns": 3 } }
+      ]
+    },
+    {
+      "id": "fulfilment",
+      "name": "Fulfilment",
+      "visuals": [
+        { "id": "f-title", "type": "text", "layout": { "x": 0, "y": 0, "w": 8, "h": 1 }, "fields": {}, "options": { "text": "# Fulfilment\nOne calendar, two roles: the order date and the ship date" } },
+        { "id": "f-days", "type": "card", "layout": { "x": 8, "y": 0, "w": 4, "h": 2 }, "fields": { "values": ["sales.Days to ship"] }, "options": { "caption": "from order to shipping" } },
+        { "id": "f-order", "type": "column", "title": "Orders by order month, 2025", "layout": { "x": 0, "y": 2, "w": 6, "h": 5 }, "fields": { "category": ["calendar.month_name"], "values": ["sales.Orders"] }, "filters": [{ "field": "calendar.year", "op": "in", "values": ["2025"] }] },
+        { "id": "f-ship", "type": "column", "title": "Orders by ship month, 2025", "subtitle": "The calendar again, as \"Ship date\"", "layout": { "x": 6, "y": 2, "w": 6, "h": 5 }, "fields": { "category": ["Ship date.month_name"], "values": ["sales.Orders"] }, "filters": [{ "field": "Ship date.year", "op": "in", "values": ["2025"] }] },
+        { "id": "f-channel", "type": "table", "title": "Days to ship by channel", "layout": { "x": 0, "y": 7, "w": 6, "h": 4 }, "fields": { "columns": ["stores.channel"], "values": ["sales.Orders", "sales.Days to ship"] } },
+        { "id": "f-region", "type": "bar", "title": "Days to ship by region", "layout": { "x": 6, "y": 7, "w": 6, "h": 4 }, "fields": { "category": ["customers.region"], "values": ["sales.Days to ship"] }, "options": { "labels": true } }
       ]
     },
     {
