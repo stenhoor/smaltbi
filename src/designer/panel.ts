@@ -669,8 +669,9 @@ function phoneSection(ctx: PanelContext, v: Visual): HTMLElement {
 function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
   const set = (repeat: Visual['repeat']) => ctx.store.change('visual', () => (repeat ? (v.repeat = repeat) : delete v.repeat), v.id);
   const r = v.repeat;
-  // A whole-number option of the repeat, empty for none.
-  type NumKey = 'maxColumns' | 'maxRows' | 'minWidth' | 'minHeight';
+  // A whole-number option of the repeat (or of its copy size), empty for none.
+  type NumKey = 'minColumns' | 'maxColumns' | 'minRows' | 'maxRows' | 'maxHeight' | 'copyW' | 'copyH';
+  const get = (key: NumKey) => (key === 'copyW' ? r?.copy?.w : key === 'copyH' ? r?.copy?.h : r?.[key]);
   const num = (label: string, key: NumKey, min: number, max: number, placeholder: string) =>
     field(
       label,
@@ -678,13 +679,17 @@ function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
         type: 'number',
         min,
         max,
-        value: r?.[key] ?? '',
+        value: get(key) ?? '',
         placeholder,
         onchange: (e: Event) => {
           const n = Math.round(Number((e.target as HTMLInputElement).value));
-          const next = { ...r! };
-          if (n >= min && n <= max) next[key] = n;
-          else delete next[key];
+          const value = n >= min && n <= max ? n : undefined;
+          const next: NonNullable<Visual['repeat']> = { ...r!, copy: { ...r!.copy } };
+          if (key === 'copyW' || key === 'copyH') next.copy = { ...next.copy, [key === 'copyW' ? 'w' : 'h']: value };
+          else next[key] = value;
+          for (const k of Object.keys(next) as (keyof typeof next)[]) if (next[k] === undefined && k !== 'field') delete next[k];
+          if (next.copy) for (const k of ['w', 'h'] as const) if (next.copy[k] === undefined) delete next.copy[k];
+          if (next.copy && !Object.keys(next.copy).length) delete next.copy;
           set(next);
         },
       }),
@@ -743,18 +748,11 @@ function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
               ),
             ),
           ),
-          h(
-            'div.sbd-row.sbd-repeat-opts',
-            {},
-            num('Max columns', 'maxColumns', 1, 12, 'none'),
-            num('Max rows', 'maxRows', 1, 100, 'none'),
-          ),
-          h(
-            'div.sbd-row.sbd-repeat-opts',
-            {},
-            num('Min width (px)', 'minWidth', 40, 2000, 'none'),
-            num('Min height (px)', 'minHeight', 40, 2000, '90'),
-          ),
+          h('div.sbd-hint', {}, 'Each copy at least (page grid cells):'),
+          h('div.sbd-row.sbd-repeat-opts', {}, num('Columns wide', 'copyW', 1, 24, 'auto'), num('Rows tall', 'copyH', 1, 40, 'auto')),
+          h('div.sbd-hint', {}, 'Copies across and down (the minimums win over the copy size):'),
+          h('div.sbd-row.sbd-repeat-opts', {}, num('Min columns', 'minColumns', 1, 12, 'none'), num('Max columns', 'maxColumns', 1, 12, 'none')),
+          h('div.sbd-row.sbd-repeat-opts', {}, num('Min rows', 'minRows', 1, 20, 'none'), num('Max rows', 'maxRows', 1, 100, 'none')),
           field(
             'When copies don’t fit',
             h(
@@ -764,7 +762,12 @@ function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
               h('option', { value: 'expand', selected: r.overflow === 'expand' }, 'Expand the visual (moves the ones below)'),
             ),
           ),
-          ...(r.overflow === 'expand' ? [h('div.sbd-hint', {}, 'The visual grows in Preview and the viewer; on the canvas, and on fixed-size pages, it scrolls.')] : []),
+          ...(r.overflow === 'expand'
+            ? [
+                num('Grow up to (rows tall)', 'maxHeight', 1, 200, 'no limit'),
+                h('div.sbd-hint', {}, 'The visual grows in Preview and the viewer, up to this height, then scrolls; on the canvas, and on fixed-size pages, it scrolls.'),
+              ]
+            : []),
         ]
       : [h('div.sbd-drop', {}, 'Drop a field: a copy of this visual for each of its values')]),
   );

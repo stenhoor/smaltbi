@@ -158,7 +158,7 @@ Patterns such as `"$#,0.00"` or `"0.0%"` also work.
       "interactions": { "filterOthers": true, "filteredByOthers": true },
       "style": { "surface": "#ffffff" },                   // per-visual theme token overrides
       "phone": { "hidden": false, "h": 4 },                // optional: on phones, hidden or its own height (rows)
-      "repeat": { "field": "products.category", "columns": 4, "max": 24, "order": "asc", "minHeight": 120, "overflow": "expand" },   // optional (below)
+      "repeat": { "field": "products.category", "columns": 4, "max": 24, "order": "asc", "copy": { "w": 3, "h": 2 }, "minColumns": 2, "overflow": "expand", "maxHeight": 12 },   // optional (below)
       "conditional": [                                     // tables, matrices, cards: first matching rule wins
         { "apply": "sales.Revenue", "op": "lt", "compare": "sales.Revenue LY", "tone": "bad", "icon": "down" },
         { "apply": "*", "op": "gt", "value": 100000, "tone": "good", "fill": true }
@@ -184,13 +184,19 @@ visuals, and on narrow screens the visuals stack. With it the page is a fixed sh
 each region. `columns` sets the grid (else automatic), `max` the number of copies (default 24; a note says how many
 more there are), `order` `asc` or `desc`. The grid can be shaped further:
 
+- `copy`: each copy is at least `w` columns and `h` rows of the page grid (the gaps between them included; without
+  `h`, 90 px with the copy's title). On a phone, where the page is one column, a cell is measured at the page's own
+  width, so copies keep their size and fewer fit across. The copy's width lowers the number of columns, `columns`
+  included.
+- `minColumns` and `minRows`: at least this many copies across and rows in view. They win over `copy`: the copies
+  shrink to fit them (rows down to 20 px).
 - `maxColumns` and `maxRows` cap the grid. Copies past `maxColumns × maxRows` are not shown; the note counts them.
-- `minWidth` and `minHeight` (pixels, the copy's title included; `minHeight` defaults to 90): a copy is never narrower
-  or lower. `minWidth` lowers the number of columns on a narrow screen, `columns` included.
+  `maxColumns` is applied last.
 - `overflow`: when the rows don't fit, `scroll` (the default) scrolls inside the visual; `expand` grows the visual to
-  show every row at `minHeight`, and the visuals below it move down (those beside it stretch with it). Without
-  `columns`, an expanding grid has as many columns as fit at `minWidth` (else 1.4 × `minHeight`). The visual grows in
-  the viewer and the designer's Preview; on the designer's canvas and on fixed-size pages it scrolls.
+  show every row at the copy's height, and the visuals below it move down (those beside it stretch with it).
+  `maxHeight` (grid rows) is the most it grows to, the visual's own height included; past that it scrolls. Without
+  `columns`, an expanding grid has as many columns as fit at the copy's width (else 1.4 × its height). The visual
+  grows in the viewer and the designer's Preview; on the designer's canvas and on fixed-size pages it scrolls.
 
 The data is one query grouped by the field as well, so a click in a copy selects that value too (the bar *and* its
 region). Each copy has its own scale; for one shared scale across charts, use the cartesian charts' `multiples` field.

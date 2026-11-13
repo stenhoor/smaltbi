@@ -205,6 +205,4 @@ body[data-mode=dark] .sbv-badge-dark { display: inline; }
 .sb-repeat-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-top: 1px solid var(--sb-border); padding-top: 4px; }
 .sb-repeat-title { font-size: var(--sb-fs-sub); font-weight: 600; color: var(--sb-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 18px; line-height: 18px; flex: none; }
 .sb-repeat-body { flex: 1; min-height: 0; position: relative; }
-/* Expand: the visual grows to show every copy (view.ts growTo), so the grid never scrolls. */
-.sb-repeat-expand { overflow: hidden; }
 .sb-repeat-more { font-size: var(--sb-fs-small); color: var(--sb-muted); height: 18px; line-height: 18px; }

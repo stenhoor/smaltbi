@@ -1,5 +1,5 @@
-// The grid of a repeated visual (visual.repeat): how many columns and rows of copies, how many copies are shown, and
-// how tall the grid must be to show them all at their minimum height. Pure, so it is unit-tested; view.ts draws it.
+// The grid of a repeated visual (visual.repeat): how many columns and rows of copies, how many copies are shown, how
+// low a row may be, and how tall the grid must be to show them all. Pure, so it is unit-tested; view.ts draws it.
 import type { Visual } from '../core/types.js';
 
 /** A copy's minimum height (its title included) when the report sets none, in pixels. */
@@ -7,40 +7,68 @@ export const REPEAT_MIN_HEIGHT = 90;
 /** Copies about this much wider than tall when the columns are automatic. */
 const ASPECT = 1.4;
 
+/** The grid settings in pixels: `repeat` with the copy's minimum size (page grid cells) worked out. */
+export interface GridSpec {
+  columns?: number;
+  minColumns?: number;
+  maxColumns?: number;
+  minRows?: number;
+  maxRows?: number;
+  /** A copy's minimum width and height (px). */
+  minWidth?: number;
+  minHeight?: number;
+  expand?: boolean;
+}
+
 export interface RepeatGrid {
   cols: number;
   rows: number;
   /** Copies drawn: all of them, or the first cols × maxRows. */
   shown: number;
-  /** A copy's minimum height (px). */
-  minHeight: number;
-  /** The grid's height with every row at the minimum height (px): what Expand grows the visual to. */
+  /** The least a row of copies may be (px): the copy's minimum height, lowered so `minRows` rows fit in view. */
+  rowHeight: number;
+  /** The grid's height with every row at the copy's minimum height (px): what Expand grows the visual to. */
   need: number;
 }
 
+/** A copy's minimum size in pixels from page grid cells (`repeat.copy`): w columns and h rows, with the gaps between. */
+export function copyPx(copy: { w?: number; h?: number } | undefined, colWidth: number, rowHeight: number, gap: number): { minWidth?: number; minHeight?: number } {
+  const w = pos(copy?.w);
+  const h = pos(copy?.h);
+  return {
+    minWidth: w ? Math.round(w * colWidth + (w - 1) * gap) : undefined,
+    minHeight: h ? Math.round(h * rowHeight + (h - 1) * gap) : undefined,
+  };
+}
+
 /**
- * Columns: `columns` if set, else automatic (copies about 1.4 times as wide as tall in the space there is, or as wide
- * as `minWidth` when the grid expands). `maxColumns` caps them, and `minWidth` never lets a copy be narrower: on a
- * narrow screen there are fewer columns. Rows: as many as the copies need, at most `maxRows`.
+ * Columns: `columns` if set, else automatic (copies about 1.4 times as wide as tall in the space there is, or as many
+ * as fit at `minWidth` when the grid expands). A copy is never narrower than `minWidth`, unless `minColumns` needs it
+ * to be: the minimum counts win over the copy's size. `maxColumns` caps the columns, last. Rows: as many as the copies
+ * need, at most `maxRows`; a row is `minHeight` high, lower when `minRows` rows must fit in `height`.
  */
-export function repeatGrid(spec: NonNullable<Visual['repeat']>, n: number, width: number, height: number, gap: number): RepeatGrid {
+export function repeatGrid(spec: GridSpec, n: number, width: number, height: number, gap: number): RepeatGrid {
   const minHeight = pos(spec.minHeight) ?? REPEAT_MIN_HEIGHT;
   const minWidth = pos(spec.minWidth);
   const fit = (w: number) => Math.floor((width + gap) / (w + gap));
   let cols: number;
   const fixed = pos(spec.columns);
   if (fixed) cols = Math.round(fixed);
-  else if (spec.overflow === 'expand') cols = fit(minWidth ?? Math.round(minHeight * ASPECT));
+  else if (spec.expand) cols = fit(minWidth ?? Math.round(minHeight * ASPECT));
   else cols = Math.round(Math.sqrt((n * width) / (Math.max(1, height) * ASPECT)));
+  if (minWidth) cols = Math.min(cols, fit(minWidth));
+  const minCols = pos(spec.minColumns);
+  if (minCols) cols = Math.max(cols, Math.round(minCols));
   const maxCols = pos(spec.maxColumns);
   if (maxCols) cols = Math.min(cols, Math.round(maxCols));
-  if (minWidth) cols = Math.min(cols, fit(minWidth));
   cols = Math.max(1, Math.min(Math.max(1, n), cols));
   let rows = Math.ceil(n / cols);
   const maxRows = pos(spec.maxRows);
   if (maxRows) rows = Math.min(rows, Math.round(maxRows));
   const shown = Math.min(n, rows * cols);
-  return { cols, rows, shown, minHeight, need: rows * minHeight + Math.max(0, rows - 1) * gap };
+  const minRows = pos(spec.minRows) ? Math.min(Math.round(pos(spec.minRows)!), rows) : 0;
+  const rowHeight = minRows > 1 || (minRows === 1 && rows >= 1) ? Math.max(20, Math.min(minHeight, (height - (minRows - 1) * gap) / minRows)) : minHeight;
+  return { cols, rows, shown, rowHeight: Math.floor(rowHeight), need: rows * minHeight + Math.max(0, rows - 1) * gap };
 }
 
 /** Grid rows (of `row` px, `gap` apart) a frame of `px` pixels spans. */
@@ -68,6 +96,11 @@ export function pushDown(items: { id: string; y: number; h: number }[], extra: M
     out.set(it.id, { y, h: at(it.y + it.h) - y });
   }
   return out;
+}
+
+/** The repeat's grid settings, with the copy's minimum size in pixels for a page of this geometry. */
+export function gridSpec(spec: NonNullable<Visual['repeat']>, expand: boolean, colWidth: number, rowHeight: number, gap: number): GridSpec {
+  return { columns: spec.columns, minColumns: spec.minColumns, maxColumns: spec.maxColumns, minRows: spec.minRows, maxRows: spec.maxRows, ...copyPx(spec.copy, colWidth, rowHeight, gap), expand };
 }
 
 function pos(v: unknown): number | undefined {

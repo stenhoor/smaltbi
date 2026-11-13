@@ -8,7 +8,7 @@ import { formatter } from '../core/format.js';
 import { pageGeometry, pageSize, paletteSize, themeCss } from '../theme/theme.js';
 import { PHONE_WIDTH, phoneLayout, type PhoneSlot } from './phone.js';
 import { CONDITIONAL_ROLE, cellFormatFor, conditionalFields } from './conditional.js';
-import { pushDown, repeatGrid, rowsFor } from './repeatgrid.js';
+import { gridSpec, pushDown, repeatGrid, rowsFor } from './repeatgrid.js';
 import { type DataColumn, dataColumn, type Plan, type PlanContext, type VisualData, type VisualDef, optionsOf, visualDef } from '../visuals/index.js';
 import type { Frame } from '../data/runner.js';
 import { download, esc, h, showMenu, type MenuItem } from 'smaltkit/dom';
@@ -122,7 +122,7 @@ export class ReportView {
   fitPage = false;
   private fitSheet: (() => void) | null = null;
   /** The page's grid as drawn: row height and gap (px), whether it is a fixed sheet, and the phone slots. */
-  private grid: { row: number; gap: number; fixed: boolean; phone: Map<string, PhoneSlot> } | null = null;
+  private grid: { el: HTMLElement; cols: number; width: number; row: number; gap: number; fixed: boolean; phone: Map<string, PhoneSlot> } | null = null;
 
   setFitPage(on: boolean): void {
     this.fitPage = on;
@@ -244,7 +244,7 @@ export class ReportView {
       );
     } else this.root.replaceChildren(sheet);
     const phone = phoneLayout(page);
-    this.grid = { row: layout.rowHeight, gap: layout.gap, fixed: !!layout.fixed, phone };
+    this.grid = { el: grid, cols: layout.columns, width: layout.width, row: layout.rowHeight, gap: layout.gap, fixed: !!layout.fixed, phone };
     for (const v of page.visuals) grid.append(this.frameFor(v, phone.get(v.id)));
     this.refreshAll();
   }
@@ -398,8 +398,13 @@ export class ReportView {
     let grow = 0;
     if (need > 0 && g) {
       const chrome = rt.frame.offsetHeight - rt.body.clientHeight;
-      const base = this.narrow ? (g.phone.get(v.id)?.h ?? v.layout.h) : v.layout.h;
-      grow = Math.max(0, rowsFor(need + chrome, g.row, g.gap) - base);
+      // Live, not this.narrow: a responsive page turns into a column by CSS alone when the window narrows.
+      const base = this.isNarrow() ? (g.phone.get(v.id)?.h ?? v.layout.h) : v.layout.h;
+      let span = rowsFor(need + chrome, g.row, g.gap);
+      // At most maxHeight rows tall: past that the copies scroll.
+      const cap = Math.round(Number(v.repeat?.maxHeight));
+      if (cap >= 1) span = Math.min(span, cap);
+      grow = Math.max(0, span - base);
     }
     if (grow === (rt.grow ?? 0)) return;
     rt.grow = grow;
@@ -435,9 +440,13 @@ export class ReportView {
     // Expand grows the visual in a responsive page; a fixed sheet (and the designer's canvas) keeps its size and scrolls.
     const expand = spec.overflow === 'expand' && this.opts.mode === 'view' && !this.grid?.fixed;
     const gap = REPEAT_GAP;
-    const g = repeatGrid({ ...spec, overflow: expand ? 'expand' : 'scroll' }, n, rt.body.clientWidth, rt.body.clientHeight - (rep.more ? 18 : 0), gap);
+    // A copy's minimum size is in page grid cells: the page's column width and row height. On a phone the page is
+    // one column, so a cell is measured at the page's own width: copies keep their size and fewer fit across.
+    const pg = this.grid;
+    const colWidth = pg ? ((this.isNarrow() ? pg.width : pg.el.clientWidth) - (pg.cols - 1) * pg.gap) / pg.cols : 80;
+    const g = repeatGrid(gridSpec(spec, expand, colWidth, pg?.row ?? 40, pg?.gap ?? gap), n, rt.body.clientWidth, rt.body.clientHeight - (rep.more ? 18 : 0), gap);
     const hidden = rep.more + (n - g.shown);
-    const grid = h('div.sb-repeat' + (expand ? '.sb-repeat-expand' : ''), { style: `grid-template-columns:repeat(${g.cols},minmax(0,1fr));grid-auto-rows:minmax(${g.minHeight}px,1fr);gap:${gap}px` });
+    const grid = h('div.sb-repeat', { style: `grid-template-columns:repeat(${g.cols},minmax(0,1fr));grid-auto-rows:minmax(${g.rowHeight}px,1fr);gap:${gap}px` });
     const panels = rep.panels.slice(0, g.shown);
     const bodies = panels.map((p) => {
       const body = h('div.sb-repeat-body', { 'data-row-offset': String(p.start) });

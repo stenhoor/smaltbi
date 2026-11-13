@@ -136,6 +136,15 @@ try {
       return /span ([4-9]|\d\d)/.test(cards.style.gridRow) && grid.scrollHeight <= grid.clientHeight + 1 && document.querySelector('[data-id=r-cats]').getBoundingClientRect().top >= cards.getBoundingClientRect().bottom;
     });
     check(grown, `sample Regions page: Expand grows the country cards and moves the charts below (${await landing.evaluate(() => document.querySelector('[data-id=r-cards]').style.gridRow)})`);
+    // On a phone: at least two cards across (the minimum wins over the cards' width), and the visual grows only up to
+    // its limit of 10 rows, then the cards scroll.
+    await landing.setViewportSize({ width: 390, height: 900 });
+    const capped = await until(landing, () => {
+      const cards = document.querySelector('[data-id=r-cards]');
+      const grid = cards.querySelector('.sb-repeat');
+      return getComputedStyle(grid).gridTemplateColumns.split(' ').length === 2 && cards.style.getPropertyValue('--phone-h') === '10' && grid.scrollHeight > grid.clientHeight + 1;
+    });
+    check(capped, `sample Regions page on a phone: two cards across, grown to its 10-row limit, then scrolling (${await landing.evaluate(() => { const c = document.querySelector("[data-id=r-cards]"); const g = c.querySelector(".sb-repeat"); return [getComputedStyle(g).gridTemplateColumns, c.style.getPropertyValue("--phone-h"), g.scrollHeight, g.clientHeight, innerWidth].join(" / "); })})`);
     await landing.close();
   } else {
     check(!process.env.E2E_SITE, 'product site checks skipped: _site/ is missing (run npm run site)');
@@ -564,19 +573,28 @@ try {
     await page.locator(`.sbd-repeat-${cls}`).dispatchEvent('change');
   }
   const capped = await until(page, (sel) => [...document.querySelectorAll(`${sel} .sb-repeat-title`)].map((t) => t.textContent).join() === 'Tea,Equipment' && /^2 more not shown/.test(document.querySelector(`${sel} .sb-repeat-more`)?.textContent ?? ''), rcard);
-  // A minimum width wider than the visual leaves one column.
-  await page.locator('.sbd-repeat-minWidth').fill('2000');
-  await page.locator('.sbd-repeat-minWidth').dispatchEvent('change');
+  // Copies at least 12 page columns wide (as wide as the visual): one column.
+  await page.locator('.sbd-repeat-copyW').fill('12');
+  await page.locator('.sbd-repeat-copyW').dispatchEvent('change');
   const narrow = await until(page, (sel) => document.querySelectorAll(`${sel} .sb-repeat-panel`).length === 1 && /^3 more not shown/.test(document.querySelector(`${sel} .sb-repeat-more`)?.textContent ?? ''), rcard);
+  // At least 2 columns wins over the copy's width: two copies again, narrower.
+  await page.locator('.sbd-repeat-minColumns').fill('2');
+  await page.locator('.sbd-repeat-minColumns').dispatchEvent('change');
+  const minWins = await until(page, (sel) => document.querySelectorAll(`${sel} .sb-repeat-panel`).length === 2, rcard);
   const spec = await page.evaluate(() => window.smaltbi.store.visual('e2e-rcard').visual.repeat);
-  check(capped && narrow && spec.maxColumns === 2 && spec.maxRows === 1 && spec.minWidth === 2000, `repeat: max columns, max rows and min width shape the grid (${JSON.stringify(spec)})`);
+  check(capped && narrow && minWins && spec.maxColumns === 2 && spec.maxRows === 1 && spec.copy?.w === 12 && spec.minColumns === 2, `repeat: max columns and rows, the copy's size in grid cells and min columns shape the grid (${JSON.stringify(spec)})`);
   // Expand is kept with the visual; on the canvas the visual keeps its size (it grows in Preview and the viewer).
-  for (const cls of ['maxRows', 'minWidth']) {
+  for (const cls of ['maxRows', 'copyW', 'minColumns']) {
     await page.locator(`.sbd-repeat-${cls}`).fill('');
     await page.locator(`.sbd-repeat-${cls}`).dispatchEvent('change');
   }
   await page.selectOption('.sbd-repeat-overflow', 'expand');
-  const expandSet = await until(page, () => window.smaltbi.store.visual('e2e-rcard').visual.repeat?.overflow === 'expand' && !!document.querySelector('.sbd-repeat .sbd-hint'));
+  await page.locator('.sbd-repeat-maxHeight').fill('8');
+  await page.locator('.sbd-repeat-maxHeight').dispatchEvent('change');
+  const expandSet = await until(page, () => {
+    const r = window.smaltbi.store.visual('e2e-rcard').visual.repeat;
+    return r?.overflow === 'expand' && r.maxHeight === 8 && !r.copy && !r.minColumns;
+  });
   const canvasRow = await page.evaluate((sel) => document.querySelector(sel).style.gridRow, rcard);
   check(expandSet && /span 3$/.test(canvasRow), `repeat: Expand is set from the panel; the canvas keeps the visual's size (${canvasRow})`);
   await page.evaluate(() => {
