@@ -10,6 +10,7 @@ import type { Filter, SqlValue } from './types.js';
 import { type Model, ModelError, type ResolvedField } from './model.js';
 import { quoteIdent, quoteLiteral } from './sql.js';
 import { compileTimeQuery } from './timeintel.js';
+import { compileDrillAcross, needsDrillAcross } from './drillacross.js';
 
 export interface QuerySpec {
   dims: ResolvedField[];
@@ -42,6 +43,8 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
   if (!dims.length && !measures.length) throw new ModelError('nothing to query: add a field');
   // Time-intelligence measures work per period of each row: a query of its own shape (core/timeintel.ts).
   if (measures.some((m) => m.time)) return compileTimeQuery(model, q);
+  // Measures of several facts: each fact computed on its own, lined up on the dimensions (ADR 0009, drill-across).
+  if (needsDrillAcross(model, q)) return compileDrillAcross(model, q);
 
   // Tables: measures decide the root (the fact table); dimensions and filters must hang off it.
   const needed = new Set<string>();
@@ -183,7 +186,8 @@ export function compileFilter(model: Model, f: Filter, root: string, all: Filter
   const field = model.resolve(f.field, isMeasure ? 'measure' : 'dimension');
   // A time-intelligence measure has no single SQL expression to filter on: the filter is reported as not applied.
   if (field.time) return null;
-  if ([...field.tables].some((t) => !model.canReach(root, t))) return null;
+  // Without a root (drill-across tests a lined-up measure), there is nothing to reach from.
+  if (root && [...field.tables].some((t) => !model.canReach(root, t))) return null;
   const x = field.expr;
   const v = f.values ?? [];
   const lit = (i: number) => quoteLiteral(v[i] ?? null);

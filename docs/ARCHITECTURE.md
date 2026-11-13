@@ -88,6 +88,10 @@ reads, cross-table measures need no extra setup.
 Totals (table totals row, matrix row/column/grand totals) are separate aggregate queries with fewer
 dimensions, never sums of the visible cells: averages, ratios and distinct counts stay right.
 
+Measures of several fact tables in one visual (ADR 0009) compile to one query per fact, each the ordinary
+query above, lined up on the dimensions (`core/drillacross.ts`): every number is still computed at its
+own table's grain. A measure combining facts is split at its `[references]` and finished after the line-up.
+
 ### Custom SQL
 
 Any visual can replace its generated query with SQL (SQL tab → *Edit as custom SQL*, which starts
