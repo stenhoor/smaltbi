@@ -989,6 +989,43 @@ try {
     });
   }, badIndex);
 
+  // Two facts in one visual (ADR 0009, drill-across): a budget by category beside the sales. Each is computed on its
+  // own and lined up by category; [Revenue] / [Target] after the line-up; the totals row the same way.
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    s.change('data', (r) => r.data.steps.push({ sql: "CREATE TABLE budget (category TEXT, target REAL);\nINSERT INTO budget VALUES ('Coffee', 400000), ('Tea', 300000), ('Equipment', 250000), ('Accessories', 100000);\nCREATE TABLE cats (category TEXT PRIMARY KEY);\nINSERT INTO cats SELECT DISTINCT category FROM products;" }));
+  });
+  await until(page, () => !!window.smaltbi.session?.schema?.tables.some((t) => t.name === 'budget'), undefined, 30000);
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    s.change('model', (r) => {
+      r.model.relationships.push({ from: 'products.category', to: 'cats.category' }, { from: 'budget.category', to: 'cats.category' });
+      r.model.measures.push({ table: 'budget', name: 'Target', sql: 'SUM(budget.target)', format: 'currency' }, { table: 'sales', name: 'vs Target', sql: '[Revenue] / NULLIF([Target], 0)', format: 'percent' });
+    });
+    const pg = s.report.pages[0];
+    s.change('page', () => pg.visuals.push(
+      { id: 'e2e-across', type: 'table', layout: { x: 0, y: 40, w: 8, h: 5 }, fields: { columns: ['cats.category'], values: ['sales.Revenue', 'budget.Target', 'sales.vs Target'] }, sort: [{ by: 'columns:0', dir: 'asc' }] },
+      { id: 'e2e-across-bad', type: 'column', layout: { x: 8, y: 40, w: 4, h: 5 }, fields: { category: ['products.name'], values: ['budget.Target'] } },
+    ), pg.id);
+  });
+  const across = await until(page, () => document.querySelectorAll('.sb-visual[data-id=e2e-across] tbody tr').length === 4 && /\$1,050,000/.test(document.querySelector('.sb-visual[data-id=e2e-across] tfoot')?.textContent ?? ''), undefined, 30000);
+  const acrossRows = await page.evaluate(() => [...document.querySelectorAll('.sb-visual[data-id=e2e-across] tbody tr')].map((tr) => [...tr.cells].map((c) => c.textContent)));
+  const tea = acrossRows.find((r) => r[0] === 'Tea') ?? [];
+  const ratioOk = tea.length === 4 && Math.abs(Number(tea[1].replace(/[^\d.]/g, '')) / 300000 * 100 - Number(tea[3].replace(/[^\d.]/g, ''))) < 0.15;
+  const refusedAcross = await until(page, () => /Target has no relationship to name/.test(document.querySelector('.sb-visual[data-id=e2e-across-bad] .sb-visual-body')?.textContent ?? ''), undefined, 15000);
+  check(across && ratioOk && refusedAcross, `two facts in one table: revenue and target by category, the ratio after the line-up, the target total; a field only sales has is refused (${JSON.stringify(acrossRows)}, ${refusedAcross})`);
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.report.pages[0];
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => !v.id.startsWith('e2e-across'))), pg.id);
+    s.change('model', (r) => {
+      r.model.relationships = r.model.relationships.filter((x) => !x.to.startsWith('cats.'));
+      r.model.measures = r.model.measures.filter((m) => m.name !== 'Target' && m.name !== 'vs Target');
+    });
+    s.change('data', (r) => r.data.steps.pop());
+  });
+  await until(page, () => !window.smaltbi.session?.schema?.tables.some((t) => t.name === 'budget'), undefined, 30000);
+
   // The measure editor (smaltkit's SQL editor): highlighting, completion from the model, reference warnings, errors.
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Avg Order Value"))').click({ button: 'right' });
   await page.click('.sk-menu-item:has-text("Edit measure…")');

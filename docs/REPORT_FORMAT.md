@@ -103,6 +103,14 @@ environment manifests. To report on an existing OPFS database, use
   can't be used inside another measure's SQL, and filters on them are not applied.
 - **Measures** must be aggregates. A plain column dropped on a value well is aggregated implicitly
   (`SUM` for numbers, `COUNT` otherwise; changeable per visual).
+- **Measures of several facts** in one visual (Revenue from `sales` beside Target from `budget`): each fact's
+  measures are computed on their own, grouped by the visual's fields, and lined up by them (drill-across, ADR 0009).
+  - The fields must be ones every fact reaches (a category both relate to). A field only one fact has is refused,
+    naming it.
+  - A measure that combines facts is written from measures, `[Revenue] / [Target]`, and is computed after the
+    line-up. `SUM(sales.x) / SUM(budget.y)` mixes the facts inside one aggregate and is refused.
+  - Filters apply to each fact they reach. A filter on a measure tests its lined-up value.
+  - Time-intelligence measures can't yet sit beside another fact's measures.
 - **`sortBy`** sorts a column by another column of the same table (month names by month number).
 - **Types**: `number`, `text`, `date`, `datetime`, `bool`, `any`. Introspection detects ISO date strings.
 - Without `relationships`, foreign keys declared in the database are used.
