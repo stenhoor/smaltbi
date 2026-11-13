@@ -159,16 +159,22 @@ export class ReportView {
         if (this.fitPage && sheet.isConnected) {
           const cs = getComputedStyle(this.root);
           const availW = this.root.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-          const top = sheet.getBoundingClientRect().top;
-          // The visible bottom: the window's, or the scrolling pane's the report sits in (the designer's canvas).
-          let bottom = this.root.ownerDocument.defaultView?.innerHeight ?? height;
+          // The height the sheet has when the pane it scrolls in (the designer's canvas, or the window) is at the
+          // top: where it is now would count the part scrolled out of view as room.
+          const win = this.root.ownerDocument.defaultView!;
+          let pane: HTMLElement | null = null;
           for (let el = this.root.parentElement; el; el = el.parentElement) {
             if (/(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.clientHeight < el.scrollHeight + 1) {
-              bottom = Math.min(bottom, el.getBoundingClientRect().top + el.clientHeight);
+              pane = el;
               break;
             }
           }
-          const availH = bottom - Math.max(0, top) - parseFloat(cs.paddingBottom) - 8;
+          const rect = sheet.getBoundingClientRect();
+          const paneTop = pane ? pane.getBoundingClientRect().top : 0;
+          const scrolled = pane ? pane.scrollTop : win.scrollY;
+          const top = rect.top - paneTop + scrolled;
+          const visible = pane ? pane.clientHeight : win.innerHeight;
+          const availH = visible - top - parseFloat(cs.paddingBottom) - 8;
           s = Math.max(0.1, Math.min(1, availW / width, availH / height));
         }
         grid.style.transform = s === 1 ? '' : `scale(${s})`;
@@ -311,6 +317,7 @@ export class ReportView {
         data,
         extra: rt.extra ?? {},
         palette: paletteSize(this.session.theme),
+        base: this.session.base,
         selected: (row) => (keys && !def.slicer ? keys.has(JSON.stringify(this.rowTuple(data, row).map(norm))) : null),
         cellFormat: def.conditional ? cellFormatFor(v, data) : undefined,
         setOption: this.opts.onOption ? (key, value) => this.opts.onOption!(v, key, value) : undefined,

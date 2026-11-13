@@ -101,7 +101,7 @@ report it is listed as:
 
 | Kind | Purpose | Examples |
 |---|---|---|
-| Visual | New chart types | Maps (with GeoJSON/TopoJSON), Sankey, Gantt, box plot |
+| Visual | New chart types | Sankey, Gantt, box plot |
 | Data connector | New data step kinds | REST/JSON APIs with paging, Google Sheets, SQL servers via a proxy |
 | Expression language | Alternative to SQL measures | A DAX-like formula language compiled to SQL |
 | Export | Output formats | PDF/PNG export, PowerPoint |

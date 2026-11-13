@@ -20,7 +20,7 @@ The sample, [`examples/sales/report.json`](../examples/sales/report.json), uses 
 }
 ```
 
-Relative paths (data files, theme files, plugins) resolve against the report file's URL. Each plugin is one ES module
+Relative paths (data files, theme files, plugins, map shapes) resolve against the report file's URL. Each plugin is one ES module
 file pinned by its SRI hash: it loads only if the file matches, and a report from another site asks before its
 plugins run ([PLUGINS](PLUGINS.md)).
 
@@ -194,6 +194,7 @@ A field in `fields` can also be an object: `{ "field": "sales.quantity", "agg": 
 | `funnel` | category (dim, 1), values (measure, 1) | `percent` |
 | `treemap` | category (dim, drill), values (measure, 1) | `labels` |
 | `heatmap` | rows, columns (dim, 1 each), values (measure, 1) | `labels` |
+| `map` | location, latitude, longitude (dim, 1 each), values (measure, 1: colour), size (measure, 1) | `shapes` (a GeoJSON or TopoJSON file, relative to the report), `key` (the property locations match, default `name`), `object` (TopoJSON), `projection`: mercator/equirectangular, `legend` |
 | `gauge` | values, target, max (measure, 1 each) | `maxValue` |
 
 Axis options of bar, column, line, area and combo charts:

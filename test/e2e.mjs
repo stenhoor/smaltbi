@@ -400,6 +400,19 @@ try {
   });
   const bulletDrawn = await until(page, () => document.querySelectorAll('.sb-visual[data-id="e2e-bullet"] rect.sk-bar').length === 4);
   check(addedPlugin && inGallery && bulletDrawn, 'plugins: File → Plugins… adds one by URL with its hash; its visual is in the gallery and draws');
+  // Map: regions from a shapes file the report names, coloured by revenue; a click on one cross-filters.
+  await page.evaluate((url) => {
+    const d = window.smaltbi;
+    d.store.change('page', () => d.page.visuals.push({ id: 'e2e-map', type: 'map', layout: { x: 6, y: 60, w: 6, h: 5 }, options: { shapes: url }, fields: { location: ['customers.region'], values: ['sales.Revenue'] } }), d.page.id);
+  }, `http://localhost:${port}/test/fixtures/regions.geojson`);
+  const mapDrawn = await until(page, () => document.querySelectorAll('.sb-visual[data-id="e2e-map"] path.sk-map-region').length === 3 && document.querySelectorAll('.sb-visual[data-id="e2e-map"] path.sk-map-shape').length === 4 && !!document.querySelector('.sb-visual[data-id="e2e-map"] .sk-map-legend'), undefined, 15000);
+  check(mapDrawn, 'map: three regions matched by name and coloured, the fourth shape plain, with a legend');
+  await page.locator('.sb-visual[data-id="e2e-map"] path.sk-map-region >> nth=0').click({ force: true });
+  const mapSelected = await until(page, () => document.querySelectorAll('.sb-visual[data-id="e2e-map"] path.sk-map-region.sk-on').length === 1 && document.querySelectorAll('.sb-visual[data-id="e2e-map"] path.sk-map-region.sk-dim').length === 2);
+  check(mapSelected, 'map: clicking a region selects it (and dims the others)');
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => window.smaltbi.view.clearSelections?.());
+  // The map stays too: publishing must copy its shapes file.
   // The plugin and its visual stay: the published site below must carry the plugin.
 
   // Phone view: the page as one column in reading order; a visual hidden on phones, another moved up; a fixed-size
@@ -583,6 +596,8 @@ try {
   await until(page, () => document.querySelector('.sbd-app')?.classList.contains('sbd-preview') && !document.querySelector('.sbv-fit')?.hidden);
   await page.evaluate(() => localStorage.removeItem('smaltbi.fitPage'));
   const full = await page.evaluate(() => document.querySelector('.sb-sheet').dataset.scale);
+  // Scrolled down first: the fit must not count the part scrolled out of view as room.
+  await page.evaluate(() => (document.querySelector('.sbd-canvas').scrollTop = 1e6));
   await page.click('.sbv-fit');
   const fitWindow = await until(page, () => {
     const sheet = document.querySelector('.sb-sheet');
@@ -592,7 +607,7 @@ try {
   const remembered = await page.evaluate(() => localStorage.getItem('smaltbi.fitPage'));
   await page.click('.sbv-fit');
   const back = await until(page, () => document.querySelector('.sb-sheet').dataset.scale === '1');
-  check(full === '1' && fitWindow && remembered === '1' && back, `fixed page: the reader sees it at 100% (${full}) or fits it to the window, and back`);
+  check(full === '1' && fitWindow && remembered === '1' && back, `fixed page: the reader sees it at 100% (${full}) or fits it to the window, and back (${fitWindow ? '' : await page.evaluate(() => { const s = document.querySelector('.sb-sheet'); const r = s.getBoundingClientRect(); return JSON.stringify({ scale: s.dataset.scale, bottom: r.bottom, right: r.right, ih: innerHeight, iw: innerWidth }); })} ${remembered} ${back})`);
   await page.click('.sbd-tbtn:has-text("Edit")');
   await until(page, () => !document.querySelector('.sbd-app').classList.contains('sbd-preview'));
   await page.click('.sbd-canvas', { position: { x: 5, y: 5 } });
@@ -808,6 +823,9 @@ try {
   const publishedPlugin = existsSync(join(site, 'plugins/bullet.js')) && JSON.parse(readFileSync(join(site, 'report.json'), 'utf8')).plugins?.[0]?.url === 'plugins/bullet.js';
   const publishedBullet = await until(viewer, () => document.querySelectorAll('.sb-visual[data-id="e2e-bullet"] rect.sk-bar').length === 4 && !document.querySelector('.sk-dialog[open]'), undefined, 20000);
   check(publishedPlugin && publishedBullet, 'plugins: publishing copies the plugin into the site; the published report draws it without asking');
+  const publishedShapes = existsSync(join(site, 'maps/regions.geojson')) && JSON.parse(readFileSync(join(site, 'report.json'), 'utf8')).pages.some((p) => p.visuals.some((v) => v.options?.shapes === 'maps/regions.geojson'));
+  const publishedMap = await until(viewer, () => document.querySelectorAll('.sb-visual[data-id="e2e-map"] path.sk-map-region').length === 3, undefined, 20000);
+  check(publishedShapes && publishedMap, 'map: publishing copies the shapes file; the published map draws');
   // On a phone the published report is one column in reading order, its tabs above.
   const phoneViewer = await newPage(browser, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   phoneViewer.on('pageerror', (e) => errors.push('phone viewer: ' + e.message));

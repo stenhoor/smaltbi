@@ -58,7 +58,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - ✓ Plugin loading by URL (with integrity hashes) in designer and viewer; plugin manifest; the
   "plugin" gallery group ([ADR 0008](adr/0008-plugin-loading.md)): File → Plugins…, asking before plugins from another
   site run, and plugins copied into published sites.
-- A maps plugin (choropleth and points, GeoJSON/TopoJSON shapes as data files).
+- ✓ A Map visual (filled regions and points, GeoJSON/TopoJSON shapes as the report's own files), drawn by
+  `smaltkit/maps` so smaltnb can use it too; our own code, so built in rather than a plugin.
 - Data: refresh button and freshness indicator; optional auto-refresh interval per report;
   incremental reload; materialized views as a "cache this table" switch; parameters (what-if
   values usable in measures).
