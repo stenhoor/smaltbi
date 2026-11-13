@@ -1,6 +1,6 @@
 # ADR 0009: Many-to-many
 
-Date: 2026-11-13. Status: proposed. Three decisions below are the owner's to make; each has a recommendation.
+Date: 2026-11-13. Status: accepted (owner, 2026-11-13): decisions 1(a), 2(a) and 3(a), the recommendations.
 
 ## Context
 
@@ -78,9 +78,9 @@ aggregate as a fan-out:
 - **Model view:** a link table is drawn as a link, a small card between the two tables with a ⇄ mark. A pure link
   table is easy to tell from a fact.
 
-**Owner decision 1: how a table becomes a link.**
+**Owner decision 1: how a table becomes a link. Decided: (a), inferred.**
 
-- **(a) Inferred (recommended):** any table with two or more relationships out and no measures can link. There is
+- **(a) Inferred (recommended; chosen):** any table with two or more relationships out and no measures can link. There is
   nothing to set. A fact table has measures, so it never links two dimensions behind the user's back. The model view
   shows which tables link, so it isn't hidden.
 - **(b) Marked:** a "Link table" switch on the table, which the model view suggests for a table of keys only. This is
@@ -106,11 +106,11 @@ SELECT k.d0…, f0.m0, f1.m1 FROM k LEFT JOIN f0 ON … LEFT JOIN f1 ON …
   is the main reason to do B: "% of target" is the most common question that runs into many-to-many.
 - Nothing changes in the model. B needs no setting at all.
 
-**Owner decision 2: a dimension that only some facts share** (Revenue and Target by product, with the budget by
-category only).
+**Owner decision 2: a dimension that only some facts share. Decided: (a), refuse with a message.** (Revenue and
+Target by product, with the budget by category only.)
 
-- **(a) Refuse with a message (recommended):** "Target has no relationship to products.name: use a field both share
-  (for example products.category)". This is the same refusal as decision 9, and never a misleading number.
+- **(a) Refuse with a message (recommended; chosen):** "Target has no relationship to products.name: use a field both
+  share (for example products.category)". This is the same refusal as decision 9, and never a misleading number.
 - **(b) Show that measure blank:** the Target cells are empty and there's a note. The visual still draws, but a blank
   column looks like missing data.
 
@@ -124,9 +124,9 @@ category only).
   - This ships on its own, before the rest.
 - **Then, the fix the message offers.** The relationship needs a table where category is unique.
 
-**Owner decision 3: how that table comes about.**
+**Owner decision 3: how that table comes about. Decided: (a), "Make a category table".**
 
-- **(a) "Make a category table" (recommended):** a button in the warning adds a data step,
+- **(a) "Make a category table" (recommended; chosen):** a button in the warning adds a data step,
   `CREATE TABLE category AS SELECT DISTINCT category FROM products`. It also adds the relationships
   `products.category → category.category` and `budget.category → category.category`. This is the same pattern as
   Add date table: one click, a real table, visible in the model and the data steps. After that it's shape B, and
@@ -141,8 +141,8 @@ category only).
   the link, multiplying additive measures. It is easy to add later, and wrong for ratios and distinct counts, so it
   shouldn't be the default.
 - **Filter-direction switches per relationship:** the compiler decides per query, which is the point of the proposal.
-- **A fact table as a link** ("customers who bought in category X" with a measure on customers): it is possible under
-  decision 1(b), if a fact is marked. Under 1(a) it stays an error, as today.
+- **A fact table as a link** ("customers who bought in category X" with a measure on customers): links are inferred
+  (decision 1a), and a table with measures doesn't link, so this stays an error, as today.
 
 ## Plan
 
