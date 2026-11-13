@@ -597,6 +597,19 @@ try {
   });
   const canvasRow = await page.evaluate((sel) => document.querySelector(sel).style.gridRow, rcard);
   check(expandSet && /span 3$/.test(canvasRow), `repeat: Expand is set from the panel; the canvas keeps the visual's size (${canvasRow})`);
+  // A fixed-size page never grows: there the panel says the copies scroll, and Expand can't be picked.
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('page', () => (d.page.size = { preset: '16:9' }), d.page.id);
+  });
+  const fixedNote = await until(page, () => /fixed size, so the copies scroll/.test(document.querySelector('.sbd-repeat-fixed')?.textContent ?? ''));
+  await page.selectOption('.sbd-repeat-overflow', 'scroll');
+  const fixedOff = await until(page, () => document.querySelector('.sbd-repeat-overflow option[value=expand]')?.disabled === true && /needs a responsive page/.test(document.querySelector('.sbd-repeat-fixed')?.textContent ?? ''));
+  check(fixedNote && fixedOff, 'repeat: on a fixed-size page Expand is offered for responsive pages only');
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('page', () => delete d.page.size, d.page.id);
+  });
   await page.evaluate(() => {
     const d = window.smaltbi;
     d.store.change('page', () => (d.page.visuals = d.page.visuals.filter((v) => !['e2e-rcard', 'e2e-rbar'].includes(v.id))), d.page.id);

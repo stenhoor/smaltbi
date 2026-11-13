@@ -196,7 +196,9 @@ more there are), `order` `asc` or `desc`. The grid can be shaped further:
   show every row at the copy's height, and the visuals below it move down (those beside it stretch with it).
   `maxHeight` (grid rows) is the most it grows to, the visual's own height included; past that it scrolls. Without
   `columns`, an expanding grid has as many columns as fit at the copy's width (else 1.4 × its height). The visual
-  grows in the viewer and the designer's Preview; on the designer's canvas and on fixed-size pages it scrolls.
+  grows in the viewer and the designer's Preview, and on the designer's canvas it scrolls. Expand is for responsive
+  pages: a fixed-size page keeps its size, so there the copies scroll, and the designer offers Expand only on
+  responsive pages.
 
 The data is one query grouped by the field as well, so a click in a copy selects that value too (the bar *and* its
 region). Each copy has its own scale; for one shared scale across charts, use the cartesian charts' `multiples` field.

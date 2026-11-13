@@ -669,6 +669,7 @@ function phoneSection(ctx: PanelContext, v: Visual): HTMLElement {
 function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
   const set = (repeat: Visual['repeat']) => ctx.store.change('visual', () => (repeat ? (v.repeat = repeat) : delete v.repeat), v.id);
   const r = v.repeat;
+  const fixedPage = !!pageSize(ctx.store.visual(v.id)?.page);
   // A whole-number option of the repeat (or of its copy size), empty for none.
   type NumKey = 'minColumns' | 'maxColumns' | 'minRows' | 'maxRows' | 'maxHeight' | 'copyW' | 'copyH';
   const get = (key: NumKey) => (key === 'copyW' ? r?.copy?.w : key === 'copyH' ? r?.copy?.h : r?.[key]);
@@ -759,10 +760,13 @@ function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
               'select.sbd-input.sbd-repeat-overflow',
               { onchange: (e: Event) => set({ ...r, overflow: (e.target as HTMLSelectElement).value === 'expand' ? 'expand' : undefined }) },
               h('option', { value: 'scroll', selected: r.overflow !== 'expand' }, 'Scroll inside the visual'),
-              h('option', { value: 'expand', selected: r.overflow === 'expand' }, 'Expand the visual (moves the ones below)'),
+              // A fixed-size page never grows, so Expand is for responsive pages only.
+              h('option', { value: 'expand', selected: r.overflow === 'expand', disabled: fixedPage && r.overflow !== 'expand' }, fixedPage ? 'Expand the visual (responsive pages only)' : 'Expand the visual (moves the ones below)'),
             ),
           ),
-          ...(r.overflow === 'expand'
+          ...(fixedPage
+            ? [h('div.sbd-hint.sbd-repeat-fixed', {}, r.overflow === 'expand' ? 'This page has a fixed size, so the copies scroll here. Expand works on responsive pages (Page size: Responsive).' : 'Expand needs a responsive page: a fixed-size page keeps its size.')]
+            : r.overflow === 'expand'
             ? [
                 num('Grow up to (rows tall)', 'maxHeight', 1, 200, 'no limit'),
                 h('div.sbd-hint', {}, 'The visual grows in Preview and the viewer, up to this height, then scrolls; on the canvas, and on fixed-size pages, it scrolls.'),
