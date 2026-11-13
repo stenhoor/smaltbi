@@ -74,8 +74,8 @@ never reaches an aggregate as a fan-out:
 - **Part-to-whole visuals** (pie, donut, treemap, 100% stacked, waterfall) add their parts in the browser, which
   overstates the whole when categories overlap. When a visual's category comes through a link table, it gets a note:
   "Some rows count under more than one of the tags (linked many-to-many): the parts add up to more than the total".
-  A donut leaves out its centre total, which would be the sum of the overlapping slices. Showing the true total there
-  needs smaltkit's donut to accept one (a follow-up).
+  A donut's centre shows the true total, from a query of its own without the groups, through smaltkit's donut
+  `total` option. The sum of the slices would be more than the whole: $1.9M against $1.19M on the sample.
 - **Relevant values** (decision 10) work unchanged: a tag slicer under a selection lists the tags of the selected
   rows.
 - **Ambiguity** counts paths through links like any other path: two links between the same tables are an error until

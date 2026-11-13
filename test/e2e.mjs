@@ -133,12 +133,13 @@ try {
     const storeScale = await landing.evaluate(() => [...document.querySelectorAll('[data-id=r-stores] .sk-map-legend > span')].map((s) => Number(s.textContent.replace(/[^\d.]/g, ''))).filter(Boolean));
     check(storeScale.length === 2 && storeScale[1] < 100000, `sample store map: the colour scale covers the stores drawn, not the online shop (${storeScale})`);
     // Many-to-many through a link table (ADR 0009): revenue by tag, each sale once in each of its tags; the donut by tag
-    // says its slices overlap and leaves out its centre total; a click on a tag in the slicer filters by it.
+    // says its slices overlap and shows the true total in its centre ($1.2M, not the slices' $1.9M); a click on a tag
+    // in the slicer filters by it.
     await landing.click('.sbv-tab:text-is("Products")');
-    const tagged = await until(landing, () => document.querySelectorAll('[data-id=p-tagbar] .sk-bar').length === 6 && /count under more than one of the tags/.test(document.querySelector('[data-id=p-tagdonut] .sb-overlap-note')?.textContent ?? '') && !document.querySelector('[data-id=p-tagdonut] .sk-donut-total') && !document.querySelector('[data-id=p-tagbar] .sb-overlap-note'), undefined, 30000);
+    const tagged = await until(landing, () => document.querySelectorAll('[data-id=p-tagbar] .sk-bar').length === 6 && /count under more than one of the tags/.test(document.querySelector('[data-id=p-tagdonut] .sb-overlap-note')?.textContent ?? '') && document.querySelector('[data-id=p-tagdonut] .sk-donut-total')?.textContent === '$1.2M' && !document.querySelector('[data-id=p-tagbar] .sb-overlap-note'), undefined, 30000);
     await landing.locator('[data-id=p-tag] label:has-text("Gift idea") input').check();
     const giftOnly = await until(landing, () => document.querySelectorAll('[data-id=p-tagbar] .sk-bar').length === 1 && /Gift idea/.test(document.querySelector('[data-id=p-tagbar] .sk-tick.sk-cat')?.textContent ?? ''), undefined, 20000);
-    check(tagged && giftOnly, `sample Products page: revenue by tag through the link table, the overlap note, and a tag slicer (${tagged}, ${giftOnly})`);
+    check(tagged && giftOnly, `sample Products page: revenue by tag through the link table, the overlap note, the donut's true total, and a tag slicer (${tagged}, ${giftOnly})`);
     await landing.locator('[data-id=p-tag] label:has-text("Gift idea") input').uncheck();
     // Two facts lined up (ADR 0009): revenue beside the budget's target, by the category and year tables made for it.
     await landing.click('.sbv-tab:text-is("Targets")');

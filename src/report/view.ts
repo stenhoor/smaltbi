@@ -54,6 +54,8 @@ interface RepeatPanel {
 }
 
 const REPEAT_ROLE = 'repeat';
+/** The extra query holding a donut's true total when its slices overlap (ADR 0009). */
+const OVERLAP_TOTAL = 'overlapTotal';
 /** Space between the copies of a repeated visual (px). */
 const REPEAT_GAP = 10;
 const REPEAT_MAX = 24;
@@ -368,8 +370,7 @@ export class ReportView {
         width: Math.max(10, rt.body.clientWidth),
         height: Math.max(10, rt.body.clientHeight),
         visual: v,
-        // A donut's centre adds up its slices: with overlapping slices (ADR 0009) that isn't the total, so it's left out.
-        options: rt.overlap?.length && v.type === 'donut' ? { ...optionsOf(def, v), center: false } : optionsOf(def, v),
+        options: this.donutOptions(v, def, rt),
         data,
         extra: rt.extra ?? {},
         palette: paletteSize(this.session.theme),
@@ -391,6 +392,17 @@ export class ReportView {
     } catch (e) {
       rt.body.innerHTML = `<div class="sb-error">${esc((e as Error).message)}</div>`;
     }
+  }
+
+  /**
+   * A donut's centre adds up its slices; with overlapping slices (ADR 0009) that is more than the whole, so it shows
+   * the true total from its own query (smaltkit's `total`), or nothing if there is none.
+   */
+  private donutOptions(v: Visual, def: VisualDef, rt: VisualRuntime): Record<string, unknown> {
+    const options = optionsOf(def, v);
+    if (!rt.overlap?.length || v.type !== 'donut') return options;
+    const total = rt.extra?.[OVERLAP_TOTAL]?.measures[0]?.values[0];
+    return typeof total === 'number' && Number.isFinite(total) ? { ...options, total } : { ...options, center: false };
   }
 
   /**
@@ -648,6 +660,10 @@ export class ReportView {
       }),
     );
     rt.overlap = main.overlap;
+    // A donut by overlapping groups (ADR 0009): its centre shows the true total, a query without the groups.
+    if (main.overlap?.length && v.type === 'donut' && !repeatField && plan.main.measures.length) {
+      extra[OVERLAP_TOTAL] = (await this.runSpec(v, { dims: [], measures: plan.main.measures.slice(0, 1) }, filters, roleOf)).data;
+    }
     if (repeatField) return { ...this.splitRepeat(v, rt, main.data, extra), sql: main.sql };
     return { data: main.data, extra, sql: main.sql };
   }
