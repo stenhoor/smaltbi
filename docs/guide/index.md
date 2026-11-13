@@ -56,6 +56,9 @@ npm run serve      # http://localhost:8080/designer.html
    - **Copy and paste:** Ctrl/⌘+C copies the selected visuals and Ctrl/⌘+V pastes them on any page, or into another
      report in another tab. Pasted visuals keep their arrangement, and go below the other visuals if their place is
      taken. Fields the other report doesn't have are named in a warning. Ctrl/⌘+X cuts, and Ctrl/⌘+D duplicates.
+   - **Phones:** on a phone every page is one column of its visuals in reading order, fixed-size pages too, so a
+     report works there without setup. *Phone view* in the top bar shows the page at phone width. In *Format*, under
+     *On phones*, a visual can be hidden on phones, given its own height, or moved up and down the column.
    - **Page size:** a page is responsive by default, fitting the window. For a slide or a printed page, click an empty
      part of the canvas and choose a *Page size* in the side panel: 16:9, 4:3, US Letter, A4 (portrait or landscape)
      or a custom size. The page becomes a sheet of that size, with its rows fitted to it. Visuals that reach below it

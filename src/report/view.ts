@@ -6,6 +6,7 @@ import { type ResolvedField, ModelError, refName } from '../core/model.js';
 import { compileQuery, type CompiledQuery, type QuerySpec, wrapCustomSql } from '../core/compile.js';
 import { formatter } from '../core/format.js';
 import { pageGeometry, pageSize, paletteSize, themeCss } from '../theme/theme.js';
+import { PHONE_WIDTH, phoneLayout, type PhoneSlot } from './phone.js';
 import { CONDITIONAL_ROLE, cellFormatFor, conditionalFields } from './conditional.js';
 import { type DataColumn, dataColumn, type Plan, type PlanContext, type VisualData, type VisualDef, optionsOf, visualDef } from '../visuals/index.js';
 import type { Frame } from '../data/runner.js';
@@ -73,6 +74,16 @@ export class ReportView {
     this.styleEl.textContent = themeCss(this.session.theme);
   }
 
+  /** The report is phone-narrow (the stylesheet's one-column breakpoint): pages are laid out as one column. */
+  narrow = false;
+
+  isNarrow(): boolean {
+    const w = this.root.clientWidth;
+    if (!w) return false;
+    const cs = getComputedStyle(this.root);
+    return w - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) <= PHONE_WIDTH;
+  }
+
   /** Fixed-size pages: scaled down to fit the window (the viewer's "Fit to window"), or shown at 100% and scrolled. */
   fitPage = false;
   private fitSheet: (() => void) | null = null;
@@ -84,7 +95,7 @@ export class ReportView {
 
   /** The current page has a fixed size (the viewer offers "Fit to window" then). */
   get fixedPage(): boolean {
-    return !!pageSize(this.page);
+    return !!pageSize(this.page) && !this.narrow;
   }
 
   setColorMode(mode: 'auto' | 'light' | 'dark'): void {
@@ -128,7 +139,9 @@ export class ReportView {
       this.root.replaceChildren(h('div.sb-empty', {}, 'This report has no pages'));
       return;
     }
-    const layout = pageGeometry(this.session.theme, page);
+    // On a phone every page is a responsive web page, fixed-size ones too: one column, no sheet.
+    this.narrow = this.isNarrow();
+    const layout = this.narrow ? { ...pageGeometry(this.session.theme, { layout: page.layout }), fixed: null } : pageGeometry(this.session.theme, page);
     const rows = Math.max(layout.rows, ...page.visuals.map((v) => v.layout.y + v.layout.h));
     const grid = h('div.sb-page', {
       style: `--cols:${layout.columns};--row:${layout.rowHeight}px;--rows:${rows};max-width:${layout.fit === 'width' ? 'none' : layout.width + 'px'}`,
@@ -174,11 +187,12 @@ export class ReportView {
         sheet,
       );
     } else this.root.replaceChildren(sheet);
-    for (const v of page.visuals) grid.append(this.frameFor(v));
+    const phone = phoneLayout(page);
+    for (const v of page.visuals) grid.append(this.frameFor(v, phone.get(v.id)));
     this.refreshAll();
   }
 
-  private frameFor(v: Visual): HTMLElement {
+  private frameFor(v: Visual, phone?: PhoneSlot): HTMLElement {
     const def = visualDef(v.type);
     const body = h('div.sb-visual-body');
     const header = h('div.sb-visual-head');
@@ -187,13 +201,14 @@ export class ReportView {
       {
         'data-id': v.id,
         'data-type': v.type,
-        style: `grid-column:${v.layout.x + 1} / span ${v.layout.w};grid-row:${v.layout.y + 1} / span ${v.layout.h};--h:${v.layout.h}`,
+        style: `grid-column:${v.layout.x + 1} / span ${v.layout.w};grid-row:${v.layout.y + 1} / span ${v.layout.h};--h:${v.layout.h};--phone-order:${phone?.order ?? 0};--phone-h:${phone?.h ?? v.layout.h}`,
       },
       header,
       body,
     );
     if (v.style) for (const [k, val] of Object.entries(v.style)) frame.style.setProperty(`--sb-${k}`, String(val));
     if (v.type === 'text' || v.type === 'image') frame.classList.add('sb-plain');
+    if (phone?.hidden) frame.classList.add('sb-phone-hidden');
     if (this.selectedVisual === v.id) frame.classList.add('sb-selected');
     const rt: VisualRuntime = { frame, body, gen: 0, dims: [] };
     this.runtimes.set(v.id, rt);
@@ -595,7 +610,11 @@ export class ReportView {
 
   private bindEvents(): void {
     // A fitted sheet follows the window (and the pane it is in).
-    new ResizeObserver(() => this.fitPage && this.fitSheet?.()).observe(this.root);
+    new ResizeObserver(() => {
+      // A fixed-size page turns into a column on a phone and back into a sheet on a wider screen.
+      if (pageSize(this.page) && this.isNarrow() !== this.narrow) return this.render();
+      if (this.fitPage) this.fitSheet?.();
+    }).observe(this.root);
     this.root.ownerDocument.defaultView?.addEventListener('resize', () => this.fitPage && this.fitSheet?.());
     const markOf = (e: Event) => {
       const t = e.target as Element;

@@ -154,6 +154,8 @@ export interface Page {
    * is responsive (the default): as wide as the window, as long as its visuals.
    */
   size?: PageSize;
+  /** On phones: the order of the visuals (ids) in the one column. Visuals not listed follow, in reading order. */
+  phoneOrder?: string[];
 }
 
 /** A fixed page: a preset (portrait unless `landscape`) or a custom size in CSS pixels (96 per inch). */
@@ -196,6 +198,8 @@ export interface Visual {
   style?: Record<string, string | number>;
   /** Conditional formatting of measure values (tables, matrices, KPI cards): the first rule that matches wins. */
   conditional?: ConditionalRule[];
+  /** On phones (narrow screens) the page is one column: hide this visual there, or give it its own height in rows. */
+  phone?: { hidden?: boolean; h?: number };
 }
 
 /**

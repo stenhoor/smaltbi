@@ -28,6 +28,16 @@ class Designer {
   selected: string | null = null;
   /** More visuals selected with the primary one (Shift- or Ctrl/Cmd-click): moved, aligned and copied together. */
   group = new Set<string>();
+  /** The canvas is phone-wide: the page as one column, in its phone order (designer/phone section, report/phone.ts). */
+  phoneView = false;
+
+  togglePhoneView(): void {
+    this.phoneView = !this.phoneView;
+    this.root.classList.toggle('sbd-phone-view', this.phoneView && this.mode === 'report');
+    this.renderTop();
+    this.renderPanel();
+  }
+
   /** When a drag last ended (a click right after it is not a selection change). */
   private draggedAt = 0;
 
@@ -84,6 +94,7 @@ class Designer {
     // App-level state first: the Model branch below can return early.
     this.root.classList.toggle('sbd-model-mode', this.mode === 'model');
     this.root.classList.toggle('sbd-preview', this.preview);
+    this.root.classList.toggle('sbd-phone-view', this.phoneView && this.mode === 'report');
     this.previewBar = undefined;
     if (this.mode === 'model' && !this.preview) {
       // The diagram replaces the canvas. The report view object is kept only for its view state
@@ -231,6 +242,15 @@ class Designer {
       h('div.sbd-spacer'),
       this.modeBtn,
       h('span.sbd-engine', { title: 'Query engine' }, this.engine.label),
+      ...(this.mode === 'report'
+        ? [
+            h(
+              'button.sbd-tbtn.sbd-phone-btn' + (this.phoneView ? '.sbd-on' : ''),
+              { title: 'See and arrange the page as phones show it: one column', 'aria-pressed': String(this.phoneView), onclick: () => this.togglePhoneView() },
+              'Phone view',
+            ),
+          ]
+        : []),
       btn(this.preview ? '✎ Edit' : '▶ Preview', 'Try the report as a viewer sees it', () => this.togglePreview()),
       btn('Publish', 'Download a static site', () => void publishDialog(this.dctx), '.sbd-primary'),
     );
@@ -704,6 +724,8 @@ class Designer {
       e.stopPropagation();
       if (e.shiftKey || e.ctrlKey || e.metaKey) return this.select(v.id, { add: true });
       if (!this.selection.includes(v.id)) this.select(v.id);
+      // Phone view shows the one-column layout: the desktop grid is not moved there (order and height: Format tab).
+      if (this.phoneView) return;
       const grid = frame.parentElement!;
       const layout = pageGeometry(this.session.theme, this.page);
       const cs = getComputedStyle(grid);

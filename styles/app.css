@@ -287,3 +287,10 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-arrange-row:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, 1fr); }
 .sbd-arrange-row:has(> :only-child) { grid-template-columns: 1fr; }
 .sbd-arrange-btn { padding: 4px 6px; font-size: 12px; white-space: nowrap; }
+
+/* Phone view: the canvas as wide as a phone, so the page shows as its one-column phone layout. */
+.sbd-phone-view .sbd-canvas { background: color-mix(in oklab, var(--d-bg) 92%, var(--d-text)); }
+.sbd-phone-view .sbd-canvas .sb-report { width: 390px; min-height: 0; margin: 16px auto; border-radius: 18px; box-shadow: 0 0 0 1px var(--d-border), 0 10px 40px color-mix(in oklab, var(--d-text) 14%, transparent); }
+.sbd-phone-view .sb-visual .sbd-grip, .sbd-phone-view .sb-visual .sbd-resize { display: none; }
+.sbd-tbtn.sbd-on { background: var(--d-accent-soft); color: var(--d-accent); }
+.sbd-phone-view .sb-report[data-mode-ui='edit'] .sb-page { min-height: 0; background-image: none; }

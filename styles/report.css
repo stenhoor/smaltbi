@@ -35,9 +35,12 @@
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--sb-text) 10%, transparent), 0 6px 24px color-mix(in oklab, var(--sb-text) 10%, transparent);
   border-radius: 2px;
 }
+/* Phones: one column, in the page's phone order (reading order unless set), at each visual's phone height
+   (report/phone.ts). Must match PHONE_WIDTH there. */
 @container (max-width: 720px) {
   .sb-page:not(.sb-fixed) { grid-template-columns: minmax(0, 1fr); }
-  .sb-page:not(.sb-fixed) > .sb-visual { grid-column: 1 / -1 !important; grid-row: auto / span var(--h, 4) !important; }
+  .sb-page:not(.sb-fixed) > .sb-visual { grid-column: 1 / -1 !important; grid-row: auto / span var(--phone-h, var(--h, 4)) !important; order: var(--phone-order, 0); }
+  .sb-page:not(.sb-fixed) > .sb-visual.sb-phone-hidden { display: none; }
 }
 
 /* ---------------------------------------------------------------- visual frame */

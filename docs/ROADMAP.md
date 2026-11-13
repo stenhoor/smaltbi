@@ -50,7 +50,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - ✓ Chart axes: continuous date/number axis (gaps and uneven dates), log scale, reference lines (value or
   average/median/min/max), axis titles, min/max overrides, small multiples.
 - ✓ Copy/paste visuals between pages and reports; align/distribute tools; snap guides.
-- Mobile layout per page.
+- ✓ Mobile layout per page: phones see every page as one responsive column (ADR 0007), with an optional phone
+  order, and hidden visuals and heights per visual; Phone view in the designer.
 
 ## 0.3: Plugins and data
 
