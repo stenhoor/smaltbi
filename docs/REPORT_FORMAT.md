@@ -150,6 +150,7 @@ Patterns such as `"$#,0.00"` or `"0.0%"` also work.
       "interactions": { "filterOthers": true, "filteredByOthers": true },
       "style": { "surface": "#ffffff" },                   // per-visual theme token overrides
       "phone": { "hidden": false, "h": 4 },                // optional: on phones, hidden or its own height (rows)
+      "repeat": { "field": "products.category", "columns": 4, "max": 24, "order": "asc" },   // optional (below)
       "conditional": [                                     // tables, matrices, cards: first matching rule wins
         { "apply": "sales.Revenue", "op": "lt", "compare": "sales.Revenue LY", "tone": "bad", "icon": "down" },
         { "apply": "*", "op": "gt", "value": 100000, "tone": "good", "fill": true }
@@ -169,6 +170,13 @@ visuals, and on narrow screens the visuals stack. With it the page is a fixed sh
   `rowHeight`. Visuals below the last row are cut off; the designer marks them.
 - Readers see the sheet at 100% and scroll, or choose *Fit to window* in the viewer bar, which scales it down. The
   choice is remembered in their browser.
+
+**Repeat for each** (`repeat`, any visual with data fields): the visual becomes a grid of copies, one per value of
+`field` (a dimension), each filtered to its value and titled with it: a card for each product category, a chart for
+each region. `columns` sets the grid (else automatic), `max` the number of copies (default 24; a note says how many
+more there are), `order` `asc` or `desc`. The data is one query grouped by the field as well, so a click in a copy
+selects that value too (the bar *and* its region). Each copy has its own scale; for one shared scale across charts,
+use the cartesian charts' `multiples` field.
 
 **On phones** (ADR 0007): a report narrower than 720px shows every page, fixed-size ones included, as one column.
 The visuals come in reading order (top to bottom, then left to right) at their desktop height. `phoneOrder` lists

@@ -62,6 +62,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
   `smaltkit/maps` so smaltnb can use it too; our own code, so built in rather than a plugin.
 - ✓ Data: refresh button and freshness indicator; optional auto-refresh interval per report.
 - ✓ Parameters: what-if values usable in measures (`[@Name]`), changed with a Parameter control.
+- ✓ Repeat for each: any visual repeated for each value of a field (a card per product type, a chart per region),
+  cross-filtering by the value too.
 - Data: incremental reload; materialized views as a "cache this table" switch.
 - Large files are imported into OPFS by default (link in place stays available).
 - Credentials: reports declare connections that need them; the viewer asks the reader and keeps

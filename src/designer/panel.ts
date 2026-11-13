@@ -83,6 +83,7 @@ function buildTab(ctx: PanelContext, v: Visual | undefined): HTMLElement {
   if (!def) return h('div', {}, out, hint(`Unknown visual type ${v.type}`));
   out.append(h('div.sbd-section-title', {}, def.label));
   for (const role of def.roles) out.append(well(ctx, v, def, role.name));
+  if (def.roles.length && !def.static && !def.slicer && !v.sql) out.append(repeatWell(ctx, v));
   if (!def.roles.length) out.append(hint('This visual has no data fields. See Format.'));
   if (v.sql) out.append(hint('This visual runs custom SQL (see the SQL tab). Its output columns map to these fields in order.'));
   return out;
@@ -662,4 +663,83 @@ function phoneSection(ctx: PanelContext, v: Visual): HTMLElement {
     ),
     p.phoneOrder ? h('button.sbd-link', { onclick: () => ctx.store.change('layout', () => delete p.phoneOrder, v.id) }, 'Back to reading order') : null,
   );
+}
+
+/** Repeat for each: a field (a dimension) whose values each get a copy of the visual, and how the copies are laid out. */
+function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
+  const set = (repeat: Visual['repeat']) => ctx.store.change('visual', () => (repeat ? (v.repeat = repeat) : delete v.repeat), v.id);
+  const r = v.repeat;
+  let label = r?.field ?? '';
+  if (r) {
+    try {
+      label = ctx.session.model.resolve(r.field).label;
+    } catch {}
+  }
+  const zone = h(
+    'div.sbd-well.sbd-repeat',
+    { 'data-role': 'repeat' },
+    h('div.sbd-well-head', {}, h('span', {}, 'Repeat for each'), h('span.sbd-max', {}, 'max 1')),
+    ...(r
+      ? [
+          h('div.sbd-chip', {}, h('span.sbd-chip-label', { title: r.field }, label), h('button.sbd-chip-btn', { title: 'Stop repeating', onclick: () => set(undefined) }, '×')),
+          h(
+            'div.sbd-row.sbd-repeat-opts',
+            {},
+            field(
+              'Columns',
+              h('input.sbd-input', {
+                type: 'number',
+                min: 1,
+                max: 12,
+                value: r.columns ?? '',
+                placeholder: 'auto',
+                onchange: (e: Event) => {
+                  const n = Math.round(Number((e.target as HTMLInputElement).value));
+                  set({ ...r, columns: n >= 1 && n <= 12 ? n : undefined });
+                },
+              }),
+            ),
+            field(
+              'At most',
+              h('input.sbd-input', {
+                type: 'number',
+                min: 1,
+                max: 100,
+                value: r.max ?? '',
+                placeholder: '24',
+                onchange: (e: Event) => {
+                  const n = Math.round(Number((e.target as HTMLInputElement).value));
+                  set({ ...r, max: n >= 1 && n <= 100 ? n : undefined });
+                },
+              }),
+            ),
+            field(
+              'Order',
+              h(
+                'select.sbd-input',
+                { onchange: (e: Event) => set({ ...r, order: (e.target as HTMLSelectElement).value === 'desc' ? 'desc' : undefined }) },
+                h('option', { value: 'asc', selected: r.order !== 'desc' }, 'A → Z'),
+                h('option', { value: 'desc', selected: r.order === 'desc' }, 'Z → A'),
+              ),
+            ),
+          ),
+        ]
+      : [h('div.sbd-drop', {}, 'Drop a field: a copy of this visual for each of its values')]),
+  );
+  zone.addEventListener('dragover', (e) => {
+    if (e.dataTransfer?.types.includes(FIELD_MIME)) {
+      e.preventDefault();
+      zone.classList.add('sbd-over');
+    }
+  });
+  zone.addEventListener('dragleave', () => zone.classList.remove('sbd-over'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('sbd-over');
+    const ref = draggedRefs(e.dataTransfer)[0];
+    if (!ref) return;
+    if (ctx.session.model.kindOf(ref) === 'measure') return toast('Repeat for each needs a field to group by (a column), not a measure', 'error');
+    set({ ...(v.repeat ?? {}), field: ref });
+  });
+  return zone;
 }

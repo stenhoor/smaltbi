@@ -199,3 +199,10 @@ body[data-mode=dark] .sbv-badge-dark { display: inline; }
 .sb-param-range { flex: 1; accent-color: var(--sb-accent, var(--sk-accent)); }
 .sb-param-value { min-width: 3em; text-align: right; font-family: var(--sb-font-num, inherit); font-variant-numeric: tabular-nums; }
 .sb-param-input { font: inherit; color: var(--sb-text); background: var(--sb-surface); border: 1px solid var(--sb-border); border-radius: 6px; padding: 4px 8px; width: 100%; }
+
+/* A repeated visual (visual.repeat): a grid of copies, one per value, each titled with its value. */
+.sb-repeat { display: grid; gap: 10px; height: 100%; min-height: 0; overflow: auto; grid-auto-rows: minmax(90px, 1fr); }
+.sb-repeat-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-top: 1px solid var(--sb-border); padding-top: 4px; }
+.sb-repeat-title { font-size: var(--sb-fs-sub); font-weight: 600; color: var(--sb-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 18px; line-height: 18px; flex: none; }
+.sb-repeat-body { flex: 1; min-height: 0; position: relative; }
+.sb-repeat-more { font-size: var(--sb-fs-small); color: var(--sb-muted); height: 18px; line-height: 18px; }

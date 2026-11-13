@@ -227,6 +227,11 @@ export interface Visual {
   style?: Record<string, string | number>;
   /** Conditional formatting of measure values (tables, matrices, KPI cards): the first rule that matches wins. */
   conditional?: ConditionalRule[];
+  /**
+   * Repeat the visual for each value of a field (a dimension): a grid of copies, each filtered to its value and
+   * titled with it. `columns` (else automatic), `max` copies (default 24), values in `order` (default asc).
+   */
+  repeat?: { field: string; columns?: number; max?: number; order?: 'asc' | 'desc' };
   /** On phones (narrow screens) the page is one column: hide this visual there, or give it its own height in rows. */
   phone?: { hidden?: boolean; h?: number };
 }

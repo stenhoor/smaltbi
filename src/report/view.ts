@@ -36,6 +36,35 @@ interface VisualRuntime {
   dims: ResolvedField[];
   ro?: ResizeObserver;
   lastSize?: string;
+  /** A repeated visual: its copies, as slices of `data` (rows start … start + count) and their extra results. */
+  repeat?: { field: DataColumn; panels: RepeatPanel[]; more: number };
+}
+
+interface RepeatPanel {
+  value: SqlValue;
+  label: string;
+  start: number;
+  count: number;
+  extra: Record<string, VisualData>;
+}
+
+const REPEAT_ROLE = 'repeat';
+const REPEAT_MAX = 24;
+
+/** Rows of a result in a new order (a subset or a permutation). */
+function pickRows(d: VisualData, rows: number[]): VisualData {
+  return makeData(d.columns.map((c) => ({ ...c, values: rows.map((r) => c.values[r]!) })), rows.length);
+}
+
+const sortValue = (v: SqlValue) => (typeof v === 'bigint' ? Number(v) : v);
+function compareValues(a: SqlValue, b: SqlValue): number {
+  const x = sortValue(a);
+  const y = sortValue(b);
+  if (x === y) return 0;
+  if (x === null) return 1;
+  if (y === null) return -1;
+  if (typeof x === 'number' && typeof y === 'number') return x - y;
+  return String(x).localeCompare(String(y), undefined, { numeric: true });
 }
 
 export class ReportView {
@@ -321,6 +350,7 @@ export class ReportView {
     const tupleSel = own?.find((f) => f.op === 'tuples');
     const keys = tupleSel ? new Set((tupleSel.tuples ?? []).map((t) => JSON.stringify(t.map(norm)))) : null;
     const data = rt.data;
+    if (rt.repeat) return this.drawRepeat(v, def, rt, keys);
     try {
       def.render({
         el: rt.body,
@@ -349,6 +379,62 @@ export class ReportView {
     } catch (e) {
       rt.body.innerHTML = `<div class="sb-error">${esc((e as Error).message)}</div>`;
     }
+  }
+
+  /** A repeated visual: a grid of copies, each drawn by the visual's own renderer from its slice of the data. */
+  private drawRepeat(v: Visual, def: VisualDef, rt: VisualRuntime, keys: Set<string> | null): void {
+    const rep = rt.repeat!;
+    const n = rep.panels.length;
+    if (!n) {
+      rt.body.innerHTML = '<div class="sb-empty">No data</div>';
+      return;
+    }
+    const W = rt.body.clientWidth;
+    const H = rt.body.clientHeight - (rep.more ? 18 : 0);
+    const want = Math.round(Number(v.repeat?.columns));
+    // Automatic columns: panels about 1.4 times as wide as tall.
+    const cols = want >= 1 ? Math.min(want, n) : Math.max(1, Math.min(n, Math.round(Math.sqrt((n * W) / (Math.max(1, H) * 1.4)))));
+    const grid = h('div.sb-repeat', { style: `grid-template-columns:repeat(${cols},minmax(0,1fr))` });
+    const bodies = rep.panels.map((p) => {
+      const body = h('div.sb-repeat-body', { 'data-row-offset': String(p.start) });
+      grid.append(h('div.sb-repeat-panel', { 'data-value': JSON.stringify(norm(p.value)) }, h('div.sb-repeat-title', { title: p.label }, p.label), body));
+      return body;
+    });
+    rt.body.replaceChildren(grid, ...(rep.more ? [h('div.sb-repeat-more', {}, `${rep.more} more not shown (Repeat for each shows ${n})`)] : []));
+    const data = rt.data!;
+    const options = optionsOf(def, v);
+    rep.panels.forEach((p, i) => {
+      const el = bodies[i]!;
+      const slice = pickRows(data, Array.from({ length: p.count }, (_, r) => p.start + r));
+      try {
+        def.render({
+          el,
+          width: Math.max(10, el.clientWidth),
+          height: Math.max(10, el.clientHeight),
+          visual: v,
+          options,
+          data: slice,
+          extra: p.extra,
+          palette: paletteSize(this.session.theme),
+          base: this.session.base,
+          selected: (row) => (keys && !def.slicer ? keys.has(JSON.stringify(this.rowTuple(data, p.start + row).map(norm))) : null),
+          cellFormat: def.conditional ? cellFormatFor(v, slice) : undefined,
+          setOption: this.opts.onOption ? (key, value) => this.opts.onOption!(v, key, value) : undefined,
+          api: {
+            select: (row, additive) => this.select(v, p.start + row, !!additive),
+            setFilters: (filters) => this.setSelection(v, filters),
+            filters: () => this.state.selections?.[v.id] ?? [],
+            query: async (spec) => (await this.runSpec(v, spec, [])).data,
+            drill: (row) => this.drillDown(v, p.start + row),
+            parameters: () => this.session.report.model.parameters ?? [],
+            param: (name) => this.param(name),
+            setParam: (name, value) => this.setParam(name, value),
+          },
+        });
+      } catch (e) {
+        el.innerHTML = `<div class="sb-error">${esc((e as Error).message)}</div>`;
+      }
+    });
   }
 
   // ---------------------------------------------------------------- queries
@@ -472,6 +558,17 @@ export class ReportView {
       const r = await this.runCustom(v, plan, roleOf, filters);
       return { ...r, extra: {} };
     }
+    // Repeat: one query grouped by the repeat field as well; the result is split into copies below.
+    let repeatField: ResolvedField | undefined;
+    rt.repeat = undefined;
+    if (v.repeat?.field) {
+      repeatField = this.session.model.resolve(v.repeat.field);
+      if (repeatField.kind === 'measure') throw new ModelError(`Repeat for each needs a dimension, not the measure ${repeatField.label}`);
+      roleOf.set(repeatField, REPEAT_ROLE);
+      const max = Math.max(1, Math.min(100, v.repeat.max ?? REPEAT_MAX));
+      plan.main = { ...plan.main, dims: [...plan.main.dims, repeatField], limit: plan.main.limit ? plan.main.limit * max : undefined };
+      if (plan.extra) plan.extra = Object.fromEntries(Object.entries(plan.extra).map(([k, spec]) => [k, { ...spec, dims: [...spec.dims, repeatField!], limit: spec.limit ? spec.limit * max : undefined }]));
+    }
     const main = await this.runSpec(v, plan.main, filters, roleOf);
     const extra: Record<string, VisualData> = {};
     await Promise.all(
@@ -479,7 +576,45 @@ export class ReportView {
         extra[k] = (await this.runSpec(v, spec, filters, roleOf)).data;
       }),
     );
+    if (repeatField) return { ...this.splitRepeat(v, rt, main.data, extra), sql: main.sql };
     return { data: main.data, extra, sql: main.sql };
+  }
+
+  /** Group a repeated visual's rows by the repeat value (in its order, up to max copies) and split its extras. */
+  private splitRepeat(v: Visual, rt: VisualRuntime, data: VisualData, extra: Record<string, VisualData>): { data: VisualData; extra: Record<string, VisualData> } {
+    const col = data.role(REPEAT_ROLE)[0];
+    if (!col) return { data, extra };
+    const dir = v.repeat?.order === 'desc' ? -1 : 1;
+    const max = Math.max(1, Math.min(100, v.repeat?.max ?? REPEAT_MAX));
+    const keyOf = (x: SqlValue) => JSON.stringify(norm(x));
+    const byValue = new Map<string, { value: SqlValue; rows: number[] }>();
+    for (let r = 0; r < data.rows; r++) {
+      const value = col.values[r] ?? null;
+      const k = keyOf(value);
+      let g = byValue.get(k);
+      if (!g) byValue.set(k, (g = { value, rows: [] }));
+      g.rows.push(r);
+    }
+    const groups = [...byValue.values()].sort((a, b) => compareValues(a.value, b.value) * dir);
+    const shown = groups.slice(0, max);
+    const order: number[] = [];
+    const panels: RepeatPanel[] = shown.map((g) => {
+      const start = order.length;
+      order.push(...g.rows);
+      return { value: g.value, label: col.fmt(g.value), start, count: g.rows.length, extra: {} };
+    });
+    // Each extra result, split by the same values.
+    for (const [k, d] of Object.entries(extra)) {
+      const ec = d.role(REPEAT_ROLE)[0];
+      for (const p of panels) {
+        const rows: number[] = [];
+        if (ec) for (let r = 0; r < d.rows; r++) if (keyOf(ec.values[r] ?? null) === keyOf(p.value)) rows.push(r);
+        p.extra[k] = ec ? pickRows(d, rows) : d;
+      }
+    }
+    const combined = pickRows(data, order);
+    rt.repeat = { field: combined.role(REPEAT_ROLE)[0]!, panels, more: groups.length - shown.length };
+    return { data: combined, extra: {} };
   }
 
   private async runSpec(_v: Visual, spec: QuerySpec, filters: Filter[], roleOf = new Map<ResolvedField, string>()): Promise<{ data: VisualData; sql: string }> {
@@ -589,7 +724,7 @@ export class ReportView {
     const keys = tupleSel ? new Set((tupleSel.tuples ?? []).map((t) => JSON.stringify(t.map(norm)))) : null;
     const data = rt.data;
     rt.body.querySelectorAll('[data-row]').forEach((el) => {
-      const row = Number(el.getAttribute('data-row'));
+      const row = Number(el.getAttribute('data-row')) + Number((el.closest('[data-row-offset]') as HTMLElement | null)?.dataset.rowOffset ?? 0);
       const on = keys ? keys.has(JSON.stringify(this.rowTuple(data, row).map(norm))) : null;
       el.classList.toggle('sk-dim', on === false);
       el.classList.toggle('sk-on', on === true);
@@ -672,7 +807,9 @@ export class ReportView {
       if (!frame) return null;
       const v = this.page.visuals.find((x) => x.id === frame.dataset.id);
       if (!v) return null;
-      return { v, frame, row: mark ? Number(mark.getAttribute('data-row')) : null };
+      // In a repeated visual, a copy's rows start at its offset in the combined data.
+      const offset = Number((mark?.closest('[data-row-offset]') as HTMLElement | null)?.dataset.rowOffset ?? 0);
+      return { v, frame, row: mark ? Number(mark.getAttribute('data-row')) + offset : null };
     };
     this.root.addEventListener('click', (e) => {
       const m = markOf(e);
