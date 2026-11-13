@@ -7,9 +7,17 @@ import { field } from './panel.js';
 import { dateTableDialog } from './datetable.js';
 import type { DialogContext } from './dialogs.js';
 
-/** The name a quick measure gets unless the user types one: "Revenue YTD", "Revenue rolling 3 months". */
-export function quickMeasureName(base: string, calc: TimeCalcKind, months: number): string {
-  return calc === 'rolling' ? `${base} rolling ${months} months` : `${base} ${TIME_CALCS[calc].suffix}`;
+/**
+ * The name a quick measure gets unless the user types one: "Revenue YTD", "Revenue rolling 3 months". When a measure
+ * has that name already (`taken`, any case), the first free "Revenue YTD 2", "Revenue YTD 3", …
+ */
+export function quickMeasureName(base: string, calc: TimeCalcKind, months: number, taken: Iterable<string> = []): string {
+  const name = calc === 'rolling' ? `${base} rolling ${months} months` : `${base} ${TIME_CALCS[calc].suffix}`;
+  const used = new Set([...taken].map((t) => t.toLowerCase()));
+  if (!used.has(name.toLowerCase())) return name;
+  let n = 2;
+  while (used.has(`${name} ${n}`.toLowerCase())) n++;
+  return `${name} ${n}`;
 }
 
 /**
@@ -53,7 +61,8 @@ export async function quickMeasureDialog(ctx: DialogContext, table: string, name
     const dt = model.dateTable!;
     const fiscal = dt.fiscalStart !== 1 && (calc === 'ytd' || calc === 'qtd') ? ` Years and quarters are fiscal, from ${new Date(2000, dt.fiscalStart - 1, 1).toLocaleString('en', { month: 'long' })}.` : '';
     about.textContent = `${TIME_CALCS[calc].description}${fiscal} Uses the date table ${dt.table} (${dt.source}): put one of its fields on the axis, or filter by it.`;
-    if (!named) nameIn.value = quickMeasureName(base.name, calc, n);
+    // A free name: the dialog refuses one a measure already has.
+    if (!named) nameIn.value = quickMeasureName(base.name, calc, n, list.filter((m) => m !== existing).map((m) => m.name));
   };
   for (const el of [baseSel, calcSel, months]) el.addEventListener('input', refresh);
   refresh();

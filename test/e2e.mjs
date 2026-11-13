@@ -980,19 +980,18 @@ try {
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Revenue"))').click({ button: 'right' });
   await page.click('.sk-menu-item:has-text("Quick measure…")');
   await page.selectOption('.sbd-quick select >> nth=1', 'py');
+  // The sample has a Revenue LY already: the dialog suggests the next free name, and adds it as it is.
   const quickName = await page.locator('.sbd-quick input:not([type=number])').inputValue();
-  // The sample has a Revenue LY already: name this one.
-  await page.locator('.sbd-quick input:not([type=number])').fill('Revenue last year');
   await page.click('.sk-dialog-foot button:has-text("Add measure")');
-  await until(page, () => (window.smaltbi.store.report.model.measures ?? []).some((m) => m.time?.calc === 'py' && m.name === 'Revenue last year'));
+  const quickAdded = await until(page, () => (window.smaltbi.store.report.model.measures ?? []).some((m) => m.time?.calc === 'py' && m.name === 'Revenue LY 2') && !document.querySelector('.sk-dialog[open]'));
   await page.evaluate(() => {
     const s = window.smaltbi.store;
     const pg = s.report.pages[0];
-    s.change('page', () => pg.visuals.push({ id: 't-ly', type: 'table', layout: { x: 0, y: 40, w: 6, h: 4 }, fields: { columns: ['calendar.year'], values: ['sales.Revenue', 'sales.Revenue last year'] }, sort: [{ by: 'columns:0', dir: 'asc' }] }), pg.id);
+    s.change('page', () => pg.visuals.push({ id: 't-ly', type: 'table', layout: { x: 0, y: 40, w: 6, h: 4 }, fields: { columns: ['calendar.year'], values: ['sales.Revenue', 'sales.Revenue LY 2'] }, sort: [{ by: 'columns:0', dir: 'asc' }] }), pg.id);
   });
   await until(page, () => document.querySelectorAll('.sb-visual[data-id=t-ly] tbody tr').length === 5, undefined, 20000);
   const ly = await page.evaluate(() => [...document.querySelectorAll('.sb-visual[data-id=t-ly] tbody tr')].map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent)));
-  check(quickName === 'Revenue LY' && ly.length === 5 && ly[0][2] === '(Blank)' && ly.slice(1).every((r, i) => r[2] === ly[i][1]), `a quick measure shows last year's revenue beside this year's (${quickName}: ${JSON.stringify(ly)})`);
+  check(quickAdded && quickName === 'Revenue LY 2' && ly.length === 5 && ly[0][2] === '(Blank)' && ly.slice(1).every((r, i) => r[2] === ly[i][1]), `a quick measure shows last year's revenue beside this year's (${quickName}: ${JSON.stringify(ly)})`);
   await page.evaluate(() => {
     const s = window.smaltbi.store;
     const pg = s.report.pages[0];
