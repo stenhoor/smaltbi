@@ -510,6 +510,41 @@ try {
     });
   });
 
+  // Repeat for each: a card per product category (dropped on the well), a bar chart per region; clicking a bar in one
+  // copy selects that channel in that region.
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('page', () => d.page.visuals.push(
+      { id: 'e2e-rcard', type: 'card', layout: { x: 0, y: 80, w: 12, h: 3 }, fields: { values: ['sales.Revenue'] } },
+      { id: 'e2e-rbar', type: 'bar', layout: { x: 0, y: 83, w: 12, h: 5 }, fields: { category: ['stores.channel'], values: ['sales.Revenue'] }, repeat: { field: 'customers.region', columns: 3 } },
+    ), d.page.id);
+  });
+  await page.locator('.sb-visual[data-id="e2e-rcard"]').click({ position: { x: 20, y: 12 } });
+  await page.click('.sbd-tab:has-text("Build")');
+  await page.locator('.sbd-field[data-ref="products.category"]').dragTo(page.locator('.sbd-well[data-role="repeat"]'));
+  const repeated = await until(page, () => {
+    const titles = [...document.querySelectorAll('.sb-visual[data-id="e2e-rcard"] .sb-repeat-title')].map((t) => t.textContent);
+    const values = [...document.querySelectorAll('.sb-visual[data-id="e2e-rcard"] .sk-kpi-value')].map((t) => t.textContent);
+    return titles.join() === 'Accessories,Coffee,Equipment,Tea' && values.length === 4 && values.every((x) => /\$\d/.test(x));
+  }, undefined, 15000);
+  check(repeated, 'repeat: a field dropped on Repeat for each makes a card for each category, A to Z');
+  const panels = await until(page, () => document.querySelectorAll('.sb-visual[data-id="e2e-rbar"] .sb-repeat-panel').length === 3 && document.querySelectorAll('.sb-visual[data-id="e2e-rbar"] rect.sk-bar').length === 6, undefined, 15000);
+  await page.locator('.sb-visual[data-id="e2e-rbar"] .sb-repeat-panel:has(.sb-repeat-title:text-is("Europe")) rect.sk-bar >> nth=0').click();
+  const picked = await until(page, () => {
+    const sel = window.smaltbi.view.state.selections?.['e2e-rbar']?.[0];
+    return sel && JSON.stringify(sel.fields) === '["stores.channel","customers.region"]' && sel.tuples?.[0]?.[1] === 'Europe' && document.querySelectorAll('.sb-visual[data-id="e2e-rbar"] rect.sk-bar.sk-on').length === 1;
+  });
+  check(panels && picked, 'repeat: a bar chart for each region; a click selects that channel in that region only');
+  await page.evaluate(() => window.smaltbi.view.clearSelections());
+  await page.locator('.sb-visual[data-id="e2e-rcard"]').click({ position: { x: 20, y: 12 } });
+  await page.selectOption('.sbd-repeat-opts select', 'desc');
+  const reversed = await until(page, () => [...document.querySelectorAll('.sb-visual[data-id="e2e-rcard"] .sb-repeat-title')].map((t) => t.textContent).join() === 'Tea,Equipment,Coffee,Accessories');
+  check(reversed, 'repeat: Z → A reverses the copies');
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('page', () => (d.page.visuals = d.page.visuals.filter((v) => !['e2e-rcard', 'e2e-rbar'].includes(v.id))), d.page.id);
+  });
+
   // Phone view: the page as one column in reading order; a visual hidden on phones, another moved up; a fixed-size
   // page reflows into the column too.
   await page.keyboard.press('Escape');

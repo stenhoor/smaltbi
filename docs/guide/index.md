@@ -50,6 +50,10 @@ npm run serve      # http://localhost:8080/designer.html
      table; double-click the edge to fit the column to its contents again.
    - **Field search:** press `/` and type to find a field. Use ↓ and ↑ to move through the matches and Enter to add
      one; Space selects it, and Esc clears the search.
+   - **Repeat for each:** drop a field on a visual's *Repeat for each* well (in Build) to get a copy of it for each
+     of the field's values: a card per product category, or a chart per region, each titled with its value. New
+     values get their own copy when the data changes. Choose the number of columns, the most copies to show, and
+     A → Z or Z → A. A click in one copy filters the page by that value too.
    - **Maps:** the *Map* visual colours regions by a measure, or places points by latitude and longitude. The region
      shapes are a GeoJSON or TopoJSON file you add to the report, like a data file, and name in *Format → Shapes
      file*; public sources such as Natural Earth have country and state boundaries. Locations match the shapes'
