@@ -129,6 +129,9 @@ try {
       document.querySelectorAll('[data-id=r-cards] .sk-kpi-value').length === 7 &&
       document.querySelectorAll('[data-id=r-cats] .sk-bar').length === 12, undefined, 30000);
     check(regions, 'sample Regions page: a country map, a store map, seven repeated cards and three repeated charts');
+    // The online shop has no position and the most revenue: the store map's colour scale leaves it out (smaltkit#28).
+    const storeScale = await landing.evaluate(() => [...document.querySelectorAll('[data-id=r-stores] .sk-map-legend > span')].map((s) => Number(s.textContent.replace(/[^\d.]/g, ''))).filter(Boolean));
+    check(storeScale.length === 2 && storeScale[1] < 100000, `sample store map: the colour scale covers the stores drawn, not the online shop (${storeScale})`);
     // The country cards expand: the visual grows to show every row of cards and the charts below move down.
     const grown = await until(landing, () => {
       const cards = document.querySelector('[data-id=r-cards]');
