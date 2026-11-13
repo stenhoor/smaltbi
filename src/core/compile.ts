@@ -36,6 +36,11 @@ export interface CompiledQuery {
   root: string;
   /** Filters that could not be applied (their table is not related to this query's tables). */
   ignored: Filter[];
+  /**
+   * Keys of dimensions reached through a link table (ADR 0009): their groups overlap (a sale with two tags is in
+   * both), so parts of a whole add up to more than the whole.
+   */
+  overlap?: string[];
 }
 
 export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
@@ -72,14 +77,23 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
   const where: string[] = [];
   const having: string[] = [];
   const ignored: Filter[] = [];
+  // The tables the visual's own fields join (to group by): a filter on one of them applies to the joined rows.
+  const grouped = new Set(dims.flatMap((d) => [...d.tables]));
   for (const f of q.filters ?? []) {
     const c = compileFilter(model, f, root, q.filters ?? []);
     if (!c) {
       ignored.push(f);
       continue;
     }
-    for (const t of c.tables) needed.add(t);
-    (c.aggregate ? having : where).push(c.sql);
+    if (c.aggregate) {
+      for (const t of c.tables) needed.add(t);
+      having.push(c.sql);
+    } else {
+      // Beyond a link table, a filter is a semi-join: it never multiplies the rows being counted (ADR 0009).
+      const w = model.throughLinks(root, c.sql, c.tables, grouped);
+      for (const t of w.tables) needed.add(t);
+      where.push(w.sql);
+    }
   }
 
   model.assertUnambiguous(root, needed);
@@ -128,7 +142,8 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
   ]
     .filter(Boolean)
     .join('\n');
-  return { sql, columns, root, ignored };
+  const overlap = dims.flatMap((d, i) => ([...d.tables].some((t) => model.linkOnPath(root, t)) ? ['d' + i] : []));
+  return { sql, columns, root, ignored, ...(overlap.length ? { overlap } : {}) };
 }
 
 /** ORDER BY over the output columns (dimensions with a sortBy column sort by it, as `s<i>`). */

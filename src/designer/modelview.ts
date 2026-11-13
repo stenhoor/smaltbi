@@ -241,10 +241,10 @@ export class ModelView {
             t.hierarchies.size ? h('span', { title: [...t.hierarchies.values()].map((x) => `${x.name}: ${x.levels.join(' › ')}`).join('\n') }, `⋮ ${t.hierarchies.size} hierarch${t.hierarchies.size > 1 ? 'ies' : 'y'}`) : null,
           )
         : null;
-    const head = h('div.sbd-mv-head', { title: 'Drag to move; click for details' }, h('span.sbd-mv-title', {}, t.label), t.kind !== 'BASE TABLE' ? h('span.sbd-mv-kind', {}, t.kind.toLowerCase()) : null, h('span.sbd-mv-count', {}, ''));
+    const head = h('div.sbd-mv-head', { title: 'Drag to move; click for details' }, h('span.sbd-mv-title', {}, t.label), t.kind !== 'BASE TABLE' ? h('span.sbd-mv-kind', {}, t.kind.toLowerCase()) : null, this.model.links.has(t.name) ? h('span.sbd-mv-kind.sbd-mv-linkmark', { title: `A link table: ${this.linkEnds(t.name)} are related many-to-many through it` }, '⇄ link') : null, h('span.sbd-mv-count', {}, ''));
     const sel = this.ctx.selection;
     const card = h(
-      'div.sbd-mv-card' + (sel?.kind === 'table' && sel.table === t.name ? '.sbd-on' : '') + (t.hidden ? '.sbd-mv-hidden' : ''),
+      'div.sbd-mv-card' + (sel?.kind === 'table' && sel.table === t.name ? '.sbd-on' : '') + (t.hidden ? '.sbd-mv-hidden' : '') + (this.model.links.has(t.name) ? '.sbd-mv-linktable' : ''),
       { 'data-table': t.name, style: `left:${p.x}px;top:${p.y}px;width:${CARD_W}px` },
       head,
       rows,
@@ -258,6 +258,11 @@ export class ModelView {
 
   /** Row counts come from the session's per-load cache: re-renders (clicks, moves, model edits)
    * show a known count at once instead of blanking it and counting again. */
+  /** The tables a link table relates, for its label. */
+  private linkEnds(link: string): string {
+    return [...new Set(this.model.edges.filter((e) => e.from.table === link).map((e) => e.to.table))].join(' and ');
+  }
+
   private countRows(table: string, el: Element): void {
     const show = (n: number | null) => (el.textContent = n === null ? '' : new Intl.NumberFormat(undefined, { notation: 'compact' }).format(n) + ' rows');
     const session = this.ctx.session;

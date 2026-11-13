@@ -71,8 +71,9 @@ export function compileTimeQuery(model: Model, q: QuerySpec): CompiledQuery {
     } else if (!tables.has(cal)) {
       const c = compileFilter(model, f, factTable, q.filters ?? []);
       if (c && !c.aggregate) {
-        factWhere.push(c.sql);
-        for (const t of c.tables) factTables.add(t);
+        const w = model.throughLinks(factTable, c.sql, c.tables);
+        factWhere.push(w.sql);
+        for (const t of w.tables) factTables.add(t);
       }
     }
     // A filter over the date table and other tables at once (a cross-filter tuple) applies to ti_q only.

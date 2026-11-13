@@ -70,6 +70,8 @@
 .sb-tool:disabled { opacity: 0.35; cursor: default; }
 .sb-drill-level { font-size: var(--sb-fs-small); color: var(--sb-muted); padding: 0 4px; white-space: nowrap; }
 .sb-visual-body { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+/* Parts of a whole by a field reached through a link table: the parts overlap (report/view.ts overlapNote). */
+.sb-overlap-note { flex: none; margin-top: 4px; font-size: var(--sb-fs-small); color: var(--sb-muted); line-height: 1.3; }
 .sb-visual.sb-loading .sb-visual-body { opacity: 0.55; transition: opacity 0.3s 0.15s; }
 .sb-visual.sb-loading::after {
   content: ''; position: absolute; left: var(--sb-pad); right: var(--sb-pad); top: 2px; height: 2px; border-radius: 2px;

@@ -92,8 +92,20 @@ for (let d = 0; d < days; d++) {
   }
 }
 
+// Tags, many-to-many with products through product_tags (ADR 0009: a link table). Drawn after everything else, so
+// adding them left the rest of the data as it was.
+const tags = ['Organic', 'Fair trade', 'Gift idea', 'Bestseller', 'New'].map((name, i) => ({ id: i + 1, name }));
+const productTags = [];
+for (const p of products)
+  for (const t of tags) {
+    const chance = { Organic: p.category === 'Tea' || p.category === 'Coffee' ? 0.5 : 0, 'Fair trade': p.category === 'Coffee' ? 0.5 : 0.1, 'Gift idea': p.category === 'Accessories' || p.category === 'Equipment' ? 0.45 : 0.15, Bestseller: 0.2, New: 0.12 }[t.name];
+    if (rand() < chance) productTags.push({ product_id: p.id, tag_id: t.id });
+  }
+
+writeFileSync(join(out, 'tags.csv'), csv(tags));
+writeFileSync(join(out, 'product_tags.csv'), csv(productTags));
 writeFileSync(join(out, 'products.csv'), csv(products));
 writeFileSync(join(out, 'stores.csv'), csv(stores));
 writeFileSync(join(out, 'customers.csv'), csv(customers));
 writeFileSync(join(out, 'sales.csv'), csv(sales));
-console.log(`examples/sales/data: ${sales.length} sales, ${customers.length} customers, ${products.length} products, ${stores.length} stores`);
+console.log(`examples/sales/data: ${sales.length} sales, ${customers.length} customers, ${products.length} products, ${stores.length} stores, ${productTags.length} product tags`);

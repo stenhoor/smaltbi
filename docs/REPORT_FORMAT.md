@@ -122,6 +122,14 @@ environment manifests. To report on an existing OPFS database, use
 - Relationships must be **unambiguous**: two active paths between the same tables (for example
   `sales → customers` and `sales → stores → customers`) make queries that cross them fail with an
   explanation. Set `"active": false` on one of them.
+- **Link tables** (many-to-many, ADR 0009): a table with two or more relationships out, no measures and no numbers
+  besides its keys, such as `product_tags` (product_id → products, tag_id → tags). Queries pass through it where no
+  plain relationship reaches the table they need:
+  - Revenue by tag counts each sale once in each of its tags, through the link's distinct pairs. Totals count it once.
+  - A filter on a tag is a semi-join, so no sale is counted twice.
+  - Part-to-whole visuals by a field beyond a link (pie, donut, treemap, funnel, waterfall, 100% stacked) say that
+    their parts overlap, and a donut leaves out its centre total.
+  - The model view marks a link table "⇄ link".
 - A relationship's `to` column must be **unique** (one row per value), or each `from` row would be counted once per
   repeat. When the data loads, each relationship's target column is checked (declared primary keys pass without
   looking). The model view marks one with repeated values, and visuals with measures through it fail with an

@@ -9,6 +9,8 @@
       { "import": "data/stores.csv", "table": "stores" },
       { "import": "data/customers.csv", "table": "customers" },
       { "import": "data/sales.csv", "table": "sales" },
+      { "import": "data/tags.csv", "table": "tags" },
+      { "import": "data/product_tags.csv", "table": "product_tags" },
       { "sql": "-- Date table for sales.order_date: whole years around its dates (added by \"Add date table\").\nDROP TABLE IF EXISTS \"calendar\";\nCREATE TABLE \"calendar\" (\"date\" TEXT PRIMARY KEY, \"year\" TEXT, \"quarter\" TEXT, \"month\" INTEGER, \"month_name\" TEXT, \"year_month\" TEXT, \"day\" INTEGER, \"day_of_week\" INTEGER, \"day_name\" TEXT, \"week\" INTEGER, \"week_start\" TEXT);\nINSERT INTO \"calendar\" (\"date\", \"year\", \"quarter\", \"month\", \"month_name\", \"year_month\", \"day\", \"day_of_week\", \"day_name\", \"week\", \"week_start\")\nWITH RECURSIVE days(d) AS (\n  SELECT date((SELECT min(\"sales\".\"order_date\") FROM \"sales\"), 'start of year')\n  UNION ALL SELECT date(d, '+1 day') FROM days\n  WHERE d < date(date((SELECT max(\"sales\".\"order_date\") FROM \"sales\"), 'start of year'), '+12 months', '-1 day')\n)\nSELECT d, strftime('%Y', d), 'Q' || ((CAST(strftime('%m', d) AS INTEGER) + 2) / 3), CAST(strftime('%m', d) AS INTEGER), CASE CAST(strftime('%m', d) AS INTEGER) WHEN 1 THEN 'Jan' WHEN 2 THEN 'Feb' WHEN 3 THEN 'Mar' WHEN 4 THEN 'Apr' WHEN 5 THEN 'May' WHEN 6 THEN 'Jun' WHEN 7 THEN 'Jul' WHEN 8 THEN 'Aug' WHEN 9 THEN 'Sep' WHEN 10 THEN 'Oct' WHEN 11 THEN 'Nov' WHEN 12 THEN 'Dec' END, strftime('%Y-%m', d), CAST(strftime('%d', d) AS INTEGER), ((CAST(strftime('%w', d) AS INTEGER) + 6) % 7) + 1, CASE CAST(strftime('%w', d) AS INTEGER) WHEN 0 THEN 'Sun' WHEN 1 THEN 'Mon' WHEN 2 THEN 'Tue' WHEN 3 THEN 'Wed' WHEN 4 THEN 'Thu' WHEN 5 THEN 'Fri' WHEN 6 THEN 'Sat' END, CAST(strftime('%W', d) AS INTEGER), date(d, '-' || (((CAST(strftime('%w', d) AS INTEGER) + 6) % 7) + 1 - 1) || ' days') FROM days;" }
     ]
   },
@@ -17,6 +19,8 @@
       { "from": "sales.customer_id", "to": "customers.id" },
       { "from": "sales.product_id", "to": "products.id" },
       { "from": "sales.store_id", "to": "stores.id" },
+      { "from": "product_tags.product_id", "to": "products.id" },
+      { "from": "product_tags.tag_id", "to": "tags.id" },
       { "from": "sales.order_date", "to": "calendar.date" },
       { "from": "sales.ship_date", "to": "calendar.date", "role": "Ship date" }
     ],
@@ -145,7 +149,10 @@
         { "id": "p-tree", "type": "treemap", "title": "Revenue by subcategory", "layout": { "x": 0, "y": 2, "w": 5, "h": 5 }, "fields": { "category": ["products.subcategory", "products.name"], "values": ["sales.Revenue"] } },
         { "id": "p-scatter", "type": "scatter", "title": "Units vs. margin by product", "subtitle": "Bubble size: revenue", "layout": { "x": 5, "y": 2, "w": 7, "h": 5 }, "fields": { "details": ["products.name"], "legend": ["products.category"], "x": ["sales.Units"], "y": ["sales.Margin %"], "size": ["sales.Revenue"] } },
         { "id": "p-matrix", "type": "matrix", "title": "Revenue by category and year", "layout": { "x": 0, "y": 7, "w": 7, "h": 6 }, "fields": { "rows": ["products.category", "products.subcategory"], "columns": ["sales.Year"], "values": ["sales.Revenue"] }, "options": { "format": "heat" } },
-        { "id": "p-table", "type": "table", "title": "Products", "layout": { "x": 7, "y": 7, "w": 5, "h": 6 }, "fields": { "columns": ["products.name"], "values": ["sales.Units", "sales.Revenue", "sales.Margin %"] }, "options": { "format": "bars" } }
+        { "id": "p-table", "type": "table", "title": "Products", "layout": { "x": 7, "y": 7, "w": 5, "h": 6 }, "fields": { "columns": ["products.name"], "values": ["sales.Units", "sales.Revenue", "sales.Margin %"] }, "options": { "format": "bars" } },
+        { "id": "p-tag", "type": "slicer", "title": "Tag", "layout": { "x": 0, "y": 13, "w": 3, "h": 5 }, "fields": { "field": ["tags.name"] }, "options": { "style": "list" } },
+        { "id": "p-tagbar", "type": "bar", "title": "Revenue by tag", "subtitle": "Products have several tags: each sale counts once in each of its tags", "layout": { "x": 3, "y": 13, "w": 5, "h": 5 }, "fields": { "category": ["tags.name"], "values": ["sales.Revenue"] }, "options": { "labels": true } },
+        { "id": "p-tagdonut", "type": "donut", "title": "Share by tag", "subtitle": "The tags overlap, so the slices add up to more than the total", "layout": { "x": 8, "y": 13, "w": 4, "h": 5 }, "fields": { "category": ["tags.name"], "values": ["sales.Revenue"] } }
       ]
     },
     {
