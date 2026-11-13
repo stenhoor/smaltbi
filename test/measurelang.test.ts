@@ -15,7 +15,7 @@ const complete = (text: string, explicit = false) => {
 test('[ completes measures and calculated columns, by name anywhere in it', () => {
   const r = complete('SUM(x) / [gro');
   assert.equal(r.start, 'SUM(x) / ['.length);
-  assert.deepEqual(r.labels, ['Gross Margin']);
+  assert.deepEqual(r.labels, ['Gross Margin', '@Growth']);
   // Calculated columns of the home table are bare; the list includes them.
   assert.ok(complete('[', true).labels.includes('Line Revenue'));
   // Contains, not only starts with: "margin" finds Gross Margin and Margin %, prefix matches first.

@@ -8,9 +8,9 @@ const s = await sampleSession();
 
 test('auto layout puts the fact table between its dimensions', () => {
   const pos = autoLayout(s.model);
-  assert.deepEqual(Object.keys(pos).sort(), ['customers', 'products', 'sales', 'stores']);
+  assert.deepEqual(Object.keys(pos).sort(), ['calendar', 'customers', 'products', 'sales', 'stores']);
   const xs = Object.fromEntries(Object.entries(pos).map(([t, p]) => [t, p.x]));
-  const dims = ['customers', 'products', 'stores'];
+  const dims = ['calendar', 'customers', 'products', 'stores'];
   assert.ok(dims.some((d) => xs[d]! < xs.sales!), 'a dimension on the left');
   assert.ok(dims.some((d) => xs[d]! > xs.sales!), 'a dimension on the right');
   // No two cards in the same column overlap vertically.

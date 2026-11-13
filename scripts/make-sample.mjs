@@ -1,5 +1,6 @@
 // Generates the sample dataset in examples/sales/data/: a small retail star schema
-// (fact: sales; dimensions: customers, products, stores). Deterministic (seeded), sample data only.
+// (fact: sales; dimensions: customers, products, stores), five years of a growing coffee and tea business, 2021 to
+// 2025. Deterministic (seeded), sample data only.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,19 +56,19 @@ const last = ['Lovelace', 'Turing', 'Hopper', 'Torvalds', 'Perlman', 'Thompson',
 const customers = [];
 for (let i = 1; i <= 600; i++) {
   const [region, country, cities] = pick(geo);
-  customers.push({ id: i, name: `${pick(first)} ${pick(last)}`, segment: weighted([['Consumer', 6], ['Small Business', 3], ['Corporate', 1]]), city: pick(cities), country, region, joined: `${2023 + Math.floor(rand() * 2)}-${String(1 + Math.floor(rand() * 12)).padStart(2, '0')}-${String(1 + Math.floor(rand() * 28)).padStart(2, '0')}` });
+  customers.push({ id: i, name: `${pick(first)} ${pick(last)}`, segment: weighted([['Consumer', 6], ['Small Business', 3], ['Corporate', 1]]), city: pick(cities), country, region, joined: `${2020 + Math.floor(rand() * 5)}-${String(1 + Math.floor(rand() * 12)).padStart(2, '0')}-${String(1 + Math.floor(rand() * 28)).padStart(2, '0')}` });
 }
 
 const sales = [];
-const start = Date.UTC(2024, 0, 1);
-const days = 365 * 2 + 1 - 60; // 2024-01-01 … 2025-11-01
+const start = Date.UTC(2021, 0, 1);
+const days = (Date.UTC(2026, 0, 1) - start) / 86400000; // 2021-01-01 … 2025-12-31
 for (let d = 0; d < days; d++) {
   const date = new Date(start + d * 86400000);
   const month = date.getUTCMonth();
   const season = 1 + 0.35 * Math.cos(((month - 11) / 12) * Math.PI * 2); // winter peak
-  const growth = 1 + d / 900;
+  const growth = 1 + d / 700; // a growing business: about 3.6 times the orders by the end of 2025
   const weekend = [0, 6].includes(date.getUTCDay()) ? 1.25 : 1;
-  const n = Math.round((14 + rand() * 8) * season * growth * weekend);
+  const n = Math.round((6 + rand() * 4) * season * growth * weekend);
   for (let k = 0; k < n; k++) {
     const p = weighted(products.map((x) => [x, x.category === 'Coffee' ? 5 : x.category === 'Tea' ? 4 : x.category === 'Accessories' ? 2 : 1]));
     const c = customers[Math.floor(rand() * customers.length)];
@@ -76,7 +77,9 @@ for (let d = 0; d < days; d++) {
     const s = online || !local.length ? stores[stores.length - 1] : pick(local);
     const qty = weighted([[1, 6], [2, 3], [3, 1.2], [4, 0.5], [6, 0.2]]);
     const discount = weighted([[0, 8], [0.05, 1], [0.1, 1], [0.2, 0.3]]);
-    sales.push({ id: sales.length + 1, order_date: date.toISOString().slice(0, 10), customer_id: c.id, product_id: p.id, store_id: s.id, quantity: qty, unit_price: p.list_price, discount });
+    // Store sales leave with the customer; online orders ship two to six days later.
+    const ship = new Date(date.getTime() + (s.channel === 'Online' ? weighted([[2, 3], [3, 4], [4, 2], [5, 1], [6, 0.5]]) : 0) * 86400000);
+    sales.push({ id: sales.length + 1, order_date: date.toISOString().slice(0, 10), ship_date: ship.toISOString().slice(0, 10), customer_id: c.id, product_id: p.id, store_id: s.id, quantity: qty, unit_price: p.list_price, discount });
   }
 }
 

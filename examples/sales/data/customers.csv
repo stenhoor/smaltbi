@@ -1,601 +1,601 @@
 id,name,segment,city,country,region,joined
-1,Sophie Easley,Corporate,Toronto,Canada,North America,2024-09-09
-2,Annie Liskov,Consumer,Osaka,Japan,Asia Pacific,2023-11-04
-3,John Lamarr,Consumer,Osaka,Japan,Asia Pacific,2024-03-15
-4,Barbara Wilson,Small Business,Lyon,France,Europe,2024-08-15
+1,Sophie Easley,Corporate,Toronto,Canada,North America,2022-09-09
+2,Annie Liskov,Consumer,Osaka,Japan,Asia Pacific,2020-11-04
+3,John Lamarr,Consumer,Osaka,Japan,Asia Pacific,2022-03-15
+4,Barbara Wilson,Small Business,Lyon,France,Europe,2022-08-15
 5,Niklaus Hopper,Consumer,Manchester,United Kingdom,Europe,2024-10-04
-6,Guido Lamarr,Consumer,Sydney,Australia,Asia Pacific,2024-05-15
+6,Guido Lamarr,Consumer,Sydney,Australia,Asia Pacific,2022-05-15
 7,Edsger Ritchie,Corporate,Paris,France,Europe,2024-02-16
-8,Annie Hamilton,Consumer,Melbourne,Australia,Asia Pacific,2023-02-16
-9,Guido Wirth,Consumer,Lyon,France,Europe,2023-09-16
-10,Sophie Turing,Corporate,Lyon,France,Europe,2023-12-19
-11,Ada Dijkstra,Small Business,Sydney,Australia,Asia Pacific,2023-02-27
-12,Hedy Allen,Consumer,London,United Kingdom,Europe,2024-08-11
-13,Barbara Easley,Small Business,Manchester,United Kingdom,Europe,2023-01-13
-14,Margaret Hopper,Small Business,Paris,France,Europe,2023-03-18
-15,Dennis Lovelace,Small Business,Osaka,Japan,Asia Pacific,2023-12-17
+8,Annie Hamilton,Consumer,Melbourne,Australia,Asia Pacific,2022-02-16
+9,Guido Wirth,Consumer,Lyon,France,Europe,2020-09-16
+10,Sophie Turing,Corporate,Lyon,France,Europe,2022-12-19
+11,Ada Dijkstra,Small Business,Sydney,Australia,Asia Pacific,2022-02-27
+12,Hedy Allen,Consumer,London,United Kingdom,Europe,2023-08-11
+13,Barbara Easley,Small Business,Manchester,United Kingdom,Europe,2021-01-13
+14,Margaret Hopper,Small Business,Paris,France,Europe,2021-03-18
+15,Dennis Lovelace,Small Business,Osaka,Japan,Asia Pacific,2022-12-17
 16,Ada Perlman,Consumer,London,United Kingdom,Europe,2024-10-12
-17,John Hopper,Small Business,Manchester,United Kingdom,Europe,2024-10-12
-18,Tim Torvalds,Consumer,Osaka,Japan,Asia Pacific,2023-09-22
-19,Grace Backus,Small Business,Chicago,United States,North America,2023-08-07
-20,Guido Thompson,Consumer,Berlin,Germany,Europe,2024-06-11
-21,John Lovelace,Consumer,Manchester,United Kingdom,Europe,2024-09-20
-22,Sophie Thompson,Small Business,Osaka,Japan,Asia Pacific,2023-12-17
-23,Grace Hamilton,Consumer,Sydney,Australia,Asia Pacific,2024-10-08
-24,John Wirth,Consumer,Vancouver,Canada,North America,2024-06-04
-25,Linus Lamarr,Consumer,Manchester,United Kingdom,Europe,2023-12-09
-26,Ken Perlman,Consumer,London,United Kingdom,Europe,2023-08-25
+17,John Hopper,Small Business,Manchester,United Kingdom,Europe,2023-10-12
+18,Tim Torvalds,Consumer,Osaka,Japan,Asia Pacific,2021-09-22
+19,Grace Backus,Small Business,Chicago,United States,North America,2021-08-07
+20,Guido Thompson,Consumer,Berlin,Germany,Europe,2023-06-11
+21,John Lovelace,Consumer,Manchester,United Kingdom,Europe,2023-09-20
+22,Sophie Thompson,Small Business,Osaka,Japan,Asia Pacific,2020-12-17
+23,Grace Hamilton,Consumer,Sydney,Australia,Asia Pacific,2023-10-08
+24,John Wirth,Consumer,Vancouver,Canada,North America,2023-06-04
+25,Linus Lamarr,Consumer,Manchester,United Kingdom,Europe,2021-12-09
+26,Ken Perlman,Consumer,London,United Kingdom,Europe,2020-08-25
 27,Barbara Johnson,Consumer,Toronto,Canada,North America,2024-08-22
-28,Niklaus Wirth,Small Business,Austin,United States,North America,2023-08-21
-29,Annie Hopper,Small Business,New York,United States,North America,2023-01-28
-30,Annie Rossum,Small Business,Sydney,Australia,Asia Pacific,2023-03-14
-31,Katherine Backus,Small Business,Lyon,France,Europe,2024-10-15
-32,Edsger Knuth,Consumer,London,United Kingdom,Europe,2024-10-15
-33,Guido Lovelace,Consumer,Seattle,United States,North America,2023-04-02
-34,Barbara Knuth,Small Business,Toronto,Canada,North America,2024-06-18
-35,Alan Lovelace,Small Business,Austin,United States,North America,2024-06-02
-36,Margaret Easley,Small Business,Osaka,Japan,Asia Pacific,2023-11-27
-37,Linus Turing,Consumer,Paris,France,Europe,2023-03-20
-38,Annie Thompson,Small Business,Vancouver,Canada,North America,2024-10-17
+28,Niklaus Wirth,Small Business,Austin,United States,North America,2020-08-21
+29,Annie Hopper,Small Business,New York,United States,North America,2022-01-28
+30,Annie Rossum,Small Business,Sydney,Australia,Asia Pacific,2020-03-14
+31,Katherine Backus,Small Business,Lyon,France,Europe,2022-10-15
+32,Edsger Knuth,Consumer,London,United Kingdom,Europe,2022-10-15
+33,Guido Lovelace,Consumer,Seattle,United States,North America,2020-04-02
+34,Barbara Knuth,Small Business,Toronto,Canada,North America,2022-06-18
+35,Alan Lovelace,Small Business,Austin,United States,North America,2023-06-02
+36,Margaret Easley,Small Business,Osaka,Japan,Asia Pacific,2020-11-27
+37,Linus Turing,Consumer,Paris,France,Europe,2021-03-20
+38,Annie Thompson,Small Business,Vancouver,Canada,North America,2022-10-17
 39,Niklaus Knuth,Consumer,Tokyo,Japan,Asia Pacific,2024-04-16
 40,Katherine Johnson,Small Business,London,United Kingdom,Europe,2024-09-20
-41,Guido Liskov,Small Business,London,United Kingdom,Europe,2023-03-18
-42,Alan Hamilton,Corporate,Melbourne,Australia,Asia Pacific,2024-01-27
-43,Donald Ritchie,Small Business,Austin,United States,North America,2024-07-27
+41,Guido Liskov,Small Business,London,United Kingdom,Europe,2021-03-18
+42,Alan Hamilton,Corporate,Melbourne,Australia,Asia Pacific,2023-01-27
+43,Donald Ritchie,Small Business,Austin,United States,North America,2023-07-27
 44,Sophie Wirth,Consumer,Munich,Germany,Europe,2024-03-19
-45,Dennis Turing,Corporate,Lyon,France,Europe,2023-11-13
-46,Annie Liskov,Consumer,Vancouver,Canada,North America,2023-10-12
-47,Linus Turing,Consumer,Austin,United States,North America,2024-11-23
-48,Margaret Hamilton,Consumer,Munich,Germany,Europe,2024-04-28
-49,Niklaus Backus,Consumer,Seattle,United States,North America,2023-06-09
-50,Edsger Torvalds,Small Business,Lyon,France,Europe,2024-09-28
-51,Ada Johnson,Consumer,London,United Kingdom,Europe,2023-08-14
-52,Frances Wilson,Consumer,Toronto,Canada,North America,2023-12-26
-53,Frances Hamilton,Consumer,Lyon,France,Europe,2023-09-04
-54,Ken Perlman,Small Business,Melbourne,Australia,Asia Pacific,2024-06-22
-55,Hedy Lamarr,Consumer,New York,United States,North America,2024-06-27
-56,Barbara Lamarr,Corporate,Berlin,Germany,Europe,2024-12-27
-57,John Hopper,Consumer,London,United Kingdom,Europe,2023-12-15
-58,Linus Berners,Consumer,Sydney,Australia,Asia Pacific,2024-10-04
-59,Barbara Dijkstra,Small Business,Lyon,France,Europe,2024-09-27
-60,Donald Dijkstra,Consumer,London,United Kingdom,Europe,2023-06-24
-61,Alan Lovelace,Consumer,Lyon,France,Europe,2024-11-24
+45,Dennis Turing,Corporate,Lyon,France,Europe,2020-11-13
+46,Annie Liskov,Consumer,Vancouver,Canada,North America,2020-10-12
+47,Linus Turing,Consumer,Austin,United States,North America,2023-11-23
+48,Margaret Hamilton,Consumer,Munich,Germany,Europe,2022-04-28
+49,Niklaus Backus,Consumer,Seattle,United States,North America,2021-06-09
+50,Edsger Torvalds,Small Business,Lyon,France,Europe,2022-09-28
+51,Ada Johnson,Consumer,London,United Kingdom,Europe,2020-08-14
+52,Frances Wilson,Consumer,Toronto,Canada,North America,2020-12-26
+53,Frances Hamilton,Consumer,Lyon,France,Europe,2020-09-04
+54,Ken Perlman,Small Business,Melbourne,Australia,Asia Pacific,2022-06-22
+55,Hedy Lamarr,Consumer,New York,United States,North America,2023-06-27
+56,Barbara Lamarr,Corporate,Berlin,Germany,Europe,2023-12-27
+57,John Hopper,Consumer,London,United Kingdom,Europe,2020-12-15
+58,Linus Berners,Consumer,Sydney,Australia,Asia Pacific,2023-10-04
+59,Barbara Dijkstra,Small Business,Lyon,France,Europe,2023-09-27
+60,Donald Dijkstra,Consumer,London,United Kingdom,Europe,2021-06-24
+61,Alan Lovelace,Consumer,Lyon,France,Europe,2023-11-24
 62,Hedy Rossum,Small Business,Toronto,Canada,North America,2024-05-18
-63,John Liskov,Corporate,Manchester,United Kingdom,Europe,2024-02-26
+63,John Liskov,Corporate,Manchester,United Kingdom,Europe,2023-02-26
 64,Ada Johnson,Corporate,Melbourne,Australia,Asia Pacific,2024-05-14
-65,Alan Backus,Consumer,Melbourne,Australia,Asia Pacific,2024-10-02
+65,Alan Backus,Consumer,Melbourne,Australia,Asia Pacific,2023-10-02
 66,Niklaus Thompson,Small Business,Berlin,Germany,Europe,2024-01-01
-67,Ken Lovelace,Consumer,Osaka,Japan,Asia Pacific,2023-12-27
-68,Annie Lamarr,Corporate,Paris,France,Europe,2024-09-28
-69,Edsger Ritchie,Consumer,Austin,United States,North America,2024-07-27
-70,Katherine Ritchie,Small Business,Paris,France,Europe,2024-07-08
-71,Donald Torvalds,Consumer,Tokyo,Japan,Asia Pacific,2024-03-25
+67,Ken Lovelace,Consumer,Osaka,Japan,Asia Pacific,2021-12-27
+68,Annie Lamarr,Corporate,Paris,France,Europe,2023-09-28
+69,Edsger Ritchie,Consumer,Austin,United States,North America,2022-07-27
+70,Katherine Ritchie,Small Business,Paris,France,Europe,2023-07-08
+71,Donald Torvalds,Consumer,Tokyo,Japan,Asia Pacific,2022-03-25
 72,Annie Torvalds,Small Business,Berlin,Germany,Europe,2024-06-19
-73,Guido Perlman,Consumer,Paris,France,Europe,2023-06-26
-74,Hedy Lamarr,Small Business,Lyon,France,Europe,2023-06-17
+73,Guido Perlman,Consumer,Paris,France,Europe,2021-06-26
+74,Hedy Lamarr,Small Business,Lyon,France,Europe,2020-06-17
 75,Dennis Easley,Small Business,Paris,France,Europe,2024-12-08
-76,Grace Lamarr,Small Business,Sydney,Australia,Asia Pacific,2023-08-01
-77,Radia Thompson,Consumer,Vancouver,Canada,North America,2024-05-03
-78,Ada Torvalds,Small Business,Berlin,Germany,Europe,2023-10-09
-79,Linus Allen,Consumer,Melbourne,Australia,Asia Pacific,2024-04-09
-80,Frances Easley,Consumer,London,United Kingdom,Europe,2023-03-23
-81,Barbara Allen,Consumer,Toronto,Canada,North America,2024-08-10
-82,Margaret Johnson,Small Business,Manchester,United Kingdom,Europe,2024-04-28
-83,Grace Dijkstra,Corporate,Toronto,Canada,North America,2023-06-28
-84,Dennis Wilson,Consumer,Austin,United States,North America,2023-06-27
-85,Katherine Ritchie,Consumer,Sydney,Australia,Asia Pacific,2023-02-05
-86,Dennis Backus,Small Business,Tokyo,Japan,Asia Pacific,2024-08-12
-87,Alan Hamilton,Consumer,Tokyo,Japan,Asia Pacific,2023-04-25
-88,Radia Hamilton,Consumer,Seattle,United States,North America,2023-03-16
-89,Katherine Knuth,Consumer,Berlin,Germany,Europe,2023-03-23
-90,Frances Berners,Corporate,Toronto,Canada,North America,2023-10-17
-91,Alan Knuth,Corporate,Osaka,Japan,Asia Pacific,2023-04-11
-92,Guido Hamilton,Consumer,Paris,France,Europe,2023-09-27
-93,Sophie Turing,Corporate,Berlin,Germany,Europe,2023-10-08
-94,Linus Dijkstra,Small Business,Manchester,United Kingdom,Europe,2023-08-20
-95,Frances Hopper,Small Business,Seattle,United States,North America,2023-05-14
-96,Radia Wirth,Small Business,Paris,France,Europe,2023-12-19
-97,Barbara Lamarr,Consumer,Toronto,Canada,North America,2024-05-03
-98,Hedy Liskov,Consumer,New York,United States,North America,2024-11-03
-99,Katherine Lamarr,Consumer,Vancouver,Canada,North America,2024-11-01
-100,Annie Easley,Small Business,Austin,United States,North America,2023-02-14
-101,Hedy Wilson,Consumer,Vancouver,Canada,North America,2023-10-21
-102,Hedy Lamarr,Consumer,Berlin,Germany,Europe,2023-06-12
-103,Radia Thompson,Consumer,Seattle,United States,North America,2023-10-10
-104,Guido Lamarr,Consumer,Manchester,United Kingdom,Europe,2024-05-09
-105,Grace Hamilton,Consumer,Osaka,Japan,Asia Pacific,2024-07-06
-106,Hedy Berners,Consumer,Tokyo,Japan,Asia Pacific,2023-05-11
-107,Ada Dijkstra,Corporate,Manchester,United Kingdom,Europe,2024-07-20
-108,Linus Turing,Consumer,London,United Kingdom,Europe,2023-11-09
-109,Tim Lamarr,Consumer,Vancouver,Canada,North America,2023-07-07
-110,Grace Wirth,Small Business,Paris,France,Europe,2023-05-02
-111,John Perlman,Corporate,Chicago,United States,North America,2023-03-26
+76,Grace Lamarr,Small Business,Sydney,Australia,Asia Pacific,2021-08-01
+77,Radia Thompson,Consumer,Vancouver,Canada,North America,2023-05-03
+78,Ada Torvalds,Small Business,Berlin,Germany,Europe,2021-10-09
+79,Linus Allen,Consumer,Melbourne,Australia,Asia Pacific,2022-04-09
+80,Frances Easley,Consumer,London,United Kingdom,Europe,2020-03-23
+81,Barbara Allen,Consumer,Toronto,Canada,North America,2023-08-10
+82,Margaret Johnson,Small Business,Manchester,United Kingdom,Europe,2022-04-28
+83,Grace Dijkstra,Corporate,Toronto,Canada,North America,2020-06-28
+84,Dennis Wilson,Consumer,Austin,United States,North America,2020-06-27
+85,Katherine Ritchie,Consumer,Sydney,Australia,Asia Pacific,2020-02-05
+86,Dennis Backus,Small Business,Tokyo,Japan,Asia Pacific,2023-08-12
+87,Alan Hamilton,Consumer,Tokyo,Japan,Asia Pacific,2020-04-25
+88,Radia Hamilton,Consumer,Seattle,United States,North America,2020-03-16
+89,Katherine Knuth,Consumer,Berlin,Germany,Europe,2021-03-23
+90,Frances Berners,Corporate,Toronto,Canada,North America,2022-10-17
+91,Alan Knuth,Corporate,Osaka,Japan,Asia Pacific,2021-04-11
+92,Guido Hamilton,Consumer,Paris,France,Europe,2021-09-27
+93,Sophie Turing,Corporate,Berlin,Germany,Europe,2021-10-08
+94,Linus Dijkstra,Small Business,Manchester,United Kingdom,Europe,2020-08-20
+95,Frances Hopper,Small Business,Seattle,United States,North America,2020-05-14
+96,Radia Wirth,Small Business,Paris,France,Europe,2020-12-19
+97,Barbara Lamarr,Consumer,Toronto,Canada,North America,2022-05-03
+98,Hedy Liskov,Consumer,New York,United States,North America,2023-11-03
+99,Katherine Lamarr,Consumer,Vancouver,Canada,North America,2022-11-01
+100,Annie Easley,Small Business,Austin,United States,North America,2022-02-14
+101,Hedy Wilson,Consumer,Vancouver,Canada,North America,2020-10-21
+102,Hedy Lamarr,Consumer,Berlin,Germany,Europe,2021-06-12
+103,Radia Thompson,Consumer,Seattle,United States,North America,2021-10-10
+104,Guido Lamarr,Consumer,Manchester,United Kingdom,Europe,2023-05-09
+105,Grace Hamilton,Consumer,Osaka,Japan,Asia Pacific,2022-07-06
+106,Hedy Berners,Consumer,Tokyo,Japan,Asia Pacific,2021-05-11
+107,Ada Dijkstra,Corporate,Manchester,United Kingdom,Europe,2023-07-20
+108,Linus Turing,Consumer,London,United Kingdom,Europe,2022-11-09
+109,Tim Lamarr,Consumer,Vancouver,Canada,North America,2021-07-07
+110,Grace Wirth,Small Business,Paris,France,Europe,2022-05-02
+111,John Perlman,Corporate,Chicago,United States,North America,2021-03-26
 112,Donald Dijkstra,Corporate,Osaka,Japan,Asia Pacific,2024-09-23
 113,Katherine Backus,Small Business,Manchester,United Kingdom,Europe,2024-05-10
-114,Radia Thompson,Small Business,Austin,United States,North America,2023-07-17
-115,Guido Hamilton,Consumer,Paris,France,Europe,2023-02-15
+114,Radia Thompson,Small Business,Austin,United States,North America,2022-07-17
+115,Guido Hamilton,Consumer,Paris,France,Europe,2022-02-15
 116,Tim Dijkstra,Consumer,London,United Kingdom,Europe,2024-01-10
 117,Margaret Thompson,Consumer,Lyon,France,Europe,2024-12-19
-118,Donald Liskov,Small Business,Austin,United States,North America,2023-09-13
-119,Niklaus Liskov,Consumer,London,United Kingdom,Europe,2023-06-24
+118,Donald Liskov,Small Business,Austin,United States,North America,2020-09-13
+119,Niklaus Liskov,Consumer,London,United Kingdom,Europe,2021-06-24
 120,Katherine Hamilton,Corporate,Toronto,Canada,North America,2024-03-20
-121,Barbara Perlman,Corporate,Seattle,United States,North America,2023-10-01
-122,Barbara Perlman,Consumer,Melbourne,Australia,Asia Pacific,2024-10-05
-123,Katherine Wirth,Consumer,Manchester,United Kingdom,Europe,2023-08-23
-124,Grace Liskov,Consumer,Paris,France,Europe,2024-04-24
-125,Radia Thompson,Consumer,Munich,Germany,Europe,2024-12-02
-126,John Backus,Small Business,Melbourne,Australia,Asia Pacific,2023-11-17
+121,Barbara Perlman,Corporate,Seattle,United States,North America,2021-10-01
+122,Barbara Perlman,Consumer,Melbourne,Australia,Asia Pacific,2022-10-05
+123,Katherine Wirth,Consumer,Manchester,United Kingdom,Europe,2020-08-23
+124,Grace Liskov,Consumer,Paris,France,Europe,2023-04-24
+125,Radia Thompson,Consumer,Munich,Germany,Europe,2023-12-02
+126,John Backus,Small Business,Melbourne,Australia,Asia Pacific,2022-11-17
 127,Katherine Dijkstra,Consumer,Manchester,United Kingdom,Europe,2024-08-02
-128,Radia Johnson,Consumer,Manchester,United Kingdom,Europe,2023-07-25
-129,Guido Liskov,Corporate,Manchester,United Kingdom,Europe,2023-01-01
-130,Radia Hopper,Consumer,London,United Kingdom,Europe,2023-11-20
-131,Donald Easley,Consumer,Chicago,United States,North America,2024-02-01
-132,Niklaus Easley,Consumer,Seattle,United States,North America,2024-04-07
-133,Barbara Hamilton,Consumer,Vancouver,Canada,North America,2023-12-25
+128,Radia Johnson,Consumer,Manchester,United Kingdom,Europe,2020-07-25
+129,Guido Liskov,Corporate,Manchester,United Kingdom,Europe,2020-01-01
+130,Radia Hopper,Consumer,London,United Kingdom,Europe,2021-11-20
+131,Donald Easley,Consumer,Chicago,United States,North America,2023-02-01
+132,Niklaus Easley,Consumer,Seattle,United States,North America,2023-04-07
+133,Barbara Hamilton,Consumer,Vancouver,Canada,North America,2020-12-25
 134,Guido Berners,Small Business,Munich,Germany,Europe,2024-11-22
-135,Donald Liskov,Consumer,Toronto,Canada,North America,2024-03-22
+135,Donald Liskov,Consumer,Toronto,Canada,North America,2022-03-22
 136,Ken Thompson,Small Business,Chicago,United States,North America,2024-09-13
-137,Radia Thompson,Corporate,Sydney,Australia,Asia Pacific,2023-05-09
-138,Tim Hopper,Small Business,Lyon,France,Europe,2024-09-05
-139,Sophie Lovelace,Small Business,Sydney,Australia,Asia Pacific,2023-04-03
-140,Grace Perlman,Consumer,Vancouver,Canada,North America,2023-01-08
-141,Niklaus Perlman,Consumer,Seattle,United States,North America,2023-06-20
-142,Margaret Perlman,Consumer,Vancouver,Canada,North America,2024-08-15
-143,Margaret Allen,Consumer,Osaka,Japan,Asia Pacific,2023-08-12
-144,Tim Turing,Corporate,Munich,Germany,Europe,2023-09-20
-145,Hedy Thompson,Consumer,Melbourne,Australia,Asia Pacific,2023-09-04
-146,Niklaus Berners,Consumer,Vancouver,Canada,North America,2024-07-18
-147,Ada Allen,Consumer,Melbourne,Australia,Asia Pacific,2023-10-28
-148,Barbara Rossum,Small Business,Munich,Germany,Europe,2023-11-26
+137,Radia Thompson,Corporate,Sydney,Australia,Asia Pacific,2020-05-09
+138,Tim Hopper,Small Business,Lyon,France,Europe,2022-09-05
+139,Sophie Lovelace,Small Business,Sydney,Australia,Asia Pacific,2021-04-03
+140,Grace Perlman,Consumer,Vancouver,Canada,North America,2022-01-08
+141,Niklaus Perlman,Consumer,Seattle,United States,North America,2020-06-20
+142,Margaret Perlman,Consumer,Vancouver,Canada,North America,2023-08-15
+143,Margaret Allen,Consumer,Osaka,Japan,Asia Pacific,2020-08-12
+144,Tim Turing,Corporate,Munich,Germany,Europe,2022-09-20
+145,Hedy Thompson,Consumer,Melbourne,Australia,Asia Pacific,2022-09-04
+146,Niklaus Berners,Consumer,Vancouver,Canada,North America,2023-07-18
+147,Ada Allen,Consumer,Melbourne,Australia,Asia Pacific,2021-10-28
+148,Barbara Rossum,Small Business,Munich,Germany,Europe,2020-11-26
 149,Niklaus Wilson,Consumer,Melbourne,Australia,Asia Pacific,2024-04-11
 150,Niklaus Ritchie,Consumer,Vancouver,Canada,North America,2024-08-17
-151,Alan Hopper,Consumer,Seattle,United States,North America,2023-11-19
-152,Margaret Wirth,Corporate,Toronto,Canada,North America,2024-12-07
-153,Hedy Easley,Small Business,Manchester,United Kingdom,Europe,2023-10-28
-154,Grace Wirth,Small Business,Melbourne,Australia,Asia Pacific,2023-10-17
-155,Donald Johnson,Consumer,Paris,France,Europe,2023-07-02
-156,Sophie Johnson,Small Business,Austin,United States,North America,2024-04-10
-157,John Wilson,Small Business,Austin,United States,North America,2023-05-03
-158,Grace Perlman,Corporate,Berlin,Germany,Europe,2024-04-02
-159,Edsger Hopper,Consumer,Manchester,United Kingdom,Europe,2024-01-13
-160,Barbara Hopper,Corporate,Vancouver,Canada,North America,2023-03-27
-161,Frances Lovelace,Consumer,London,United Kingdom,Europe,2023-10-17
-162,Katherine Wirth,Small Business,Osaka,Japan,Asia Pacific,2024-03-18
-163,Alan Easley,Consumer,Sydney,Australia,Asia Pacific,2023-11-24
-164,Niklaus Lamarr,Consumer,Sydney,Australia,Asia Pacific,2023-02-02
-165,Sophie Hopper,Small Business,Sydney,Australia,Asia Pacific,2023-03-05
-166,Barbara Hopper,Consumer,New York,United States,North America,2023-08-05
-167,Frances Allen,Small Business,Tokyo,Japan,Asia Pacific,2023-06-27
-168,Grace Hopper,Consumer,Chicago,United States,North America,2024-04-25
-169,Barbara Hamilton,Consumer,Manchester,United Kingdom,Europe,2024-04-01
+151,Alan Hopper,Consumer,Seattle,United States,North America,2021-11-19
+152,Margaret Wirth,Corporate,Toronto,Canada,North America,2023-12-07
+153,Hedy Easley,Small Business,Manchester,United Kingdom,Europe,2022-10-28
+154,Grace Wirth,Small Business,Melbourne,Australia,Asia Pacific,2020-10-17
+155,Donald Johnson,Consumer,Paris,France,Europe,2021-07-02
+156,Sophie Johnson,Small Business,Austin,United States,North America,2023-04-10
+157,John Wilson,Small Business,Austin,United States,North America,2020-05-03
+158,Grace Perlman,Corporate,Berlin,Germany,Europe,2023-04-02
+159,Edsger Hopper,Consumer,Manchester,United Kingdom,Europe,2023-01-13
+160,Barbara Hopper,Corporate,Vancouver,Canada,North America,2021-03-27
+161,Frances Lovelace,Consumer,London,United Kingdom,Europe,2022-10-17
+162,Katherine Wirth,Small Business,Osaka,Japan,Asia Pacific,2022-03-18
+163,Alan Easley,Consumer,Sydney,Australia,Asia Pacific,2020-11-24
+164,Niklaus Lamarr,Consumer,Sydney,Australia,Asia Pacific,2020-02-02
+165,Sophie Hopper,Small Business,Sydney,Australia,Asia Pacific,2020-03-05
+166,Barbara Hopper,Consumer,New York,United States,North America,2021-08-05
+167,Frances Allen,Small Business,Tokyo,Japan,Asia Pacific,2022-06-27
+168,Grace Hopper,Consumer,Chicago,United States,North America,2023-04-25
+169,Barbara Hamilton,Consumer,Manchester,United Kingdom,Europe,2023-04-01
 170,Edsger Lamarr,Small Business,Seattle,United States,North America,2024-09-20
 171,Annie Easley,Corporate,Vancouver,Canada,North America,2024-04-06
-172,Edsger Hopper,Consumer,Vancouver,Canada,North America,2024-03-22
-173,Barbara Lovelace,Consumer,Lyon,France,Europe,2024-03-07
-174,Hedy Berners,Consumer,Seattle,United States,North America,2023-07-13
-175,Margaret Torvalds,Small Business,Melbourne,Australia,Asia Pacific,2024-09-18
-176,Barbara Knuth,Consumer,Toronto,Canada,North America,2024-04-10
-177,Donald Wilson,Small Business,Paris,France,Europe,2024-09-14
-178,Margaret Ritchie,Consumer,Manchester,United Kingdom,Europe,2024-06-26
-179,Tim Hopper,Small Business,New York,United States,North America,2023-06-04
+172,Edsger Hopper,Consumer,Vancouver,Canada,North America,2023-03-22
+173,Barbara Lovelace,Consumer,Lyon,France,Europe,2023-03-07
+174,Hedy Berners,Consumer,Seattle,United States,North America,2021-07-13
+175,Margaret Torvalds,Small Business,Melbourne,Australia,Asia Pacific,2022-09-18
+176,Barbara Knuth,Consumer,Toronto,Canada,North America,2023-04-10
+177,Donald Wilson,Small Business,Paris,France,Europe,2022-09-14
+178,Margaret Ritchie,Consumer,Manchester,United Kingdom,Europe,2022-06-26
+179,Tim Hopper,Small Business,New York,United States,North America,2020-06-04
 180,Dennis Wirth,Consumer,Melbourne,Australia,Asia Pacific,2024-12-12
-181,John Easley,Consumer,London,United Kingdom,Europe,2024-03-05
-182,Barbara Rossum,Small Business,Melbourne,Australia,Asia Pacific,2024-06-20
-183,Ken Knuth,Small Business,Manchester,United Kingdom,Europe,2024-09-05
-184,Dennis Thompson,Consumer,Osaka,Japan,Asia Pacific,2024-09-28
-185,Grace Perlman,Consumer,Paris,France,Europe,2023-03-13
-186,Radia Perlman,Small Business,Paris,France,Europe,2024-12-20
-187,Katherine Hopper,Small Business,Austin,United States,North America,2023-04-28
-188,Guido Hopper,Small Business,Tokyo,Japan,Asia Pacific,2023-11-08
-189,Annie Berners,Consumer,Melbourne,Australia,Asia Pacific,2024-03-03
-190,Grace Allen,Small Business,Tokyo,Japan,Asia Pacific,2023-12-27
-191,Edsger Allen,Corporate,Manchester,United Kingdom,Europe,2024-07-13
-192,Annie Rossum,Consumer,Paris,France,Europe,2023-01-18
-193,Annie Wilson,Small Business,Melbourne,Australia,Asia Pacific,2023-11-20
-194,Katherine Dijkstra,Consumer,Melbourne,Australia,Asia Pacific,2023-11-20
-195,Tim Wirth,Consumer,Berlin,Germany,Europe,2023-03-08
-196,Ken Turing,Small Business,Lyon,France,Europe,2024-09-21
-197,Grace Berners,Consumer,Tokyo,Japan,Asia Pacific,2023-07-12
-198,John Wilson,Consumer,Vancouver,Canada,North America,2023-11-13
-199,Annie Hamilton,Corporate,Munich,Germany,Europe,2023-08-21
-200,Tim Perlman,Consumer,Berlin,Germany,Europe,2023-05-11
-201,Niklaus Liskov,Consumer,Paris,France,Europe,2023-01-06
-202,Sophie Lovelace,Small Business,Austin,United States,North America,2023-03-24
+181,John Easley,Consumer,London,United Kingdom,Europe,2022-03-05
+182,Barbara Rossum,Small Business,Melbourne,Australia,Asia Pacific,2022-06-20
+183,Ken Knuth,Small Business,Manchester,United Kingdom,Europe,2023-09-05
+184,Dennis Thompson,Consumer,Osaka,Japan,Asia Pacific,2023-09-28
+185,Grace Perlman,Consumer,Paris,France,Europe,2020-03-13
+186,Radia Perlman,Small Business,Paris,France,Europe,2023-12-20
+187,Katherine Hopper,Small Business,Austin,United States,North America,2020-04-28
+188,Guido Hopper,Small Business,Tokyo,Japan,Asia Pacific,2022-11-08
+189,Annie Berners,Consumer,Melbourne,Australia,Asia Pacific,2023-03-03
+190,Grace Allen,Small Business,Tokyo,Japan,Asia Pacific,2020-12-27
+191,Edsger Allen,Corporate,Manchester,United Kingdom,Europe,2023-07-13
+192,Annie Rossum,Consumer,Paris,France,Europe,2020-01-18
+193,Annie Wilson,Small Business,Melbourne,Australia,Asia Pacific,2020-11-20
+194,Katherine Dijkstra,Consumer,Melbourne,Australia,Asia Pacific,2021-11-20
+195,Tim Wirth,Consumer,Berlin,Germany,Europe,2021-03-08
+196,Ken Turing,Small Business,Lyon,France,Europe,2022-09-21
+197,Grace Berners,Consumer,Tokyo,Japan,Asia Pacific,2020-07-12
+198,John Wilson,Consumer,Vancouver,Canada,North America,2021-11-13
+199,Annie Hamilton,Corporate,Munich,Germany,Europe,2021-08-21
+200,Tim Perlman,Consumer,Berlin,Germany,Europe,2021-05-11
+201,Niklaus Liskov,Consumer,Paris,France,Europe,2020-01-06
+202,Sophie Lovelace,Small Business,Austin,United States,North America,2020-03-24
 203,Donald Torvalds,Consumer,Sydney,Australia,Asia Pacific,2024-07-25
-204,Linus Johnson,Consumer,New York,United States,North America,2023-06-17
-205,Tim Perlman,Consumer,Osaka,Japan,Asia Pacific,2023-10-20
-206,Guido Rossum,Consumer,Lyon,France,Europe,2024-03-21
+204,Linus Johnson,Consumer,New York,United States,North America,2021-06-17
+205,Tim Perlman,Consumer,Osaka,Japan,Asia Pacific,2021-10-20
+206,Guido Rossum,Consumer,Lyon,France,Europe,2023-03-21
 207,Linus Hamilton,Corporate,Melbourne,Australia,Asia Pacific,2024-06-12
-208,Sophie Perlman,Small Business,Lyon,France,Europe,2023-08-16
-209,Linus Thompson,Consumer,Vancouver,Canada,North America,2024-07-07
-210,Niklaus Lamarr,Small Business,Melbourne,Australia,Asia Pacific,2023-02-07
-211,Barbara Rossum,Consumer,Paris,France,Europe,2023-02-22
-212,Frances Lamarr,Consumer,Osaka,Japan,Asia Pacific,2023-05-21
+208,Sophie Perlman,Small Business,Lyon,France,Europe,2021-08-16
+209,Linus Thompson,Consumer,Vancouver,Canada,North America,2022-07-07
+210,Niklaus Lamarr,Small Business,Melbourne,Australia,Asia Pacific,2021-02-07
+211,Barbara Rossum,Consumer,Paris,France,Europe,2021-02-22
+212,Frances Lamarr,Consumer,Osaka,Japan,Asia Pacific,2022-05-21
 213,Linus Lovelace,Small Business,Munich,Germany,Europe,2024-09-24
-214,Annie Wilson,Consumer,Manchester,United Kingdom,Europe,2023-05-17
+214,Annie Wilson,Consumer,Manchester,United Kingdom,Europe,2021-05-17
 215,Guido Backus,Consumer,Sydney,Australia,Asia Pacific,2024-01-05
-216,Barbara Turing,Consumer,Toronto,Canada,North America,2023-05-21
-217,Alan Hopper,Consumer,Toronto,Canada,North America,2023-03-08
-218,John Lamarr,Consumer,Lyon,France,Europe,2024-03-09
-219,Guido Johnson,Consumer,Tokyo,Japan,Asia Pacific,2023-12-10
-220,Edsger Perlman,Consumer,Toronto,Canada,North America,2024-01-13
-221,Niklaus Ritchie,Consumer,London,United Kingdom,Europe,2023-05-27
+216,Barbara Turing,Consumer,Toronto,Canada,North America,2021-05-21
+217,Alan Hopper,Consumer,Toronto,Canada,North America,2021-03-08
+218,John Lamarr,Consumer,Lyon,France,Europe,2022-03-09
+219,Guido Johnson,Consumer,Tokyo,Japan,Asia Pacific,2020-12-10
+220,Edsger Perlman,Consumer,Toronto,Canada,North America,2022-01-13
+221,Niklaus Ritchie,Consumer,London,United Kingdom,Europe,2020-05-27
 222,Ken Lamarr,Consumer,Manchester,United Kingdom,Europe,2024-11-02
-223,Linus Liskov,Consumer,Paris,France,Europe,2023-04-26
-224,Ken Ritchie,Corporate,Berlin,Germany,Europe,2024-02-23
-225,Margaret Lamarr,Corporate,Osaka,Japan,Asia Pacific,2023-03-02
-226,Frances Backus,Consumer,London,United Kingdom,Europe,2023-12-21
-227,Edsger Hamilton,Consumer,Osaka,Japan,Asia Pacific,2023-02-04
-228,Dennis Allen,Corporate,Seattle,United States,North America,2024-03-04
-229,John Wirth,Consumer,Toronto,Canada,North America,2024-01-13
-230,Dennis Thompson,Small Business,Melbourne,Australia,Asia Pacific,2023-08-12
-231,Niklaus Wirth,Consumer,Paris,France,Europe,2023-10-25
-232,Guido Wilson,Consumer,Lyon,France,Europe,2023-11-24
-233,Katherine Wirth,Small Business,Sydney,Australia,Asia Pacific,2023-12-18
+223,Linus Liskov,Consumer,Paris,France,Europe,2020-04-26
+224,Ken Ritchie,Corporate,Berlin,Germany,Europe,2023-02-23
+225,Margaret Lamarr,Corporate,Osaka,Japan,Asia Pacific,2021-03-02
+226,Frances Backus,Consumer,London,United Kingdom,Europe,2022-12-21
+227,Edsger Hamilton,Consumer,Osaka,Japan,Asia Pacific,2020-02-04
+228,Dennis Allen,Corporate,Seattle,United States,North America,2023-03-04
+229,John Wirth,Consumer,Toronto,Canada,North America,2023-01-13
+230,Dennis Thompson,Small Business,Melbourne,Australia,Asia Pacific,2020-08-12
+231,Niklaus Wirth,Consumer,Paris,France,Europe,2022-10-25
+232,Guido Wilson,Consumer,Lyon,France,Europe,2020-11-24
+233,Katherine Wirth,Small Business,Sydney,Australia,Asia Pacific,2020-12-18
 234,Niklaus Allen,Small Business,Toronto,Canada,North America,2024-06-11
-235,Linus Johnson,Consumer,Manchester,United Kingdom,Europe,2024-03-26
-236,Katherine Dijkstra,Consumer,Paris,France,Europe,2023-10-16
-237,Dennis Wirth,Consumer,Tokyo,Japan,Asia Pacific,2023-04-25
-238,Donald Johnson,Corporate,Chicago,United States,North America,2023-09-05
-239,Sophie Hamilton,Consumer,Berlin,Germany,Europe,2023-12-14
-240,Alan Johnson,Corporate,Austin,United States,North America,2023-09-04
+235,Linus Johnson,Consumer,Manchester,United Kingdom,Europe,2023-03-26
+236,Katherine Dijkstra,Consumer,Paris,France,Europe,2020-10-16
+237,Dennis Wirth,Consumer,Tokyo,Japan,Asia Pacific,2021-04-25
+238,Donald Johnson,Corporate,Chicago,United States,North America,2021-09-05
+239,Sophie Hamilton,Consumer,Berlin,Germany,Europe,2021-12-14
+240,Alan Johnson,Corporate,Austin,United States,North America,2021-09-04
 241,Hedy Knuth,Consumer,Berlin,Germany,Europe,2024-02-06
-242,Katherine Lamarr,Consumer,London,United Kingdom,Europe,2023-11-12
+242,Katherine Lamarr,Consumer,London,United Kingdom,Europe,2021-11-12
 243,Annie Turing,Consumer,Melbourne,Australia,Asia Pacific,2024-01-22
-244,Radia Allen,Consumer,Manchester,United Kingdom,Europe,2023-03-18
-245,Donald Knuth,Consumer,Paris,France,Europe,2023-12-06
-246,Katherine Johnson,Small Business,Sydney,Australia,Asia Pacific,2023-05-03
+244,Radia Allen,Consumer,Manchester,United Kingdom,Europe,2021-03-18
+245,Donald Knuth,Consumer,Paris,France,Europe,2022-12-06
+246,Katherine Johnson,Small Business,Sydney,Australia,Asia Pacific,2021-05-03
 247,Dennis Knuth,Consumer,Manchester,United Kingdom,Europe,2024-10-12
-248,Alan Thompson,Consumer,Berlin,Germany,Europe,2024-01-10
-249,Katherine Rossum,Consumer,Vancouver,Canada,North America,2024-09-07
+248,Alan Thompson,Consumer,Berlin,Germany,Europe,2023-01-10
+249,Katherine Rossum,Consumer,Vancouver,Canada,North America,2023-09-07
 250,Tim Lovelace,Small Business,New York,United States,North America,2024-08-07
-251,Niklaus Easley,Consumer,Berlin,Germany,Europe,2024-05-28
-252,Alan Perlman,Corporate,Sydney,Australia,Asia Pacific,2023-11-19
-253,Guido Turing,Consumer,Tokyo,Japan,Asia Pacific,2023-01-13
-254,Katherine Johnson,Corporate,Lyon,France,Europe,2023-03-06
-255,Alan Backus,Small Business,Munich,Germany,Europe,2023-05-18
-256,Guido Backus,Corporate,New York,United States,North America,2024-06-08
-257,Frances Lamarr,Consumer,Seattle,United States,North America,2023-11-16
-258,Donald Allen,Consumer,Manchester,United Kingdom,Europe,2024-06-15
-259,Radia Torvalds,Consumer,Melbourne,Australia,Asia Pacific,2023-09-05
-260,Donald Lamarr,Consumer,Munich,Germany,Europe,2023-08-01
+251,Niklaus Easley,Consumer,Berlin,Germany,Europe,2022-05-28
+252,Alan Perlman,Corporate,Sydney,Australia,Asia Pacific,2020-11-19
+253,Guido Turing,Consumer,Tokyo,Japan,Asia Pacific,2022-01-13
+254,Katherine Johnson,Corporate,Lyon,France,Europe,2022-03-06
+255,Alan Backus,Small Business,Munich,Germany,Europe,2021-05-18
+256,Guido Backus,Corporate,New York,United States,North America,2022-06-08
+257,Frances Lamarr,Consumer,Seattle,United States,North America,2022-11-16
+258,Donald Allen,Consumer,Manchester,United Kingdom,Europe,2022-06-15
+259,Radia Torvalds,Consumer,Melbourne,Australia,Asia Pacific,2021-09-05
+260,Donald Lamarr,Consumer,Munich,Germany,Europe,2022-08-01
 261,Ken Knuth,Consumer,Sydney,Australia,Asia Pacific,2024-10-02
 262,Niklaus Backus,Corporate,Vancouver,Canada,North America,2024-01-24
-263,Barbara Perlman,Small Business,London,United Kingdom,Europe,2023-12-07
-264,Ada Rossum,Corporate,Chicago,United States,North America,2023-12-28
-265,Katherine Easley,Consumer,Paris,France,Europe,2024-12-04
-266,Annie Backus,Consumer,Melbourne,Australia,Asia Pacific,2023-05-04
-267,Katherine Easley,Consumer,Sydney,Australia,Asia Pacific,2024-04-04
+263,Barbara Perlman,Small Business,London,United Kingdom,Europe,2021-12-07
+264,Ada Rossum,Corporate,Chicago,United States,North America,2022-12-28
+265,Katherine Easley,Consumer,Paris,France,Europe,2023-12-04
+266,Annie Backus,Consumer,Melbourne,Australia,Asia Pacific,2020-05-04
+267,Katherine Easley,Consumer,Sydney,Australia,Asia Pacific,2022-04-04
 268,Guido Johnson,Consumer,Melbourne,Australia,Asia Pacific,2024-05-13
 269,John Wirth,Consumer,Melbourne,Australia,Asia Pacific,2024-11-18
-270,John Turing,Small Business,London,United Kingdom,Europe,2023-01-14
-271,Margaret Perlman,Consumer,London,United Kingdom,Europe,2023-04-22
-272,Hedy Johnson,Corporate,Munich,Germany,Europe,2023-08-25
-273,Hedy Backus,Consumer,Lyon,France,Europe,2024-08-05
+270,John Turing,Small Business,London,United Kingdom,Europe,2020-01-14
+271,Margaret Perlman,Consumer,London,United Kingdom,Europe,2020-04-22
+272,Hedy Johnson,Corporate,Munich,Germany,Europe,2021-08-25
+273,Hedy Backus,Consumer,Lyon,France,Europe,2023-08-05
 274,Donald Wilson,Consumer,Munich,Germany,Europe,2024-07-08
-275,Margaret Berners,Consumer,Tokyo,Japan,Asia Pacific,2023-01-25
-276,Barbara Hopper,Consumer,Tokyo,Japan,Asia Pacific,2024-06-27
-277,Dennis Easley,Corporate,Tokyo,Japan,Asia Pacific,2023-12-01
-278,Frances Easley,Consumer,Paris,France,Europe,2023-06-27
-279,Ken Liskov,Consumer,Vancouver,Canada,North America,2023-03-23
-280,Grace Easley,Small Business,London,United Kingdom,Europe,2023-10-16
-281,Hedy Easley,Consumer,Munich,Germany,Europe,2023-12-06
-282,Radia Hamilton,Consumer,Vancouver,Canada,North America,2023-05-09
-283,Margaret Hamilton,Consumer,Toronto,Canada,North America,2024-11-21
-284,Linus Torvalds,Small Business,Lyon,France,Europe,2023-05-21
-285,Donald Turing,Consumer,Osaka,Japan,Asia Pacific,2023-03-11
+275,Margaret Berners,Consumer,Tokyo,Japan,Asia Pacific,2021-01-25
+276,Barbara Hopper,Consumer,Tokyo,Japan,Asia Pacific,2022-06-27
+277,Dennis Easley,Corporate,Tokyo,Japan,Asia Pacific,2022-12-01
+278,Frances Easley,Consumer,Paris,France,Europe,2020-06-27
+279,Ken Liskov,Consumer,Vancouver,Canada,North America,2021-03-23
+280,Grace Easley,Small Business,London,United Kingdom,Europe,2021-10-16
+281,Hedy Easley,Consumer,Munich,Germany,Europe,2021-12-06
+282,Radia Hamilton,Consumer,Vancouver,Canada,North America,2020-05-09
+283,Margaret Hamilton,Consumer,Toronto,Canada,North America,2023-11-21
+284,Linus Torvalds,Small Business,Lyon,France,Europe,2022-05-21
+285,Donald Turing,Consumer,Osaka,Japan,Asia Pacific,2020-03-11
 286,Grace Hopper,Small Business,Melbourne,Australia,Asia Pacific,2024-11-07
-287,Edsger Perlman,Consumer,New York,United States,North America,2024-09-11
+287,Edsger Perlman,Consumer,New York,United States,North America,2022-09-11
 288,Frances Lamarr,Consumer,Berlin,Germany,Europe,2024-03-22
-289,Ada Easley,Consumer,Vancouver,Canada,North America,2024-12-28
+289,Ada Easley,Consumer,Vancouver,Canada,North America,2023-12-28
 290,Katherine Turing,Consumer,Paris,France,Europe,2024-07-25
 291,Radia Johnson,Small Business,Vancouver,Canada,North America,2024-12-08
-292,Niklaus Johnson,Consumer,Melbourne,Australia,Asia Pacific,2024-12-06
-293,Guido Torvalds,Consumer,Lyon,France,Europe,2023-11-03
+292,Niklaus Johnson,Consumer,Melbourne,Australia,Asia Pacific,2022-12-06
+293,Guido Torvalds,Consumer,Lyon,France,Europe,2021-11-03
 294,Katherine Ritchie,Consumer,Paris,France,Europe,2024-02-17
 295,Katherine Easley,Small Business,Lyon,France,Europe,2024-04-18
-296,Katherine Lovelace,Corporate,Munich,Germany,Europe,2024-08-20
-297,Alan Backus,Consumer,Sydney,Australia,Asia Pacific,2023-02-14
-298,Edsger Allen,Consumer,Osaka,Japan,Asia Pacific,2024-02-26
-299,Radia Hamilton,Small Business,Vancouver,Canada,North America,2024-11-09
-300,Ada Thompson,Consumer,Seattle,United States,North America,2023-02-05
-301,Sophie Liskov,Consumer,Osaka,Japan,Asia Pacific,2023-06-20
-302,Guido Allen,Consumer,Berlin,Germany,Europe,2024-04-17
-303,John Rossum,Consumer,Manchester,United Kingdom,Europe,2024-07-28
-304,Sophie Liskov,Consumer,New York,United States,North America,2023-05-19
-305,Frances Turing,Small Business,Paris,France,Europe,2023-02-28
-306,Dennis Knuth,Consumer,Manchester,United Kingdom,Europe,2023-04-17
+296,Katherine Lovelace,Corporate,Munich,Germany,Europe,2022-08-20
+297,Alan Backus,Consumer,Sydney,Australia,Asia Pacific,2021-02-14
+298,Edsger Allen,Consumer,Osaka,Japan,Asia Pacific,2023-02-26
+299,Radia Hamilton,Small Business,Vancouver,Canada,North America,2023-11-09
+300,Ada Thompson,Consumer,Seattle,United States,North America,2020-02-05
+301,Sophie Liskov,Consumer,Osaka,Japan,Asia Pacific,2021-06-20
+302,Guido Allen,Consumer,Berlin,Germany,Europe,2023-04-17
+303,John Rossum,Consumer,Manchester,United Kingdom,Europe,2023-07-28
+304,Sophie Liskov,Consumer,New York,United States,North America,2021-05-19
+305,Frances Turing,Small Business,Paris,France,Europe,2021-02-28
+306,Dennis Knuth,Consumer,Manchester,United Kingdom,Europe,2020-04-17
 307,Margaret Easley,Consumer,Paris,France,Europe,2024-05-26
-308,Donald Johnson,Consumer,New York,United States,North America,2024-03-14
-309,Barbara Easley,Consumer,Lyon,France,Europe,2023-10-05
+308,Donald Johnson,Consumer,New York,United States,North America,2023-03-14
+309,Barbara Easley,Consumer,Lyon,France,Europe,2020-10-05
 310,Donald Perlman,Consumer,Osaka,Japan,Asia Pacific,2024-09-01
-311,Linus Easley,Consumer,Toronto,Canada,North America,2023-03-04
-312,Niklaus Turing,Consumer,London,United Kingdom,Europe,2023-09-06
-313,John Lovelace,Corporate,Sydney,Australia,Asia Pacific,2024-10-27
-314,Tim Torvalds,Corporate,Vancouver,Canada,North America,2024-05-08
-315,Radia Lamarr,Small Business,Melbourne,Australia,Asia Pacific,2024-05-11
+311,Linus Easley,Consumer,Toronto,Canada,North America,2021-03-04
+312,Niklaus Turing,Consumer,London,United Kingdom,Europe,2021-09-06
+313,John Lovelace,Corporate,Sydney,Australia,Asia Pacific,2023-10-27
+314,Tim Torvalds,Corporate,Vancouver,Canada,North America,2022-05-08
+315,Radia Lamarr,Small Business,Melbourne,Australia,Asia Pacific,2023-05-11
 316,John Hopper,Consumer,Lyon,France,Europe,2024-09-14
-317,Annie Rossum,Consumer,Toronto,Canada,North America,2023-12-17
+317,Annie Rossum,Consumer,Toronto,Canada,North America,2021-12-17
 318,Tim Hamilton,Small Business,Lyon,France,Europe,2024-01-25
-319,Edsger Dijkstra,Small Business,Vancouver,Canada,North America,2023-07-01
+319,Edsger Dijkstra,Small Business,Vancouver,Canada,North America,2021-07-01
 320,Annie Easley,Consumer,Osaka,Japan,Asia Pacific,2024-04-07
-321,Hedy Hamilton,Consumer,Osaka,Japan,Asia Pacific,2024-06-04
-322,Ken Backus,Consumer,London,United Kingdom,Europe,2024-04-18
-323,Sophie Hamilton,Small Business,Munich,Germany,Europe,2023-01-07
-324,Edsger Turing,Small Business,Vancouver,Canada,North America,2023-05-16
-325,Barbara Allen,Small Business,Berlin,Germany,Europe,2023-03-09
-326,Donald Allen,Consumer,Vancouver,Canada,North America,2024-12-13
+321,Hedy Hamilton,Consumer,Osaka,Japan,Asia Pacific,2022-06-04
+322,Ken Backus,Consumer,London,United Kingdom,Europe,2023-04-18
+323,Sophie Hamilton,Small Business,Munich,Germany,Europe,2021-01-07
+324,Edsger Turing,Small Business,Vancouver,Canada,North America,2020-05-16
+325,Barbara Allen,Small Business,Berlin,Germany,Europe,2020-03-09
+326,Donald Allen,Consumer,Vancouver,Canada,North America,2023-12-13
 327,Hedy Knuth,Consumer,Lyon,France,Europe,2024-10-24
 328,Frances Knuth,Consumer,Munich,Germany,Europe,2024-01-22
-329,John Lamarr,Consumer,Manchester,United Kingdom,Europe,2023-07-16
-330,Margaret Torvalds,Small Business,Vancouver,Canada,North America,2023-10-16
-331,Sophie Rossum,Small Business,Vancouver,Canada,North America,2024-01-10
-332,Radia Wirth,Small Business,Munich,Germany,Europe,2023-03-12
-333,Frances Allen,Consumer,Osaka,Japan,Asia Pacific,2023-02-28
-334,Guido Knuth,Small Business,Seattle,United States,North America,2023-08-08
-335,Grace Knuth,Consumer,London,United Kingdom,Europe,2023-08-28
+329,John Lamarr,Consumer,Manchester,United Kingdom,Europe,2020-07-16
+330,Margaret Torvalds,Small Business,Vancouver,Canada,North America,2021-10-16
+331,Sophie Rossum,Small Business,Vancouver,Canada,North America,2022-01-10
+332,Radia Wirth,Small Business,Munich,Germany,Europe,2020-03-12
+333,Frances Allen,Consumer,Osaka,Japan,Asia Pacific,2020-02-28
+334,Guido Knuth,Small Business,Seattle,United States,North America,2021-08-08
+335,Grace Knuth,Consumer,London,United Kingdom,Europe,2021-08-28
 336,Guido Allen,Consumer,Manchester,United Kingdom,Europe,2024-01-06
-337,Edsger Ritchie,Small Business,Manchester,United Kingdom,Europe,2023-07-13
-338,Donald Liskov,Small Business,Sydney,Australia,Asia Pacific,2024-02-06
-339,Linus Allen,Corporate,Sydney,Australia,Asia Pacific,2023-12-21
+337,Edsger Ritchie,Small Business,Manchester,United Kingdom,Europe,2020-07-13
+338,Donald Liskov,Small Business,Sydney,Australia,Asia Pacific,2023-02-06
+339,Linus Allen,Corporate,Sydney,Australia,Asia Pacific,2020-12-21
 340,Margaret Ritchie,Consumer,Tokyo,Japan,Asia Pacific,2024-07-02
 341,Tim Lovelace,Consumer,Lyon,France,Europe,2024-07-13
-342,Katherine Rossum,Consumer,Berlin,Germany,Europe,2023-04-04
-343,Tim Backus,Consumer,Toronto,Canada,North America,2023-12-06
-344,Barbara Wirth,Consumer,Osaka,Japan,Asia Pacific,2023-10-04
-345,John Easley,Small Business,London,United Kingdom,Europe,2023-07-08
-346,Dennis Knuth,Consumer,London,United Kingdom,Europe,2023-11-01
-347,Grace Dijkstra,Consumer,Chicago,United States,North America,2023-11-20
+342,Katherine Rossum,Consumer,Berlin,Germany,Europe,2020-04-04
+343,Tim Backus,Consumer,Toronto,Canada,North America,2020-12-06
+344,Barbara Wirth,Consumer,Osaka,Japan,Asia Pacific,2020-10-04
+345,John Easley,Small Business,London,United Kingdom,Europe,2020-07-08
+346,Dennis Knuth,Consumer,London,United Kingdom,Europe,2022-11-01
+347,Grace Dijkstra,Consumer,Chicago,United States,North America,2020-11-20
 348,Dennis Torvalds,Consumer,Lyon,France,Europe,2024-11-20
-349,Annie Johnson,Small Business,Tokyo,Japan,Asia Pacific,2023-05-25
-350,Radia Torvalds,Consumer,Tokyo,Japan,Asia Pacific,2023-09-01
-351,Frances Liskov,Small Business,Toronto,Canada,North America,2024-10-10
-352,Frances Johnson,Small Business,Tokyo,Japan,Asia Pacific,2023-11-11
-353,Tim Berners,Corporate,Berlin,Germany,Europe,2023-08-24
-354,Hedy Backus,Consumer,Manchester,United Kingdom,Europe,2023-08-17
+349,Annie Johnson,Small Business,Tokyo,Japan,Asia Pacific,2021-05-25
+350,Radia Torvalds,Consumer,Tokyo,Japan,Asia Pacific,2021-09-01
+351,Frances Liskov,Small Business,Toronto,Canada,North America,2023-10-10
+352,Frances Johnson,Small Business,Tokyo,Japan,Asia Pacific,2020-11-11
+353,Tim Berners,Corporate,Berlin,Germany,Europe,2020-08-24
+354,Hedy Backus,Consumer,Manchester,United Kingdom,Europe,2021-08-17
 355,Alan Dijkstra,Consumer,Sydney,Australia,Asia Pacific,2024-01-24
-356,Donald Dijkstra,Consumer,Melbourne,Australia,Asia Pacific,2023-11-23
-357,Dennis Johnson,Small Business,Vancouver,Canada,North America,2024-01-17
-358,Hedy Berners,Small Business,Melbourne,Australia,Asia Pacific,2024-07-08
-359,Ada Dijkstra,Small Business,Munich,Germany,Europe,2023-07-19
-360,Alan Berners,Consumer,Berlin,Germany,Europe,2024-02-01
-361,Dennis Perlman,Consumer,Munich,Germany,Europe,2024-03-04
+356,Donald Dijkstra,Consumer,Melbourne,Australia,Asia Pacific,2021-11-23
+357,Dennis Johnson,Small Business,Vancouver,Canada,North America,2023-01-17
+358,Hedy Berners,Small Business,Melbourne,Australia,Asia Pacific,2022-07-08
+359,Ada Dijkstra,Small Business,Munich,Germany,Europe,2022-07-19
+360,Alan Berners,Consumer,Berlin,Germany,Europe,2022-02-01
+361,Dennis Perlman,Consumer,Munich,Germany,Europe,2023-03-04
 362,Guido Hopper,Consumer,Chicago,United States,North America,2024-04-24
-363,Guido Hamilton,Consumer,Paris,France,Europe,2023-10-28
-364,Margaret Dijkstra,Consumer,Munich,Germany,Europe,2023-09-03
-365,Barbara Torvalds,Consumer,London,United Kingdom,Europe,2023-01-07
-366,Linus Wilson,Small Business,Munich,Germany,Europe,2023-12-10
-367,Dennis Torvalds,Consumer,Paris,France,Europe,2023-10-17
-368,Niklaus Hopper,Consumer,Lyon,France,Europe,2023-10-11
-369,Niklaus Berners,Consumer,Lyon,France,Europe,2023-01-10
-370,Edsger Knuth,Consumer,Chicago,United States,North America,2024-03-27
-371,Niklaus Hopper,Small Business,Berlin,Germany,Europe,2023-01-04
-372,Ken Berners,Consumer,Tokyo,Japan,Asia Pacific,2024-07-14
-373,Edsger Perlman,Consumer,Toronto,Canada,North America,2023-03-19
+363,Guido Hamilton,Consumer,Paris,France,Europe,2021-10-28
+364,Margaret Dijkstra,Consumer,Munich,Germany,Europe,2021-09-03
+365,Barbara Torvalds,Consumer,London,United Kingdom,Europe,2021-01-07
+366,Linus Wilson,Small Business,Munich,Germany,Europe,2020-12-10
+367,Dennis Torvalds,Consumer,Paris,France,Europe,2022-10-17
+368,Niklaus Hopper,Consumer,Lyon,France,Europe,2020-10-11
+369,Niklaus Berners,Consumer,Lyon,France,Europe,2021-01-10
+370,Edsger Knuth,Consumer,Chicago,United States,North America,2023-03-27
+371,Niklaus Hopper,Small Business,Berlin,Germany,Europe,2020-01-04
+372,Ken Berners,Consumer,Tokyo,Japan,Asia Pacific,2022-07-14
+373,Edsger Perlman,Consumer,Toronto,Canada,North America,2020-03-19
 374,Ken Dijkstra,Consumer,Tokyo,Japan,Asia Pacific,2024-03-02
-375,Dennis Perlman,Consumer,Sydney,Australia,Asia Pacific,2023-06-22
-376,Linus Hopper,Small Business,Sydney,Australia,Asia Pacific,2023-03-04
-377,John Wirth,Consumer,Chicago,United States,North America,2024-01-01
-378,Katherine Turing,Corporate,Toronto,Canada,North America,2023-10-09
-379,Hedy Johnson,Small Business,Munich,Germany,Europe,2023-08-17
-380,Dennis Dijkstra,Small Business,Melbourne,Australia,Asia Pacific,2024-11-08
-381,Ken Rossum,Consumer,Melbourne,Australia,Asia Pacific,2024-07-01
+375,Dennis Perlman,Consumer,Sydney,Australia,Asia Pacific,2020-06-22
+376,Linus Hopper,Small Business,Sydney,Australia,Asia Pacific,2020-03-04
+377,John Wirth,Consumer,Chicago,United States,North America,2023-01-01
+378,Katherine Turing,Corporate,Toronto,Canada,North America,2021-10-09
+379,Hedy Johnson,Small Business,Munich,Germany,Europe,2020-08-17
+380,Dennis Dijkstra,Small Business,Melbourne,Australia,Asia Pacific,2023-11-08
+381,Ken Rossum,Consumer,Melbourne,Australia,Asia Pacific,2022-07-01
 382,Hedy Turing,Small Business,Munich,Germany,Europe,2024-12-13
-383,Katherine Thompson,Corporate,Paris,France,Europe,2023-07-06
+383,Katherine Thompson,Corporate,Paris,France,Europe,2021-07-06
 384,Radia Liskov,Consumer,Seattle,United States,North America,2024-12-01
 385,Donald Backus,Consumer,Lyon,France,Europe,2024-04-26
 386,Radia Torvalds,Small Business,Chicago,United States,North America,2024-09-16
-387,Margaret Allen,Corporate,Vancouver,Canada,North America,2023-11-27
-388,Annie Backus,Consumer,Manchester,United Kingdom,Europe,2024-08-24
-389,Sophie Allen,Consumer,London,United Kingdom,Europe,2023-05-20
-390,Donald Johnson,Consumer,Berlin,Germany,Europe,2024-12-23
+387,Margaret Allen,Corporate,Vancouver,Canada,North America,2020-11-27
+388,Annie Backus,Consumer,Manchester,United Kingdom,Europe,2023-08-24
+389,Sophie Allen,Consumer,London,United Kingdom,Europe,2021-05-20
+390,Donald Johnson,Consumer,Berlin,Germany,Europe,2023-12-23
 391,Edsger Perlman,Consumer,London,United Kingdom,Europe,2024-07-28
-392,Linus Rossum,Corporate,Sydney,Australia,Asia Pacific,2023-01-06
-393,Tim Johnson,Small Business,Berlin,Germany,Europe,2023-04-01
-394,Alan Dijkstra,Consumer,Osaka,Japan,Asia Pacific,2023-11-17
-395,Ken Lovelace,Consumer,Lyon,France,Europe,2023-03-01
+392,Linus Rossum,Corporate,Sydney,Australia,Asia Pacific,2020-01-06
+393,Tim Johnson,Small Business,Berlin,Germany,Europe,2021-04-01
+394,Alan Dijkstra,Consumer,Osaka,Japan,Asia Pacific,2020-11-17
+395,Ken Lovelace,Consumer,Lyon,France,Europe,2022-03-01
 396,Radia Torvalds,Small Business,Manchester,United Kingdom,Europe,2024-08-27
-397,Guido Lamarr,Corporate,New York,United States,North America,2023-03-08
-398,Margaret Wirth,Consumer,Paris,France,Europe,2024-05-17
-399,Tim Liskov,Small Business,Paris,France,Europe,2023-12-17
-400,Edsger Berners,Corporate,Lyon,France,Europe,2024-07-01
-401,Annie Backus,Consumer,Manchester,United Kingdom,Europe,2023-09-15
-402,Linus Easley,Consumer,Toronto,Canada,North America,2024-07-17
-403,Guido Lovelace,Consumer,Paris,France,Europe,2023-06-25
+397,Guido Lamarr,Corporate,New York,United States,North America,2022-03-08
+398,Margaret Wirth,Consumer,Paris,France,Europe,2022-05-17
+399,Tim Liskov,Small Business,Paris,France,Europe,2020-12-17
+400,Edsger Berners,Corporate,Lyon,France,Europe,2022-07-01
+401,Annie Backus,Consumer,Manchester,United Kingdom,Europe,2021-09-15
+402,Linus Easley,Consumer,Toronto,Canada,North America,2022-07-17
+403,Guido Lovelace,Consumer,Paris,France,Europe,2020-06-25
 404,Margaret Ritchie,Consumer,Paris,France,Europe,2024-03-16
 405,Barbara Wilson,Consumer,Austin,United States,North America,2024-11-18
-406,Guido Dijkstra,Consumer,London,United Kingdom,Europe,2024-06-19
-407,Sophie Turing,Consumer,London,United Kingdom,Europe,2024-10-21
-408,Dennis Torvalds,Consumer,Berlin,Germany,Europe,2023-11-01
+406,Guido Dijkstra,Consumer,London,United Kingdom,Europe,2022-06-19
+407,Sophie Turing,Consumer,London,United Kingdom,Europe,2023-10-21
+408,Dennis Torvalds,Consumer,Berlin,Germany,Europe,2022-11-01
 409,Radia Ritchie,Consumer,London,United Kingdom,Europe,2024-05-01
-410,Tim Berners,Consumer,Lyon,France,Europe,2023-03-28
-411,Annie Easley,Small Business,New York,United States,North America,2023-07-23
-412,Grace Wirth,Small Business,Paris,France,Europe,2023-11-26
-413,Radia Thompson,Consumer,Berlin,Germany,Europe,2023-06-25
-414,Donald Liskov,Consumer,London,United Kingdom,Europe,2024-11-28
-415,John Torvalds,Consumer,Chicago,United States,North America,2023-12-10
-416,Guido Ritchie,Small Business,Toronto,Canada,North America,2023-08-02
-417,Frances Wirth,Consumer,London,United Kingdom,Europe,2023-08-05
-418,Ken Johnson,Consumer,Paris,France,Europe,2023-07-10
+410,Tim Berners,Consumer,Lyon,France,Europe,2020-03-28
+411,Annie Easley,Small Business,New York,United States,North America,2020-07-23
+412,Grace Wirth,Small Business,Paris,France,Europe,2022-11-26
+413,Radia Thompson,Consumer,Berlin,Germany,Europe,2021-06-25
+414,Donald Liskov,Consumer,London,United Kingdom,Europe,2023-11-28
+415,John Torvalds,Consumer,Chicago,United States,North America,2020-12-10
+416,Guido Ritchie,Small Business,Toronto,Canada,North America,2021-08-02
+417,Frances Wirth,Consumer,London,United Kingdom,Europe,2020-08-05
+418,Ken Johnson,Consumer,Paris,France,Europe,2020-07-10
 419,Tim Rossum,Consumer,Austin,United States,North America,2024-09-10
-420,Dennis Ritchie,Consumer,Manchester,United Kingdom,Europe,2023-06-12
-421,Alan Thompson,Consumer,Chicago,United States,North America,2023-03-13
-422,Edsger Ritchie,Consumer,Austin,United States,North America,2023-05-25
-423,Annie Ritchie,Consumer,Tokyo,Japan,Asia Pacific,2023-12-16
-424,Annie Lamarr,Consumer,London,United Kingdom,Europe,2024-10-07
-425,John Dijkstra,Consumer,Lyon,France,Europe,2023-10-01
+420,Dennis Ritchie,Consumer,Manchester,United Kingdom,Europe,2022-06-12
+421,Alan Thompson,Consumer,Chicago,United States,North America,2021-03-13
+422,Edsger Ritchie,Consumer,Austin,United States,North America,2021-05-25
+423,Annie Ritchie,Consumer,Tokyo,Japan,Asia Pacific,2022-12-16
+424,Annie Lamarr,Consumer,London,United Kingdom,Europe,2022-10-07
+425,John Dijkstra,Consumer,Lyon,France,Europe,2020-10-01
 426,Alan Knuth,Consumer,Melbourne,Australia,Asia Pacific,2024-06-18
-427,Annie Liskov,Corporate,Melbourne,Australia,Asia Pacific,2023-05-10
-428,Sophie Torvalds,Consumer,Melbourne,Australia,Asia Pacific,2023-12-24
-429,Katherine Backus,Consumer,Toronto,Canada,North America,2024-08-26
+427,Annie Liskov,Corporate,Melbourne,Australia,Asia Pacific,2020-05-10
+428,Sophie Torvalds,Consumer,Melbourne,Australia,Asia Pacific,2021-12-24
+429,Katherine Backus,Consumer,Toronto,Canada,North America,2023-08-26
 430,Ada Perlman,Consumer,Munich,Germany,Europe,2024-01-24
 431,Radia Hamilton,Consumer,Vancouver,Canada,North America,2024-04-24
-432,Niklaus Ritchie,Consumer,Austin,United States,North America,2023-06-25
-433,Linus Wirth,Small Business,Osaka,Japan,Asia Pacific,2023-07-23
-434,Hedy Thompson,Consumer,Munich,Germany,Europe,2023-03-28
-435,Linus Torvalds,Small Business,Sydney,Australia,Asia Pacific,2024-06-24
-436,Hedy Easley,Corporate,Berlin,Germany,Europe,2023-08-04
+432,Niklaus Ritchie,Consumer,Austin,United States,North America,2021-06-25
+433,Linus Wirth,Small Business,Osaka,Japan,Asia Pacific,2022-07-23
+434,Hedy Thompson,Consumer,Munich,Germany,Europe,2022-03-28
+435,Linus Torvalds,Small Business,Sydney,Australia,Asia Pacific,2022-06-24
+436,Hedy Easley,Corporate,Berlin,Germany,Europe,2022-08-04
 437,Guido Allen,Corporate,Sydney,Australia,Asia Pacific,2024-08-04
-438,Radia Johnson,Corporate,Lyon,France,Europe,2024-03-20
-439,Ken Berners,Small Business,Chicago,United States,North America,2023-12-25
-440,Katherine Knuth,Consumer,Melbourne,Australia,Asia Pacific,2024-12-17
-441,Radia Berners,Consumer,Seattle,United States,North America,2023-10-01
-442,Annie Thompson,Consumer,Tokyo,Japan,Asia Pacific,2023-03-24
-443,Tim Backus,Corporate,Seattle,United States,North America,2023-09-05
-444,Hedy Allen,Consumer,Osaka,Japan,Asia Pacific,2024-12-14
-445,Grace Rossum,Small Business,Berlin,Germany,Europe,2023-03-08
-446,Guido Knuth,Consumer,Munich,Germany,Europe,2023-07-13
-447,John Torvalds,Consumer,Seattle,United States,North America,2024-12-17
-448,Alan Ritchie,Consumer,Manchester,United Kingdom,Europe,2024-01-06
+438,Radia Johnson,Corporate,Lyon,France,Europe,2022-03-20
+439,Ken Berners,Small Business,Chicago,United States,North America,2020-12-25
+440,Katherine Knuth,Consumer,Melbourne,Australia,Asia Pacific,2022-12-17
+441,Radia Berners,Consumer,Seattle,United States,North America,2020-10-01
+442,Annie Thompson,Consumer,Tokyo,Japan,Asia Pacific,2021-03-24
+443,Tim Backus,Corporate,Seattle,United States,North America,2021-09-05
+444,Hedy Allen,Consumer,Osaka,Japan,Asia Pacific,2023-12-14
+445,Grace Rossum,Small Business,Berlin,Germany,Europe,2020-03-08
+446,Guido Knuth,Consumer,Munich,Germany,Europe,2020-07-13
+447,John Torvalds,Consumer,Seattle,United States,North America,2023-12-17
+448,Alan Ritchie,Consumer,Manchester,United Kingdom,Europe,2023-01-06
 449,Alan Perlman,Small Business,London,United Kingdom,Europe,2024-09-12
-450,Radia Johnson,Small Business,Paris,France,Europe,2023-03-22
+450,Radia Johnson,Small Business,Paris,France,Europe,2020-03-22
 451,Grace Thompson,Consumer,Austin,United States,North America,2024-07-24
 452,Radia Ritchie,Small Business,Osaka,Japan,Asia Pacific,2024-09-11
 453,Annie Allen,Small Business,Toronto,Canada,North America,2024-08-19
 454,Radia Rossum,Small Business,Paris,France,Europe,2024-09-10
-455,Alan Hamilton,Consumer,Berlin,Germany,Europe,2024-09-06
-456,Niklaus Liskov,Consumer,Vancouver,Canada,North America,2023-06-24
-457,Alan Turing,Corporate,Seattle,United States,North America,2023-09-28
+455,Alan Hamilton,Consumer,Berlin,Germany,Europe,2022-09-06
+456,Niklaus Liskov,Consumer,Vancouver,Canada,North America,2022-06-24
+457,Alan Turing,Corporate,Seattle,United States,North America,2022-09-28
 458,Ada Knuth,Consumer,Sydney,Australia,Asia Pacific,2024-03-22
-459,John Allen,Small Business,Toronto,Canada,North America,2024-05-20
-460,Ken Berners,Consumer,Lyon,France,Europe,2024-12-16
-461,Alan Easley,Small Business,Austin,United States,North America,2024-06-27
-462,Donald Turing,Small Business,Berlin,Germany,Europe,2024-12-27
-463,Grace Johnson,Consumer,Berlin,Germany,Europe,2023-11-03
-464,Radia Hamilton,Small Business,Tokyo,Japan,Asia Pacific,2024-07-22
-465,Katherine Thompson,Corporate,Paris,France,Europe,2023-08-28
+459,John Allen,Small Business,Toronto,Canada,North America,2023-05-20
+460,Ken Berners,Consumer,Lyon,France,Europe,2023-12-16
+461,Alan Easley,Small Business,Austin,United States,North America,2022-06-27
+462,Donald Turing,Small Business,Berlin,Germany,Europe,2023-12-27
+463,Grace Johnson,Consumer,Berlin,Germany,Europe,2020-11-03
+464,Radia Hamilton,Small Business,Tokyo,Japan,Asia Pacific,2023-07-22
+465,Katherine Thompson,Corporate,Paris,France,Europe,2020-08-28
 466,Grace Lovelace,Consumer,Osaka,Japan,Asia Pacific,2024-04-26
-467,Hedy Wilson,Small Business,Vancouver,Canada,North America,2024-12-23
-468,John Ritchie,Small Business,Vancouver,Canada,North America,2023-11-27
-469,Guido Hamilton,Consumer,Toronto,Canada,North America,2023-07-01
-470,Edsger Rossum,Consumer,Melbourne,Australia,Asia Pacific,2023-06-01
-471,Dennis Berners,Consumer,Tokyo,Japan,Asia Pacific,2024-02-28
-472,Ken Lamarr,Small Business,Osaka,Japan,Asia Pacific,2024-07-19
-473,Radia Allen,Consumer,Osaka,Japan,Asia Pacific,2024-02-25
-474,Tim Hamilton,Consumer,Melbourne,Australia,Asia Pacific,2023-11-19
-475,Tim Rossum,Small Business,London,United Kingdom,Europe,2023-04-14
-476,Barbara Allen,Consumer,Toronto,Canada,North America,2024-01-23
+467,Hedy Wilson,Small Business,Vancouver,Canada,North America,2023-12-23
+468,John Ritchie,Small Business,Vancouver,Canada,North America,2021-11-27
+469,Guido Hamilton,Consumer,Toronto,Canada,North America,2020-07-01
+470,Edsger Rossum,Consumer,Melbourne,Australia,Asia Pacific,2020-06-01
+471,Dennis Berners,Consumer,Tokyo,Japan,Asia Pacific,2023-02-28
+472,Ken Lamarr,Small Business,Osaka,Japan,Asia Pacific,2023-07-19
+473,Radia Allen,Consumer,Osaka,Japan,Asia Pacific,2022-02-25
+474,Tim Hamilton,Consumer,Melbourne,Australia,Asia Pacific,2021-11-19
+475,Tim Rossum,Small Business,London,United Kingdom,Europe,2020-04-14
+476,Barbara Allen,Consumer,Toronto,Canada,North America,2022-01-23
 477,Barbara Easley,Small Business,Osaka,Japan,Asia Pacific,2024-11-28
-478,Donald Turing,Consumer,New York,United States,North America,2023-12-17
-479,Linus Perlman,Small Business,Vancouver,Canada,North America,2023-09-23
-480,Sophie Allen,Consumer,Sydney,Australia,Asia Pacific,2024-02-10
+478,Donald Turing,Consumer,New York,United States,North America,2021-12-17
+479,Linus Perlman,Small Business,Vancouver,Canada,North America,2020-09-23
+480,Sophie Allen,Consumer,Sydney,Australia,Asia Pacific,2022-02-10
 481,Ken Thompson,Consumer,Osaka,Japan,Asia Pacific,2024-07-13
-482,Barbara Liskov,Consumer,London,United Kingdom,Europe,2023-11-19
-483,John Perlman,Consumer,Paris,France,Europe,2023-07-07
-484,Grace Backus,Corporate,London,United Kingdom,Europe,2023-04-16
-485,Guido Knuth,Small Business,Munich,Germany,Europe,2024-09-05
-486,Sophie Thompson,Consumer,Toronto,Canada,North America,2024-02-28
-487,Ada Turing,Consumer,New York,United States,North America,2023-01-21
-488,John Backus,Corporate,Austin,United States,North America,2023-03-24
-489,Frances Johnson,Consumer,Sydney,Australia,Asia Pacific,2024-04-20
-490,Radia Berners,Consumer,Lyon,France,Europe,2023-01-23
-491,Margaret Allen,Corporate,Seattle,United States,North America,2024-03-27
-492,Radia Torvalds,Consumer,Vancouver,Canada,North America,2023-06-26
-493,Sophie Backus,Consumer,Sydney,Australia,Asia Pacific,2023-09-08
+482,Barbara Liskov,Consumer,London,United Kingdom,Europe,2020-11-19
+483,John Perlman,Consumer,Paris,France,Europe,2020-07-07
+484,Grace Backus,Corporate,London,United Kingdom,Europe,2022-04-16
+485,Guido Knuth,Small Business,Munich,Germany,Europe,2022-09-05
+486,Sophie Thompson,Consumer,Toronto,Canada,North America,2023-02-28
+487,Ada Turing,Consumer,New York,United States,North America,2022-01-21
+488,John Backus,Corporate,Austin,United States,North America,2020-03-24
+489,Frances Johnson,Consumer,Sydney,Australia,Asia Pacific,2023-04-20
+490,Radia Berners,Consumer,Lyon,France,Europe,2021-01-23
+491,Margaret Allen,Corporate,Seattle,United States,North America,2022-03-27
+492,Radia Torvalds,Consumer,Vancouver,Canada,North America,2021-06-26
+493,Sophie Backus,Consumer,Sydney,Australia,Asia Pacific,2020-09-08
 494,Sophie Allen,Consumer,Seattle,United States,North America,2024-02-19
-495,Frances Perlman,Consumer,Paris,France,Europe,2024-08-06
-496,Grace Thompson,Consumer,Vancouver,Canada,North America,2023-11-17
-497,Linus Allen,Small Business,New York,United States,North America,2023-12-24
+495,Frances Perlman,Consumer,Paris,France,Europe,2023-08-06
+496,Grace Thompson,Consumer,Vancouver,Canada,North America,2021-11-17
+497,Linus Allen,Small Business,New York,United States,North America,2021-12-24
 498,John Thompson,Consumer,Austin,United States,North America,2024-09-07
-499,Radia Lamarr,Corporate,Osaka,Japan,Asia Pacific,2023-02-17
-500,Dennis Ritchie,Consumer,Berlin,Germany,Europe,2024-01-25
+499,Radia Lamarr,Corporate,Osaka,Japan,Asia Pacific,2020-02-17
+500,Dennis Ritchie,Consumer,Berlin,Germany,Europe,2023-01-25
 501,Guido Lovelace,Consumer,Munich,Germany,Europe,2024-08-03
-502,Barbara Lovelace,Small Business,Berlin,Germany,Europe,2024-04-12
-503,Katherine Hopper,Consumer,Toronto,Canada,North America,2024-04-26
-504,Linus Hopper,Consumer,Sydney,Australia,Asia Pacific,2023-08-03
-505,Tim Ritchie,Consumer,Lyon,France,Europe,2023-08-12
-506,Edsger Liskov,Consumer,Munich,Germany,Europe,2023-04-10
+502,Barbara Lovelace,Small Business,Berlin,Germany,Europe,2022-04-12
+503,Katherine Hopper,Consumer,Toronto,Canada,North America,2023-04-26
+504,Linus Hopper,Consumer,Sydney,Australia,Asia Pacific,2020-08-03
+505,Tim Ritchie,Consumer,Lyon,France,Europe,2022-08-12
+506,Edsger Liskov,Consumer,Munich,Germany,Europe,2022-04-10
 507,Ken Allen,Consumer,Lyon,France,Europe,2024-03-16
-508,Margaret Wirth,Consumer,Lyon,France,Europe,2023-04-19
-509,Alan Hopper,Small Business,Chicago,United States,North America,2023-06-23
+508,Margaret Wirth,Consumer,Lyon,France,Europe,2022-04-19
+509,Alan Hopper,Small Business,Chicago,United States,North America,2020-06-23
 510,Radia Rossum,Consumer,Vancouver,Canada,North America,2024-03-09
 511,Alan Hamilton,Small Business,Chicago,United States,North America,2024-04-22
-512,Donald Torvalds,Small Business,Osaka,Japan,Asia Pacific,2023-12-07
-513,Barbara Lovelace,Corporate,Tokyo,Japan,Asia Pacific,2023-04-03
-514,John Dijkstra,Corporate,Lyon,France,Europe,2024-06-23
-515,Ada Lamarr,Small Business,New York,United States,North America,2023-08-11
-516,Guido Lamarr,Consumer,Paris,France,Europe,2023-03-20
-517,Margaret Knuth,Corporate,Paris,France,Europe,2023-07-22
-518,Radia Dijkstra,Consumer,Sydney,Australia,Asia Pacific,2023-08-17
-519,Linus Liskov,Consumer,Toronto,Canada,North America,2023-11-28
-520,Guido Dijkstra,Small Business,Osaka,Japan,Asia Pacific,2024-11-03
-521,Linus Johnson,Small Business,Berlin,Germany,Europe,2023-06-28
-522,Annie Hamilton,Consumer,Vancouver,Canada,North America,2023-03-16
+512,Donald Torvalds,Small Business,Osaka,Japan,Asia Pacific,2020-12-07
+513,Barbara Lovelace,Corporate,Tokyo,Japan,Asia Pacific,2021-04-03
+514,John Dijkstra,Corporate,Lyon,France,Europe,2023-06-23
+515,Ada Lamarr,Small Business,New York,United States,North America,2021-08-11
+516,Guido Lamarr,Consumer,Paris,France,Europe,2021-03-20
+517,Margaret Knuth,Corporate,Paris,France,Europe,2022-07-22
+518,Radia Dijkstra,Consumer,Sydney,Australia,Asia Pacific,2020-08-17
+519,Linus Liskov,Consumer,Toronto,Canada,North America,2022-11-28
+520,Guido Dijkstra,Small Business,Osaka,Japan,Asia Pacific,2023-11-03
+521,Linus Johnson,Small Business,Berlin,Germany,Europe,2020-06-28
+522,Annie Hamilton,Consumer,Vancouver,Canada,North America,2021-03-16
 523,Alan Dijkstra,Small Business,Sydney,Australia,Asia Pacific,2024-01-24
-524,Katherine Thompson,Small Business,Munich,Germany,Europe,2024-09-21
+524,Katherine Thompson,Small Business,Munich,Germany,Europe,2023-09-21
 525,Grace Johnson,Small Business,Lyon,France,Europe,2024-06-17
-526,Margaret Liskov,Small Business,Austin,United States,North America,2023-09-23
-527,Tim Johnson,Corporate,Austin,United States,North America,2023-09-27
-528,Niklaus Lovelace,Consumer,Sydney,Australia,Asia Pacific,2023-07-02
-529,Dennis Thompson,Small Business,Vancouver,Canada,North America,2024-10-07
-530,Barbara Hopper,Corporate,Melbourne,Australia,Asia Pacific,2023-09-20
-531,Frances Lovelace,Consumer,Munich,Germany,Europe,2024-12-01
-532,Ada Turing,Consumer,Paris,France,Europe,2023-01-21
-533,Ada Lovelace,Corporate,Austin,United States,North America,2024-12-05
-534,Tim Easley,Consumer,London,United Kingdom,Europe,2023-10-21
-535,Frances Berners,Small Business,New York,United States,North America,2024-07-12
-536,Annie Ritchie,Small Business,London,United Kingdom,Europe,2023-03-18
-537,Barbara Easley,Consumer,Osaka,Japan,Asia Pacific,2023-03-11
+526,Margaret Liskov,Small Business,Austin,United States,North America,2020-09-23
+527,Tim Johnson,Corporate,Austin,United States,North America,2022-09-27
+528,Niklaus Lovelace,Consumer,Sydney,Australia,Asia Pacific,2020-07-02
+529,Dennis Thompson,Small Business,Vancouver,Canada,North America,2022-10-07
+530,Barbara Hopper,Corporate,Melbourne,Australia,Asia Pacific,2020-09-20
+531,Frances Lovelace,Consumer,Munich,Germany,Europe,2023-12-01
+532,Ada Turing,Consumer,Paris,France,Europe,2021-01-21
+533,Ada Lovelace,Corporate,Austin,United States,North America,2023-12-05
+534,Tim Easley,Consumer,London,United Kingdom,Europe,2021-10-21
+535,Frances Berners,Small Business,New York,United States,North America,2022-07-12
+536,Annie Ritchie,Small Business,London,United Kingdom,Europe,2021-03-18
+537,Barbara Easley,Consumer,Osaka,Japan,Asia Pacific,2021-03-11
 538,Donald Rossum,Consumer,Manchester,United Kingdom,Europe,2024-06-18
-539,Radia Hopper,Corporate,Toronto,Canada,North America,2024-07-07
-540,Hedy Lamarr,Small Business,Seattle,United States,North America,2024-10-25
-541,Guido Thompson,Small Business,London,United Kingdom,Europe,2023-02-17
+539,Radia Hopper,Corporate,Toronto,Canada,North America,2023-07-07
+540,Hedy Lamarr,Small Business,Seattle,United States,North America,2023-10-25
+541,Guido Thompson,Small Business,London,United Kingdom,Europe,2020-02-17
 542,Guido Backus,Corporate,Lyon,France,Europe,2024-05-11
-543,John Lovelace,Corporate,Berlin,Germany,Europe,2023-09-08
-544,Alan Backus,Consumer,Manchester,United Kingdom,Europe,2024-09-21
-545,Dennis Hamilton,Consumer,Chicago,United States,North America,2023-11-06
-546,Radia Knuth,Consumer,Manchester,United Kingdom,Europe,2024-02-02
-547,Katherine Hamilton,Small Business,Lyon,France,Europe,2023-01-02
+543,John Lovelace,Corporate,Berlin,Germany,Europe,2021-09-08
+544,Alan Backus,Consumer,Manchester,United Kingdom,Europe,2022-09-21
+545,Dennis Hamilton,Consumer,Chicago,United States,North America,2021-11-06
+546,Radia Knuth,Consumer,Manchester,United Kingdom,Europe,2023-02-02
+547,Katherine Hamilton,Small Business,Lyon,France,Europe,2021-01-02
 548,Grace Johnson,Consumer,Vancouver,Canada,North America,2024-09-19
 549,John Berners,Consumer,Tokyo,Japan,Asia Pacific,2024-03-08
-550,Alan Hopper,Consumer,Austin,United States,North America,2023-04-01
+550,Alan Hopper,Consumer,Austin,United States,North America,2022-04-01
 551,Katherine Dijkstra,Consumer,London,United Kingdom,Europe,2024-04-21
-552,Frances Johnson,Consumer,Tokyo,Japan,Asia Pacific,2024-09-12
-553,Sophie Turing,Consumer,Chicago,United States,North America,2023-03-18
-554,Margaret Torvalds,Consumer,Paris,France,Europe,2024-08-24
-555,Annie Dijkstra,Small Business,Munich,Germany,Europe,2023-10-07
-556,Frances Backus,Consumer,Tokyo,Japan,Asia Pacific,2023-09-23
-557,Dennis Wilson,Small Business,Toronto,Canada,North America,2023-10-23
-558,Sophie Backus,Small Business,Melbourne,Australia,Asia Pacific,2023-09-06
-559,Dennis Wilson,Consumer,Manchester,United Kingdom,Europe,2023-02-06
-560,Frances Wilson,Small Business,Berlin,Germany,Europe,2024-07-01
-561,Ken Easley,Corporate,London,United Kingdom,Europe,2023-12-27
-562,Hedy Hamilton,Small Business,Tokyo,Japan,Asia Pacific,2023-04-04
+552,Frances Johnson,Consumer,Tokyo,Japan,Asia Pacific,2023-09-12
+553,Sophie Turing,Consumer,Chicago,United States,North America,2020-03-18
+554,Margaret Torvalds,Consumer,Paris,France,Europe,2022-08-24
+555,Annie Dijkstra,Small Business,Munich,Germany,Europe,2020-10-07
+556,Frances Backus,Consumer,Tokyo,Japan,Asia Pacific,2020-09-23
+557,Dennis Wilson,Small Business,Toronto,Canada,North America,2020-10-23
+558,Sophie Backus,Small Business,Melbourne,Australia,Asia Pacific,2021-09-06
+559,Dennis Wilson,Consumer,Manchester,United Kingdom,Europe,2022-02-06
+560,Frances Wilson,Small Business,Berlin,Germany,Europe,2022-07-01
+561,Ken Easley,Corporate,London,United Kingdom,Europe,2021-12-27
+562,Hedy Hamilton,Small Business,Tokyo,Japan,Asia Pacific,2022-04-04
 563,Tim Easley,Small Business,Berlin,Germany,Europe,2024-08-26
-564,Dennis Lovelace,Consumer,Seattle,United States,North America,2023-03-08
-565,Annie Hamilton,Consumer,Melbourne,Australia,Asia Pacific,2024-08-02
-566,Alan Berners,Consumer,New York,United States,North America,2023-12-21
-567,Guido Rossum,Consumer,Melbourne,Australia,Asia Pacific,2023-12-11
-568,Niklaus Turing,Consumer,Paris,France,Europe,2023-07-04
-569,Alan Ritchie,Consumer,Melbourne,Australia,Asia Pacific,2023-12-19
-570,Dennis Lamarr,Corporate,Munich,Germany,Europe,2023-06-10
-571,Dennis Backus,Consumer,Munich,Germany,Europe,2023-06-10
-572,John Knuth,Small Business,Manchester,United Kingdom,Europe,2024-07-08
-573,Margaret Berners,Consumer,Berlin,Germany,Europe,2023-11-05
+564,Dennis Lovelace,Consumer,Seattle,United States,North America,2020-03-08
+565,Annie Hamilton,Consumer,Melbourne,Australia,Asia Pacific,2023-08-02
+566,Alan Berners,Consumer,New York,United States,North America,2022-12-21
+567,Guido Rossum,Consumer,Melbourne,Australia,Asia Pacific,2022-12-11
+568,Niklaus Turing,Consumer,Paris,France,Europe,2021-07-04
+569,Alan Ritchie,Consumer,Melbourne,Australia,Asia Pacific,2021-12-19
+570,Dennis Lamarr,Corporate,Munich,Germany,Europe,2020-06-10
+571,Dennis Backus,Consumer,Munich,Germany,Europe,2020-06-10
+572,John Knuth,Small Business,Manchester,United Kingdom,Europe,2022-07-08
+573,Margaret Berners,Consumer,Berlin,Germany,Europe,2021-11-05
 574,Guido Wilson,Consumer,Berlin,Germany,Europe,2024-06-17
-575,John Johnson,Consumer,Berlin,Germany,Europe,2024-12-06
-576,Edsger Ritchie,Consumer,Vancouver,Canada,North America,2023-04-18
-577,Barbara Johnson,Consumer,Berlin,Germany,Europe,2023-06-15
+575,John Johnson,Consumer,Berlin,Germany,Europe,2023-12-06
+576,Edsger Ritchie,Consumer,Vancouver,Canada,North America,2021-04-18
+577,Barbara Johnson,Consumer,Berlin,Germany,Europe,2022-06-15
 578,Hedy Thompson,Consumer,Manchester,United Kingdom,Europe,2024-10-05
-579,Hedy Knuth,Consumer,Chicago,United States,North America,2024-08-02
-580,Katherine Ritchie,Consumer,Toronto,Canada,North America,2023-09-08
-581,Donald Hamilton,Small Business,Sydney,Australia,Asia Pacific,2023-09-14
+579,Hedy Knuth,Consumer,Chicago,United States,North America,2023-08-02
+580,Katherine Ritchie,Consumer,Toronto,Canada,North America,2021-09-08
+581,Donald Hamilton,Small Business,Sydney,Australia,Asia Pacific,2021-09-14
 582,Margaret Hamilton,Consumer,Vancouver,Canada,North America,2024-03-02
-583,Radia Torvalds,Small Business,Osaka,Japan,Asia Pacific,2023-06-23
-584,Tim Liskov,Small Business,Sydney,Australia,Asia Pacific,2023-09-16
-585,Ken Rossum,Consumer,London,United Kingdom,Europe,2023-10-14
+583,Radia Torvalds,Small Business,Osaka,Japan,Asia Pacific,2020-06-23
+584,Tim Liskov,Small Business,Sydney,Australia,Asia Pacific,2021-09-16
+585,Ken Rossum,Consumer,London,United Kingdom,Europe,2020-10-14
 586,Ken Hamilton,Consumer,Seattle,United States,North America,2024-06-13
-587,Edsger Allen,Corporate,Austin,United States,North America,2023-08-27
+587,Edsger Allen,Corporate,Austin,United States,North America,2022-08-27
 588,Edsger Knuth,Small Business,Tokyo,Japan,Asia Pacific,2024-07-28
 589,Edsger Wilson,Small Business,Manchester,United Kingdom,Europe,2024-09-19
-590,Hedy Lovelace,Corporate,Vancouver,Canada,North America,2023-03-20
+590,Hedy Lovelace,Corporate,Vancouver,Canada,North America,2020-03-20
 591,Alan Knuth,Consumer,Sydney,Australia,Asia Pacific,2024-01-20
 592,Tim Berners,Consumer,Vancouver,Canada,North America,2024-01-08
-593,Hedy Allen,Consumer,Tokyo,Japan,Asia Pacific,2024-09-24
-594,Radia Rossum,Consumer,Toronto,Canada,North America,2024-06-11
-595,Guido Berners,Consumer,Lyon,France,Europe,2023-01-01
-596,Margaret Hamilton,Corporate,Tokyo,Japan,Asia Pacific,2024-05-11
-597,Katherine Lamarr,Small Business,Munich,Germany,Europe,2023-09-16
-598,Tim Wilson,Consumer,Munich,Germany,Europe,2023-11-08
-599,John Rossum,Consumer,Berlin,Germany,Europe,2024-07-16
-600,Alan Lamarr,Consumer,Vancouver,Canada,North America,2024-07-11
+593,Hedy Allen,Consumer,Tokyo,Japan,Asia Pacific,2022-09-24
+594,Radia Rossum,Consumer,Toronto,Canada,North America,2022-06-11
+595,Guido Berners,Consumer,Lyon,France,Europe,2021-01-01
+596,Margaret Hamilton,Corporate,Tokyo,Japan,Asia Pacific,2023-05-11
+597,Katherine Lamarr,Small Business,Munich,Germany,Europe,2021-09-16
+598,Tim Wilson,Consumer,Munich,Germany,Europe,2022-11-08
+599,John Rossum,Consumer,Berlin,Germany,Europe,2023-07-16
+600,Alan Lamarr,Consumer,Vancouver,Canada,North America,2023-07-11
