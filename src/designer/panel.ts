@@ -669,6 +669,32 @@ function phoneSection(ctx: PanelContext, v: Visual): HTMLElement {
 function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
   const set = (repeat: Visual['repeat']) => ctx.store.change('visual', () => (repeat ? (v.repeat = repeat) : delete v.repeat), v.id);
   const r = v.repeat;
+  const fixedPage = !!pageSize(ctx.store.visual(v.id)?.page);
+  // A whole-number option of the repeat (or of its copy size), empty for none.
+  type NumKey = 'minColumns' | 'maxColumns' | 'minRows' | 'maxRows' | 'maxHeight' | 'copyW' | 'copyH';
+  const get = (key: NumKey) => (key === 'copyW' ? r?.copy?.w : key === 'copyH' ? r?.copy?.h : r?.[key]);
+  const num = (label: string, key: NumKey, min: number, max: number, placeholder: string) =>
+    field(
+      label,
+      h(`input.sbd-input.sbd-repeat-${key}`, {
+        type: 'number',
+        min,
+        max,
+        value: get(key) ?? '',
+        placeholder,
+        onchange: (e: Event) => {
+          const n = Math.round(Number((e.target as HTMLInputElement).value));
+          const value = n >= min && n <= max ? n : undefined;
+          const next: NonNullable<Visual['repeat']> = { ...r!, copy: { ...r!.copy } };
+          if (key === 'copyW' || key === 'copyH') next.copy = { ...next.copy, [key === 'copyW' ? 'w' : 'h']: value };
+          else next[key] = value;
+          for (const k of Object.keys(next) as (keyof typeof next)[]) if (next[k] === undefined && k !== 'field') delete next[k];
+          if (next.copy) for (const k of ['w', 'h'] as const) if (next.copy[k] === undefined) delete next.copy[k];
+          if (next.copy && !Object.keys(next.copy).length) delete next.copy;
+          set(next);
+        },
+      }),
+    );
   let label = r?.field ?? '';
   if (r) {
     try {
@@ -723,6 +749,29 @@ function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
               ),
             ),
           ),
+          h('div.sbd-hint', {}, 'Each copy at least (page grid cells):'),
+          h('div.sbd-row.sbd-repeat-opts', {}, num('Columns wide', 'copyW', 1, 24, 'auto'), num('Rows tall', 'copyH', 1, 40, 'auto')),
+          h('div.sbd-hint', {}, 'Copies across and down (the minimums win over the copy size):'),
+          h('div.sbd-row.sbd-repeat-opts', {}, num('Min columns', 'minColumns', 1, 12, 'none'), num('Max columns', 'maxColumns', 1, 12, 'none')),
+          h('div.sbd-row.sbd-repeat-opts', {}, num('Min rows', 'minRows', 1, 20, 'none'), num('Max rows', 'maxRows', 1, 100, 'none')),
+          field(
+            'When copies don’t fit',
+            h(
+              'select.sbd-input.sbd-repeat-overflow',
+              { onchange: (e: Event) => set({ ...r, overflow: (e.target as HTMLSelectElement).value === 'expand' ? 'expand' : undefined }) },
+              h('option', { value: 'scroll', selected: r.overflow !== 'expand' }, 'Scroll inside the visual'),
+              // A fixed-size page never grows, so Expand is for responsive pages only.
+              h('option', { value: 'expand', selected: r.overflow === 'expand', disabled: fixedPage && r.overflow !== 'expand' }, fixedPage ? 'Expand the visual (responsive pages only)' : 'Expand the visual (moves the ones below)'),
+            ),
+          ),
+          ...(fixedPage
+            ? [h('div.sbd-hint.sbd-repeat-fixed', {}, r.overflow === 'expand' ? 'This page has a fixed size, so the copies scroll here. Expand works on responsive pages (Page size: Responsive).' : 'Expand needs a responsive page: a fixed-size page keeps its size.')]
+            : r.overflow === 'expand'
+            ? [
+                num('Grow up to (rows tall)', 'maxHeight', 1, 200, 'no limit'),
+                h('div.sbd-hint', {}, 'The visual grows in Preview and the viewer, up to this height, then scrolls; on the canvas, and on fixed-size pages, it scrolls.'),
+              ]
+            : []),
         ]
       : [h('div.sbd-drop', {}, 'Drop a field: a copy of this visual for each of its values')]),
   );

@@ -55,7 +55,12 @@ npm run serve      # http://localhost:8080/designer.html
    - **Repeat for each:** drop a field on a visual's *Repeat for each* well (in Build) to get a copy of it for each
      of the field's values: a card per product category, or a chart per region, each titled with its value. New
      values get their own copy when the data changes. Choose the number of columns, the most copies to show, and
-     A → Z or Z → A. A click in one copy filters the page by that value too.
+     A → Z or Z → A. Give each copy a minimum size in page grid cells (*Columns wide*, *Rows tall*), and the section
+     a minimum and maximum number of columns and rows; the minimums win when space is short. When the copies don't
+     fit, they scroll inside the visual, or, with *Expand the visual*, it grows to show them all, up to *Grow up to*
+     rows tall, and the visuals below move down (in Preview and the viewer; responsive pages only, since a fixed-size
+     page keeps its size). A click in one copy filters the page by
+     that value too.
    - **Maps:** the *Map* visual colours regions by a measure, or places points by latitude and longitude. The region
      shapes are a GeoJSON or TopoJSON file you add to the report, like a data file, and name in *Format → Shapes
      file*; public sources such as Natural Earth have country and state boundaries. Locations match the shapes'

@@ -63,7 +63,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - ✓ Data: refresh button and freshness indicator; optional auto-refresh interval per report.
 - ✓ Parameters: what-if values usable in measures (`[@Name]`), changed with a Parameter control.
 - ✓ Repeat for each: any visual repeated for each value of a field (a card per product type, a chart per region),
-  cross-filtering by the value too.
+  cross-filtering by the value too; a minimum copy size in grid cells, minimum and maximum columns and rows, and
+  scroll or expand (up to a height).
 - Data: incremental reload; materialized views as a "cache this table" switch.
 - Large files are imported into OPFS by default (link in place stays available).
 - Credentials: reports declare connections that need them; the viewer asks the reader and keeps

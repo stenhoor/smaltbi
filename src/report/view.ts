@@ -8,6 +8,7 @@ import { formatter } from '../core/format.js';
 import { pageGeometry, pageSize, paletteSize, themeCss } from '../theme/theme.js';
 import { PHONE_WIDTH, phoneLayout, type PhoneSlot } from './phone.js';
 import { CONDITIONAL_ROLE, cellFormatFor, conditionalFields } from './conditional.js';
+import { gridSpec, pushDown, repeatGrid, rowsFor } from './repeatgrid.js';
 import { type DataColumn, dataColumn, type Plan, type PlanContext, type VisualData, type VisualDef, optionsOf, visualDef } from '../visuals/index.js';
 import type { Frame } from '../data/runner.js';
 import { download, esc, h, showMenu, type MenuItem } from 'smaltkit/dom';
@@ -38,6 +39,8 @@ interface VisualRuntime {
   lastSize?: string;
   /** A repeated visual: its copies, as slices of `data` (rows start … start + count) and their extra results. */
   repeat?: { field: DataColumn; panels: RepeatPanel[]; more: number };
+  /** Grid rows this visual grows by to show all its copies (repeat overflow: expand). */
+  grow?: number;
 }
 
 interface RepeatPanel {
@@ -49,6 +52,8 @@ interface RepeatPanel {
 }
 
 const REPEAT_ROLE = 'repeat';
+/** Space between the copies of a repeated visual (px). */
+const REPEAT_GAP = 10;
 const REPEAT_MAX = 24;
 
 /** Rows of a result in a new order (a subset or a permutation). */
@@ -116,6 +121,8 @@ export class ReportView {
   /** Fixed-size pages: scaled down to fit the window (the viewer's "Fit to window"), or shown at 100% and scrolled. */
   fitPage = false;
   private fitSheet: (() => void) | null = null;
+  /** The page's grid as drawn: row height and gap (px), whether it is a fixed sheet, and the phone slots. */
+  private grid: { el: HTMLElement; cols: number; width: number; row: number; gap: number; fixed: boolean; phone: Map<string, PhoneSlot> } | null = null;
 
   setFitPage(on: boolean): void {
     this.fitPage = on;
@@ -237,6 +244,7 @@ export class ReportView {
       );
     } else this.root.replaceChildren(sheet);
     const phone = phoneLayout(page);
+    this.grid = { el: grid, cols: layout.columns, width: layout.width, row: layout.rowHeight, gap: layout.gap, fixed: !!layout.fixed, phone };
     for (const v of page.visuals) grid.append(this.frameFor(v, phone.get(v.id)));
     this.refreshAll();
   }
@@ -381,6 +389,45 @@ export class ReportView {
     }
   }
 
+  /**
+   * Expand: grow the visual's frame to fit `need` px of body (0: its own size), in whole grid rows, and move the visuals
+   * below it down. Never smaller than the report made it.
+   */
+  private growTo(v: Visual, rt: VisualRuntime, need: number): void {
+    const g = this.grid;
+    let grow = 0;
+    if (need > 0 && g) {
+      const chrome = rt.frame.offsetHeight - rt.body.clientHeight;
+      // Live, not this.narrow: a responsive page turns into a column by CSS alone when the window narrows.
+      const base = this.isNarrow() ? (g.phone.get(v.id)?.h ?? v.layout.h) : v.layout.h;
+      let span = rowsFor(need + chrome, g.row, g.gap);
+      // At most maxHeight rows tall: past that the copies scroll.
+      const cap = Math.round(Number(v.repeat?.maxHeight));
+      if (cap >= 1) span = Math.min(span, cap);
+      grow = Math.max(0, span - base);
+    }
+    if (grow === (rt.grow ?? 0)) return;
+    rt.grow = grow;
+    this.relayout();
+  }
+
+  /** Grid positions with the grown visuals' extra rows (pushDown); phones flow, so there only the heights change. */
+  private relayout(): void {
+    const page = this.page;
+    if (!page || !this.grid) return;
+    const grow = new Map<string, number>();
+    for (const v of page.visuals) grow.set(v.id, this.runtimes.get(v.id)?.grow ?? 0);
+    const placed = pushDown(page.visuals.map((v) => ({ id: v.id, y: v.layout.y, h: v.layout.h })), grow);
+    for (const v of page.visuals) {
+      const rt = this.runtimes.get(v.id);
+      const at = placed.get(v.id);
+      if (!rt || !at) continue;
+      rt.frame.style.gridRow = `${at.y + 1} / span ${at.h}`;
+      const phoneH = this.grid.phone.get(v.id)?.h ?? v.layout.h;
+      rt.frame.style.setProperty('--phone-h', String(phoneH + (grow.get(v.id) ?? 0)));
+    }
+  }
+
   /** A repeated visual: a grid of copies, each drawn by the visual's own renderer from its slice of the data. */
   private drawRepeat(v: Visual, def: VisualDef, rt: VisualRuntime, keys: Set<string> | null): void {
     const rep = rt.repeat!;
@@ -389,21 +436,28 @@ export class ReportView {
       rt.body.innerHTML = '<div class="sb-empty">No data</div>';
       return;
     }
-    const W = rt.body.clientWidth;
-    const H = rt.body.clientHeight - (rep.more ? 18 : 0);
-    const want = Math.round(Number(v.repeat?.columns));
-    // Automatic columns: panels about 1.4 times as wide as tall.
-    const cols = want >= 1 ? Math.min(want, n) : Math.max(1, Math.min(n, Math.round(Math.sqrt((n * W) / (Math.max(1, H) * 1.4)))));
-    const grid = h('div.sb-repeat', { style: `grid-template-columns:repeat(${cols},minmax(0,1fr))` });
-    const bodies = rep.panels.map((p) => {
+    const spec = v.repeat!;
+    // Expand grows the visual in a responsive page; a fixed sheet (and the designer's canvas) keeps its size and scrolls.
+    const expand = spec.overflow === 'expand' && this.opts.mode === 'view' && !this.grid?.fixed;
+    const gap = REPEAT_GAP;
+    // A copy's minimum size is in page grid cells: the page's column width and row height. On a phone the page is
+    // one column, so a cell is measured at the page's own width: copies keep their size and fewer fit across.
+    const pg = this.grid;
+    const colWidth = pg ? ((this.isNarrow() ? pg.width : pg.el.clientWidth) - (pg.cols - 1) * pg.gap) / pg.cols : 80;
+    const g = repeatGrid(gridSpec(spec, expand, colWidth, pg?.row ?? 40, pg?.gap ?? gap), n, rt.body.clientWidth, rt.body.clientHeight - (rep.more ? 18 : 0), gap);
+    const hidden = rep.more + (n - g.shown);
+    const grid = h('div.sb-repeat', { style: `grid-template-columns:repeat(${g.cols},minmax(0,1fr));grid-auto-rows:minmax(${g.rowHeight}px,1fr);gap:${gap}px` });
+    const panels = rep.panels.slice(0, g.shown);
+    const bodies = panels.map((p) => {
       const body = h('div.sb-repeat-body', { 'data-row-offset': String(p.start) });
       grid.append(h('div.sb-repeat-panel', { 'data-value': JSON.stringify(norm(p.value)) }, h('div.sb-repeat-title', { title: p.label }, p.label), body));
       return body;
     });
-    rt.body.replaceChildren(grid, ...(rep.more ? [h('div.sb-repeat-more', {}, `${rep.more} more not shown (Repeat for each shows ${n})`)] : []));
+    rt.body.replaceChildren(grid, ...(hidden ? [h('div.sb-repeat-more', {}, `${hidden} more not shown (Repeat for each shows ${g.shown})`)] : []));
+    this.growTo(v, rt, expand ? g.need + (hidden ? 18 : 0) : 0);
     const data = rt.data!;
     const options = optionsOf(def, v);
-    rep.panels.forEach((p, i) => {
+    panels.forEach((p, i) => {
       const el = bodies[i]!;
       const slice = pickRows(data, Array.from({ length: p.count }, (_, r) => p.start + r));
       try {

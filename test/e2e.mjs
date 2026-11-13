@@ -129,6 +129,22 @@ try {
       document.querySelectorAll('[data-id=r-cards] .sk-kpi-value').length === 7 &&
       document.querySelectorAll('[data-id=r-cats] .sk-bar').length === 12, undefined, 30000);
     check(regions, 'sample Regions page: a country map, a store map, seven repeated cards and three repeated charts');
+    // The country cards expand: the visual grows to show every row of cards and the charts below move down.
+    const grown = await until(landing, () => {
+      const cards = document.querySelector('[data-id=r-cards]');
+      const grid = cards.querySelector('.sb-repeat');
+      return /span ([4-9]|\d\d)/.test(cards.style.gridRow) && grid.scrollHeight <= grid.clientHeight + 1 && document.querySelector('[data-id=r-cats]').getBoundingClientRect().top >= cards.getBoundingClientRect().bottom;
+    });
+    check(grown, `sample Regions page: Expand grows the country cards and moves the charts below (${await landing.evaluate(() => document.querySelector('[data-id=r-cards]').style.gridRow)})`);
+    // On a phone: at least two cards across (the minimum wins over the cards' width), and the visual grows only up to
+    // its limit of 10 rows, then the cards scroll.
+    await landing.setViewportSize({ width: 390, height: 900 });
+    const capped = await until(landing, () => {
+      const cards = document.querySelector('[data-id=r-cards]');
+      const grid = cards.querySelector('.sb-repeat');
+      return getComputedStyle(grid).gridTemplateColumns.split(' ').length === 2 && cards.style.getPropertyValue('--phone-h') === '10' && grid.scrollHeight > grid.clientHeight + 1;
+    });
+    check(capped, `sample Regions page on a phone: two cards across, grown to its 10-row limit, then scrolling (${await landing.evaluate(() => { const c = document.querySelector("[data-id=r-cards]"); const g = c.querySelector(".sb-repeat"); return [getComputedStyle(g).gridTemplateColumns, c.style.getPropertyValue("--phone-h"), g.scrollHeight, g.clientHeight, innerWidth].join(" / "); })})`);
     await landing.close();
   } else {
     check(!process.env.E2E_SITE, 'product site checks skipped: _site/ is missing (run npm run site)');
@@ -550,6 +566,50 @@ try {
   await page.selectOption('.sbd-repeat-opts select', 'desc');
   const reversed = await until(page, () => [...document.querySelectorAll('.sb-visual[data-id="e2e-rcard"] .sb-repeat-title')].map((t) => t.textContent).join() === 'Tea,Equipment,Coffee,Accessories');
   check(reversed, 'repeat: Z → A reverses the copies');
+  // The grid: at most 2 columns and 1 row shows the first two copies and says how many more there are.
+  const rcard = '.sb-visual[data-id="e2e-rcard"]';
+  for (const [cls, val] of [['maxColumns', '2'], ['maxRows', '1']]) {
+    await page.locator(`.sbd-repeat-${cls}`).fill(val);
+    await page.locator(`.sbd-repeat-${cls}`).dispatchEvent('change');
+  }
+  const capped = await until(page, (sel) => [...document.querySelectorAll(`${sel} .sb-repeat-title`)].map((t) => t.textContent).join() === 'Tea,Equipment' && /^2 more not shown/.test(document.querySelector(`${sel} .sb-repeat-more`)?.textContent ?? ''), rcard);
+  // Copies at least 12 page columns wide (as wide as the visual): one column.
+  await page.locator('.sbd-repeat-copyW').fill('12');
+  await page.locator('.sbd-repeat-copyW').dispatchEvent('change');
+  const narrow = await until(page, (sel) => document.querySelectorAll(`${sel} .sb-repeat-panel`).length === 1 && /^3 more not shown/.test(document.querySelector(`${sel} .sb-repeat-more`)?.textContent ?? ''), rcard);
+  // At least 2 columns wins over the copy's width: two copies again, narrower.
+  await page.locator('.sbd-repeat-minColumns').fill('2');
+  await page.locator('.sbd-repeat-minColumns').dispatchEvent('change');
+  const minWins = await until(page, (sel) => document.querySelectorAll(`${sel} .sb-repeat-panel`).length === 2, rcard);
+  const spec = await page.evaluate(() => window.smaltbi.store.visual('e2e-rcard').visual.repeat);
+  check(capped && narrow && minWins && spec.maxColumns === 2 && spec.maxRows === 1 && spec.copy?.w === 12 && spec.minColumns === 2, `repeat: max columns and rows, the copy's size in grid cells and min columns shape the grid (${JSON.stringify(spec)})`);
+  // Expand is kept with the visual; on the canvas the visual keeps its size (it grows in Preview and the viewer).
+  for (const cls of ['maxRows', 'copyW', 'minColumns']) {
+    await page.locator(`.sbd-repeat-${cls}`).fill('');
+    await page.locator(`.sbd-repeat-${cls}`).dispatchEvent('change');
+  }
+  await page.selectOption('.sbd-repeat-overflow', 'expand');
+  await page.locator('.sbd-repeat-maxHeight').fill('8');
+  await page.locator('.sbd-repeat-maxHeight').dispatchEvent('change');
+  const expandSet = await until(page, () => {
+    const r = window.smaltbi.store.visual('e2e-rcard').visual.repeat;
+    return r?.overflow === 'expand' && r.maxHeight === 8 && !r.copy && !r.minColumns;
+  });
+  const canvasRow = await page.evaluate((sel) => document.querySelector(sel).style.gridRow, rcard);
+  check(expandSet && /span 3$/.test(canvasRow), `repeat: Expand is set from the panel; the canvas keeps the visual's size (${canvasRow})`);
+  // A fixed-size page never grows: there the panel says the copies scroll, and Expand can't be picked.
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('page', () => (d.page.size = { preset: '16:9' }), d.page.id);
+  });
+  const fixedNote = await until(page, () => /fixed size, so the copies scroll/.test(document.querySelector('.sbd-repeat-fixed')?.textContent ?? ''));
+  await page.selectOption('.sbd-repeat-overflow', 'scroll');
+  const fixedOff = await until(page, () => document.querySelector('.sbd-repeat-overflow option[value=expand]')?.disabled === true && /needs a responsive page/.test(document.querySelector('.sbd-repeat-fixed')?.textContent ?? ''));
+  check(fixedNote && fixedOff, 'repeat: on a fixed-size page Expand is offered for responsive pages only');
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('page', () => delete d.page.size, d.page.id);
+  });
   await page.evaluate(() => {
     const d = window.smaltbi;
     d.store.change('page', () => (d.page.visuals = d.page.visuals.filter((v) => !['e2e-rcard', 'e2e-rbar'].includes(v.id))), d.page.id);

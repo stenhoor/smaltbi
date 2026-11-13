@@ -235,8 +235,25 @@ export interface Visual {
   /**
    * Repeat the visual for each value of a field (a dimension): a grid of copies, each filtered to its value and
    * titled with it. `columns` (else automatic), `max` copies (default 24), values in `order` (default asc).
+   * - Each copy is at least `copy.w` columns and `copy.h` rows of the page grid (height default 90 px).
+   * - The section: `minColumns` / `minRows` of copies at least (they win over the copy's minimum size: copies shrink
+   *   to fit them), `maxColumns` / `maxRows` at most (copies past them are not shown).
+   * - Copies that don't fit `scroll` inside the visual (the default) or `expand` it: it grows to show them all, up to
+   *   `maxHeight` grid rows tall (then scrolls), and the visuals below move down. In the viewer; fixed pages scroll.
    */
-  repeat?: { field: string; columns?: number; max?: number; order?: 'asc' | 'desc' };
+  repeat?: {
+    field: string;
+    columns?: number;
+    max?: number;
+    order?: 'asc' | 'desc';
+    copy?: { w?: number; h?: number };
+    minColumns?: number;
+    maxColumns?: number;
+    minRows?: number;
+    maxRows?: number;
+    overflow?: 'scroll' | 'expand';
+    maxHeight?: number;
+  };
   /** On phones (narrow screens) the page is one column: hide this visual there, or give it its own height in rows. */
   phone?: { hidden?: boolean; h?: number };
 }
