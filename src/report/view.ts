@@ -98,6 +98,20 @@ export class ReportView {
     return !!pageSize(this.page) && !this.narrow;
   }
 
+  private refreshing: Promise<void> | null = null;
+
+  /** Load the data again (the data steps run again) and redraw; selections, filters and the page stay. */
+  refreshData(): Promise<void> {
+    this.refreshing ??= this.session
+      .reloadData()
+      .then(() => {
+        this.render();
+        this.emit();
+      })
+      .finally(() => (this.refreshing = null));
+    return this.refreshing;
+  }
+
   setColorMode(mode: 'auto' | 'light' | 'dark'): void {
     if (mode === 'auto') this.root.removeAttribute('data-mode');
     else this.root.dataset.mode = mode;

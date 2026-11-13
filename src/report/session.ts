@@ -41,6 +41,7 @@ export class ReportSession {
     const db = await openDatabase(engine, report, base, opts);
     const s = new ReportSession(report, base, engine, db, opts);
     s.runner = new QueryRunner(db);
+    s.loadedAt = new Date();
     await s.refreshSchema();
     s.theme = await loadTheme(report.theme, base);
     return s;
@@ -63,6 +64,9 @@ export class ReportSession {
   }
 
   /** Rebuild the database from the report's data steps (after the data section changed). */
+  /** When the data was last loaded (opened or refreshed): the viewer's freshness label. */
+  loadedAt = new Date();
+
   async reloadData(): Promise<void> {
     await this.db.close().catch(() => {});
     this.db = await openDatabase(this.engine, this.report, this.base, { ...this.opts, force: true });
@@ -70,6 +74,7 @@ export class ReportSession {
     this.knownRowCounts.clear();
     this.runner = new QueryRunner(this.db);
     await this.refreshSchema();
+    this.loadedAt = new Date();
   }
 
   /** A table's row count, counted once per data load (null when the source can't be read). */

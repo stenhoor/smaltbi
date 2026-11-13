@@ -146,6 +146,24 @@ export async function dataDialog(ctx: DialogContext): Promise<boolean> {
     h('div.sbd-row', {}, dbSel, useDb),
     h('div.sbd-section-title', {}, 'Storage'),
     storage,
+    h('div.sbd-section-title', {}, 'Refresh'),
+    h(
+      'label.sbd-field-row',
+      {},
+      h('span', {}, 'In the viewer, load the data again every … minutes (empty: only with the Refresh button)'),
+      h('input.sbd-input.sbd-refresh-every', {
+        type: 'number',
+        min: 1,
+        max: 1440,
+        value: data.refresh?.every ?? '',
+        placeholder: 'off',
+        onchange: (e: Event) => {
+          const n = Math.round(Number((e.target as HTMLInputElement).value));
+          if (n >= 1 && n <= 1440) data.refresh = { every: n };
+          else delete data.refresh;
+        },
+      }),
+    ),
   );
   const ok = await dialog('Data', body, [{ label: 'Cancel' }, { label: 'Apply', primary: true, value: () => true }], { wide: true });
   if (!ok) return false;

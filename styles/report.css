@@ -165,6 +165,9 @@ body[data-mode=dark] .sbv-mark-dark { display: inline; }
 .sbv-tab.sbv-on { color: var(--sb-accent); background: color-mix(in oklab, var(--sb-accent) 11%, transparent); font-weight: 600; }
 .sbv-actions { display: flex; gap: 6px; margin-left: auto; }
 .sbv-btn { font: inherit; font-size: 12px; color: var(--sb-text); background: var(--sb-surface); border: 1px solid var(--sb-border); border-radius: 7px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+.sbv-fresh { font-size: 12px; color: var(--sb-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sbv-btn.sbv-busy { opacity: 0.6; cursor: progress; }
+@media (max-width: 720px) { .sbv-fresh { display: none; } }
 .sbv-btn:hover { border-color: var(--sb-accent); }
 .sbv-host { position: relative; }
 .sbv-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 70vh; color: #5c6375; font: 14px Geist, system-ui, sans-serif; text-align: center; padding: 20px; }

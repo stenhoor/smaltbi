@@ -30,6 +30,7 @@ plugins run ([PLUGINS](PLUGINS.md)).
 "data": {
   "database": { "name": "sales", "storage": "memory" },   // or "opfs"
   "init": "always",            // opfs: "once" (default: build only if empty) | "always" | "none" (use as is)
+  "refresh": { "every": 15 },  // optional: the viewer loads the data again every 15 minutes (while visible)
   "steps": [
     { "import": "data/sales.csv", "table": "sales" },                       // copy into a table
     { "import": "https://…/x.parquet", "table": "x" },
