@@ -89,6 +89,11 @@ export interface Relationship {
   from: string; // "orders.customer_id"
   to: string; // "customers.id"
   active?: boolean;
+  /**
+   * A role-playing relationship: the `to` table appears a second time under this name (an alias), joined through
+   * this relationship, e.g. `sales.ship_date → calendar.date` as "Ship date" beside the calendar of the order date.
+   */
+  role?: string;
 }
 
 export interface Measure {

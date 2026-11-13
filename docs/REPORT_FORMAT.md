@@ -53,7 +53,10 @@ environment manifests. To report on an existing OPFS database, use
 
 ```jsonc
 "model": {
-  "relationships": [ { "from": "sales.customer_id", "to": "customers.id" } ],   // many → one
+  "relationships": [
+    { "from": "sales.customer_id", "to": "customers.id" },                     // many → one
+    { "from": "sales.ship_date", "to": "calendar.date", "role": "Ship date" }   // a role (below)
+  ],
   "measures": [
     { "table": "sales", "name": "Revenue", "sql": "SUM(sales.quantity * sales.unit_price)", "format": "currency0" },
     { "table": "sales", "name": "Margin %", "sql": "([Revenue] - [Cost]) / NULLIF([Revenue], 0)", "format": "percent" },
@@ -81,6 +84,11 @@ environment manifests. To report on an existing OPFS database, use
   hierarchy of that table. The first dot separates the table.
 - **`[Name]`** inside measure or column SQL inlines a measure (searched model-wide) or a calculated
   column (of the same table, or `[table.Name]`). Other bracketed text is left alone.
+- **Roles** (role-playing dimensions): a relationship with a `role` makes its `to` table appear a second time under
+  that name, joined through this relationship: `calendar` for the order date and `Ship date` for the ship date. Refer
+  to its fields as `"Ship date.month"`; its columns and hierarchies are the table's own. Only the table itself is
+  repeated: tables beyond it are still reached through the original. A role name can't be a table's name or contain
+  a dot.
 - **`[@Name]`** inside measure or column SQL is a **parameter**: a value readers change with a Parameter control
   visual (a slider for a number with `min` and `max`, a number box, a dropdown for text with `choices`, or a text
   box). It runs as a literal of the current value: the reader's choice, kept inside `min`/`max` or `choices`, or else

@@ -140,6 +140,22 @@ function relPanel(ctx: ModelPanelContext, index: number): HTMLElement {
     field('Many side (foreign key)', colSelect(r.from, 'from')),
     field('One side (key)', colSelect(r.to, 'to')),
     checkbox('Active (used by queries)', r.active !== false, (on) => update({ active: on ? undefined : false })),
+    field(
+      'Role (optional)',
+      h('input.sbd-input.sbd-rel-role', {
+        value: r.role ?? '',
+        placeholder: `e.g. Ship date: ${tt} a second time`,
+        onchange: (e: Event) => {
+          const v = (e.target as HTMLInputElement).value.trim();
+          update({ role: v || undefined });
+        },
+      }),
+    ),
+    hint(
+      r.role
+        ? `${tt} appears again as “${r.role}” in the fields, joined through this relationship: group by ${r.role}'s columns to use ${r.from} instead of the other relationship to ${tt}.`
+        : `To relate ${ft} to ${tt} a second way (an order date and a ship date to one calendar), name a role: ${tt} then appears a second time under that name.`,
+    ),
     h(
       'div.sbd-row',
       {},

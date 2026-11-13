@@ -49,20 +49,23 @@ function cardHeight(t: TableInfo): number {
  * hop; unrelated tables go in a row underneath.
  */
 export function autoLayout(model: Model): Record<string, Pos> {
-  const tables = [...model.tables.values()];
+  // A role table has no card of its own: its lines go to the table it plays.
+  const tables = [...model.tables.values()].filter((t) => !t.source);
+  const card = (name: string) => model.tables.get(name)?.source ?? name;
+  const edges = model.edges.map((e) => ({ from: card(e.from.table), to: card(e.to.table) }));
   const level = new Map<string, number>();
-  const into = new Set(model.edges.map((e) => e.to.table));
-  const related = new Set(model.edges.flatMap((e) => [e.from.table, e.to.table]));
+  const into = new Set(edges.map((e) => e.to));
+  const related = new Set(edges.flatMap((e) => [e.from, e.to]));
   for (const t of tables) if (related.has(t.name) && !into.has(t.name)) level.set(t.name, 0);
   if (!level.size && related.size) level.set([...related][0]!, 0);
   // Longest path from a fact (relaxation, bounded by the table count so cycles terminate).
   for (let pass = 0; pass < tables.length; pass++) {
     let changed = false;
-    for (const e of model.edges) {
-      const l = level.get(e.from.table);
-      if (l === undefined || e.from.table === e.to.table) continue;
-      if ((level.get(e.to.table) ?? -1) < l + 1 && l + 1 <= tables.length) {
-        level.set(e.to.table, l + 1);
+    for (const e of edges) {
+      const l = level.get(e.from);
+      if (l === undefined || e.from === e.to) continue;
+      if ((level.get(e.to) ?? -1) < l + 1 && l + 1 <= tables.length) {
+        level.set(e.to, l + 1);
         changed = true;
       }
     }
@@ -186,7 +189,8 @@ export class ModelView {
     );
     this.board.replaceChildren(this.svg);
     this.cards.clear();
-    for (const t of this.model.tables.values()) this.board.append(this.card(t));
+    // A role is drawn as its relationship (labelled with the role), not as a card of its own.
+    for (const t of this.model.tables.values()) if (!t.source) this.board.append(this.card(t));
     this.root.replaceChildren(toolbar, this.scroller);
     this.applyZoom();
     requestAnimationFrame(() => {
@@ -307,11 +311,13 @@ export class ModelView {
       const ty = p2.y + c2.y - c1.y - p1.y;
       const ang = (Math.atan2(-ty, -tx) * 180) / Math.PI;
       const on = sel?.kind === 'rel' && sel.index === i;
-      const cls = `sbd-mv-rel${r.active === false ? ' sbd-mv-inactive' : ''}${on ? ' sbd-on' : ''}`;
+      const cls = `sbd-mv-rel${r.active === false ? ' sbd-mv-inactive' : ''}${r.role ? ' sbd-mv-role' : ''}${on ? ' sbd-on' : ''}`;
       out += `<g class="${cls}" data-rel="${i}"><path class="sbd-mv-hit" d="${d}"/><path class="sbd-mv-path" d="${d}"/>`;
       out += `<path class="sbd-mv-arrow" d="M-6,-5 L6,0 L-6,5 Z" transform="translate(${mx.toFixed(1)},${my.toFixed(1)}) rotate(${ang.toFixed(1)})"/>`;
       out += `<text class="sbd-mv-mark" x="${p1.x + d1 * 12}" y="${p1.y - 5}" text-anchor="middle">*</text>`;
-      out += `<text class="sbd-mv-mark" x="${p2.x + d2 * 12}" y="${p2.y - 5}" text-anchor="middle">1</text></g>`;
+      out += `<text class="sbd-mv-mark" x="${p2.x + d2 * 12}" y="${p2.y - 5}" text-anchor="middle">1</text>`;
+      if (r.role) out += `<text class="sbd-mv-rolelabel" x="${mx.toFixed(1)}" y="${(my - 9).toFixed(1)}" text-anchor="middle">as ${r.role.replace(/[<&"]/g, '')}</text>`;
+      out += '</g>';
     });
     this.svg.innerHTML = out + (this.temp ? this.temp.outerHTML : '');
     this.svg.querySelectorAll<SVGGElement>('.sbd-mv-rel').forEach((g) => {

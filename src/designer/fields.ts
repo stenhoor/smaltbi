@@ -196,8 +196,8 @@ export function fieldsPane(model: Model, handlers: FieldsPaneHandlers, collapsed
         },
         h('span.sbd-caret', {}, open ? '▾' : '▸'),
         h('span', {}, t.label),
-        h('span.sbd-kind', {}, t.kind === 'BASE TABLE' ? '' : t.kind.toLowerCase()),
-        h(
+        h('span.sbd-kind', { title: t.source ? `${t.source} again, through its own relationship` : '' }, t.source ? `${t.source} role` : t.kind === 'BASE TABLE' ? '' : t.kind.toLowerCase()),
+        t.source ? null : h(
           'span.sbd-add',
           {
             title: 'New measure',

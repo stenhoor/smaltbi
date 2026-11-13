@@ -306,3 +306,7 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-repeat { border-style: dashed; }
 .sbd-repeat-opts { gap: 6px; }
 .sbd-repeat-opts .sbd-field-row { flex: 1; min-width: 0; }
+
+/* Model view: a role-playing relationship (dashed, labelled with its role) */
+.sbd-mv-role .sbd-mv-path { stroke-dasharray: 6 4; }
+.sbd-mv-rolelabel { font-size: 11px; font-weight: 600; fill: var(--d-accent); paint-order: stroke; stroke: var(--d-bg); stroke-width: 3px; }
