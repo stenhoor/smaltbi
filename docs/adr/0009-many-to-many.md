@@ -134,8 +134,10 @@ Target by product, with the budget by category only.)
 
 **Owner decision 3: how that table comes about. Decided: (a), "Make a category table".**
 
-- **(a) "Make a category table" (recommended; chosen):** a button in the warning adds a data step,
-  `CREATE TABLE category AS SELECT DISTINCT category FROM products`. It also adds the relationships
+- **(a) "Make a category table" (recommended; chosen):** a button in the warning adds a data step that creates
+  `category` with a primary key and one type, then fills it with the distinct values of both columns
+  (`INSERT … SELECT … UNION SELECT …`). The declared key is what the uniqueness check trusts, and the one type makes
+  a value that is text on one side and a number on the other a single row. It also adds the relationships
   `products.category → category.category` and `budget.category → category.category`. This is the same pattern as
   Add date table: one click, a real table, visible in the model and the data steps. After that it's shape B, and
   Revenue against Target by category works.

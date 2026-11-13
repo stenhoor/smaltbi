@@ -133,8 +133,15 @@ environment manifests. To report on an existing OPFS database, use
 - A relationship's `to` column must be **unique** (one row per value), or each `from` row would be counted once per
   repeat. When the data loads, each relationship's target column is checked (declared primary keys pass without
   looking). The model view marks one with repeated values, and visuals with measures through it fail with an
-  explanation; lists of values (slicers) still work. ADR 0009 has the fix for a different grain (a budget by
-  category): a table with one row per value.
+  explanation; lists of values (slicers) still work.
+- The fix for a different grain (a budget by category related to `products.category`): a table with one row per
+  value. **Make a ⟨column⟩ table**, in the relationship's panel, adds it as a data step. The step builds the table from
+  both columns' values, cast to one type, so a year that is text on one side and a number on the other is one value.
+  The flagged relationship then points at the new table, and the original column gets a relationship to it too.
+  After that, the budget and the sales are two facts sharing a dimension, lined up by drill-across. The sample's
+  budget does this for category and for year (Targets page).
+- Replacing the date table keeps its step where it was, so a step that reads the calendar still runs after it.
+  Removing the date table is refused while another step reads it.
 
 ### Formats
 

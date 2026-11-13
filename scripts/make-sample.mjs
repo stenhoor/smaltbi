@@ -102,10 +102,22 @@ for (const p of products)
     if (rand() < chance) productTags.push({ product_id: p.id, tag_id: t.id });
   }
 
+// A budget by category and year (ADR 0009: a second fact at another grain). Each year's target is the year before's
+// revenue plus 15%, rounded; 2026 has targets and no sales yet. Worked out from the sales, so it draws nothing random.
+const revenue = new Map();
+for (const s of sales) {
+  const key = `${products[s.product_id - 1].category}|${s.order_date.slice(0, 4)}`;
+  revenue.set(key, (revenue.get(key) ?? 0) + s.quantity * s.unit_price * (1 - s.discount));
+}
+const budget = [];
+for (const category of Object.keys(catalog))
+  for (let y = 2022; y <= 2026; y++) budget.push({ category, year: String(y), target: Math.round(((revenue.get(`${category}|${y - 1}`) ?? 0) * 1.15) / 1000) * 1000 });
+
+writeFileSync(join(out, 'budget.csv'), csv(budget));
 writeFileSync(join(out, 'tags.csv'), csv(tags));
 writeFileSync(join(out, 'product_tags.csv'), csv(productTags));
 writeFileSync(join(out, 'products.csv'), csv(products));
 writeFileSync(join(out, 'stores.csv'), csv(stores));
 writeFileSync(join(out, 'customers.csv'), csv(customers));
 writeFileSync(join(out, 'sales.csv'), csv(sales));
-console.log(`examples/sales/data: ${sales.length} sales, ${customers.length} customers, ${products.length} products, ${stores.length} stores, ${productTags.length} product tags`);
+console.log(`examples/sales/data: ${sales.length} sales, ${customers.length} customers, ${products.length} products, ${stores.length} stores, ${productTags.length} product tags, ${budget.length} budget rows`);

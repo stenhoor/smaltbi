@@ -137,22 +137,46 @@ export function planDateTable(o: DateTableOptions): DateTablePlan {
 }
 
 /**
- * Add (or replace) the report's date table: the step goes last in the data steps, the relationship, hierarchies and
- * display settings into the model, and `model.dateTable` records it. A previous date table is removed first.
+ * Add (or replace) the report's date table: the step goes last in the data steps (or, replacing one, where the old one
+ * was, so steps that read the calendar after it still run after it), the relationship, hierarchies and display
+ * settings into the model, and `model.dateTable` records it. A previous date table is removed first.
  */
 export function addDateTable(report: Report, o: DateTableOptions): DateTablePlan {
   const plan = planDateTable(o);
+  const old = dateStepIndex(report);
   removeDateTable(report);
   const { table } = plan.spec;
   const steps = (report.data.steps ??= []);
   if (steps.some((s) => 'table' in s && s.table === table)) throw new Error(`a data step already creates a table named "${table}": pick another name`);
-  steps.push(plan.step);
+  if (old >= 0) steps.splice(old, 0, plan.step);
+  else steps.push(plan.step);
   const model = report.model;
   (model.relationships ??= []).push(plan.relationship);
   (model.hierarchies ??= []).push(...plan.hierarchies);
   (model.tables ??= {})[table] = plan.settings;
   model.dateTable = plan.spec;
   return plan;
+}
+
+/**
+ * Other data steps that read the date table (a year table made from calendar.year): removing the date table would
+ * leave them nothing to read, so the data would no longer load.
+ */
+export function stepsReadingDateTable(report: Report): string[] {
+  const spec = report.model.dateTable;
+  if (!spec) return [];
+  const marker = `-- Date table for ${spec.source}:`;
+  const name = spec.table.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const reads = new RegExp(`\\b(FROM|JOIN)\\s+("${name}"|${name})\\b`, 'i');
+  return (report.data.steps ?? []).flatMap((s) => ('sql' in s && !s.sql.startsWith(marker) && reads.test(s.sql) ? [s.sql.split('\n')[0]!.replace(/^--\s*/, '')] : []));
+}
+
+/** Where the report's date table step is, or -1. */
+function dateStepIndex(report: Report): number {
+  const spec = report.model.dateTable;
+  if (!spec) return -1;
+  const marker = `-- Date table for ${spec.source}:`;
+  return (report.data.steps ?? []).findIndex((s) => 'sql' in s && s.sql.startsWith(marker));
 }
 
 /** Remove the report's date table (its step, relationship, hierarchies and settings). */
@@ -162,7 +186,8 @@ export function removeDateTable(report: Report): void {
   const marker = `-- Date table for ${spec.source}:`;
   report.data.steps = (report.data.steps ?? []).filter((s) => !('sql' in s && s.sql.startsWith(marker)));
   const model = report.model;
-  model.relationships = (model.relationships ?? []).filter((r) => r.to !== `${spec.table}.${spec.column}`);
+  // Its own relationship (from its source column), not others to the calendar, such as a role (the ship date).
+  model.relationships = (model.relationships ?? []).filter((r) => !(r.to === `${spec.table}.${spec.column}` && r.from === spec.source && !r.role));
   model.hierarchies = (model.hierarchies ?? []).filter((h) => h.table !== spec.table);
   if (model.tables) delete model.tables[spec.table];
   if (model.layout) delete model.layout[spec.table];

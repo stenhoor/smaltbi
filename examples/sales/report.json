@@ -11,7 +11,10 @@
       { "import": "data/sales.csv", "table": "sales" },
       { "import": "data/tags.csv", "table": "tags" },
       { "import": "data/product_tags.csv", "table": "product_tags" },
-      { "sql": "-- Date table for sales.order_date: whole years around its dates (added by \"Add date table\").\nDROP TABLE IF EXISTS \"calendar\";\nCREATE TABLE \"calendar\" (\"date\" TEXT PRIMARY KEY, \"year\" TEXT, \"quarter\" TEXT, \"month\" INTEGER, \"month_name\" TEXT, \"year_month\" TEXT, \"day\" INTEGER, \"day_of_week\" INTEGER, \"day_name\" TEXT, \"week\" INTEGER, \"week_start\" TEXT);\nINSERT INTO \"calendar\" (\"date\", \"year\", \"quarter\", \"month\", \"month_name\", \"year_month\", \"day\", \"day_of_week\", \"day_name\", \"week\", \"week_start\")\nWITH RECURSIVE days(d) AS (\n  SELECT date((SELECT min(\"sales\".\"order_date\") FROM \"sales\"), 'start of year')\n  UNION ALL SELECT date(d, '+1 day') FROM days\n  WHERE d < date(date((SELECT max(\"sales\".\"order_date\") FROM \"sales\"), 'start of year'), '+12 months', '-1 day')\n)\nSELECT d, strftime('%Y', d), 'Q' || ((CAST(strftime('%m', d) AS INTEGER) + 2) / 3), CAST(strftime('%m', d) AS INTEGER), CASE CAST(strftime('%m', d) AS INTEGER) WHEN 1 THEN 'Jan' WHEN 2 THEN 'Feb' WHEN 3 THEN 'Mar' WHEN 4 THEN 'Apr' WHEN 5 THEN 'May' WHEN 6 THEN 'Jun' WHEN 7 THEN 'Jul' WHEN 8 THEN 'Aug' WHEN 9 THEN 'Sep' WHEN 10 THEN 'Oct' WHEN 11 THEN 'Nov' WHEN 12 THEN 'Dec' END, strftime('%Y-%m', d), CAST(strftime('%d', d) AS INTEGER), ((CAST(strftime('%w', d) AS INTEGER) + 6) % 7) + 1, CASE CAST(strftime('%w', d) AS INTEGER) WHEN 0 THEN 'Sun' WHEN 1 THEN 'Mon' WHEN 2 THEN 'Tue' WHEN 3 THEN 'Wed' WHEN 4 THEN 'Thu' WHEN 5 THEN 'Fri' WHEN 6 THEN 'Sat' END, CAST(strftime('%W', d) AS INTEGER), date(d, '-' || (((CAST(strftime('%w', d) AS INTEGER) + 6) % 7) + 1 - 1) || ' days') FROM days;" }
+      { "import": "data/budget.csv", "table": "budget" },
+      { "sql": "-- Date table for sales.order_date: whole years around its dates (added by \"Add date table\").\nDROP TABLE IF EXISTS \"calendar\";\nCREATE TABLE \"calendar\" (\"date\" TEXT PRIMARY KEY, \"year\" TEXT, \"quarter\" TEXT, \"month\" INTEGER, \"month_name\" TEXT, \"year_month\" TEXT, \"day\" INTEGER, \"day_of_week\" INTEGER, \"day_name\" TEXT, \"week\" INTEGER, \"week_start\" TEXT);\nINSERT INTO \"calendar\" (\"date\", \"year\", \"quarter\", \"month\", \"month_name\", \"year_month\", \"day\", \"day_of_week\", \"day_name\", \"week\", \"week_start\")\nWITH RECURSIVE days(d) AS (\n  SELECT date((SELECT min(\"sales\".\"order_date\") FROM \"sales\"), 'start of year')\n  UNION ALL SELECT date(d, '+1 day') FROM days\n  WHERE d < date(date((SELECT max(\"sales\".\"order_date\") FROM \"sales\"), 'start of year'), '+12 months', '-1 day')\n)\nSELECT d, strftime('%Y', d), 'Q' || ((CAST(strftime('%m', d) AS INTEGER) + 2) / 3), CAST(strftime('%m', d) AS INTEGER), CASE CAST(strftime('%m', d) AS INTEGER) WHEN 1 THEN 'Jan' WHEN 2 THEN 'Feb' WHEN 3 THEN 'Mar' WHEN 4 THEN 'Apr' WHEN 5 THEN 'May' WHEN 6 THEN 'Jun' WHEN 7 THEN 'Jul' WHEN 8 THEN 'Aug' WHEN 9 THEN 'Sep' WHEN 10 THEN 'Oct' WHEN 11 THEN 'Nov' WHEN 12 THEN 'Dec' END, strftime('%Y-%m', d), CAST(strftime('%d', d) AS INTEGER), ((CAST(strftime('%w', d) AS INTEGER) + 6) % 7) + 1, CASE CAST(strftime('%w', d) AS INTEGER) WHEN 0 THEN 'Sun' WHEN 1 THEN 'Mon' WHEN 2 THEN 'Tue' WHEN 3 THEN 'Wed' WHEN 4 THEN 'Thu' WHEN 5 THEN 'Fri' WHEN 6 THEN 'Sat' END, CAST(strftime('%W', d) AS INTEGER), date(d, '-' || (((CAST(strftime('%w', d) AS INTEGER) + 6) % 7) + 1 - 1) || ' days') FROM days;" },
+      { "sql": "-- One row per category, from products.category and budget.category (added by \"Make a category table\": products.category repeats values).\nDROP TABLE IF EXISTS \"category\";\nCREATE TABLE \"category\" (\"category\" TEXT PRIMARY KEY);\nINSERT INTO \"category\" (\"category\")\nSELECT CAST(\"category\" AS TEXT) FROM \"products\" WHERE \"category\" IS NOT NULL\nUNION SELECT CAST(\"category\" AS TEXT) FROM \"budget\" WHERE \"category\" IS NOT NULL;" },
+      { "sql": "-- One row per year, from calendar.year and budget.year (added by \"Make a year table\": calendar.year repeats values).\nDROP TABLE IF EXISTS \"year\";\nCREATE TABLE \"year\" (\"year\" TEXT PRIMARY KEY);\nINSERT INTO \"year\" (\"year\")\nSELECT CAST(\"year\" AS TEXT) FROM \"calendar\" WHERE \"year\" IS NOT NULL\nUNION SELECT CAST(\"year\" AS TEXT) FROM \"budget\" WHERE \"year\" IS NOT NULL;" }
     ]
   },
   "model": {
@@ -21,6 +24,10 @@
       { "from": "sales.store_id", "to": "stores.id" },
       { "from": "product_tags.product_id", "to": "products.id" },
       { "from": "product_tags.tag_id", "to": "tags.id" },
+      { "from": "budget.category", "to": "category.category" },
+      { "from": "products.category", "to": "category.category" },
+      { "from": "budget.year", "to": "year.year" },
+      { "from": "calendar.year", "to": "year.year" },
       { "from": "sales.order_date", "to": "calendar.date" },
       { "from": "sales.ship_date", "to": "calendar.date", "role": "Ship date" }
     ],
@@ -33,6 +40,8 @@
     ],
     "measures": [
       { "table": "sales", "name": "Revenue", "sql": "SUM([Line Revenue])", "format": { "currency": "USD", "decimals": 0 } },
+      { "table": "budget", "name": "Target", "sql": "SUM(budget.target)", "format": { "currency": "USD", "decimals": 0 }, "description": "The budget: each year's target by category" },
+      { "table": "sales", "name": "Revenue vs target", "sql": "[Revenue] / NULLIF([Target], 0)", "format": "percent", "description": "Revenue as a share of the target: two facts, lined up by the fields they share" },
       { "table": "sales", "name": "Cost", "sql": "SUM(sales.quantity * products.unit_cost)", "format": { "currency": "USD", "decimals": 0 } },
       { "table": "sales", "name": "Gross Margin", "sql": "[Revenue] - [Cost]", "format": { "currency": "USD", "decimals": 0 } },
       { "table": "sales", "name": "Margin %", "sql": "([Revenue] - [Cost]) / NULLIF([Revenue], 0)", "format": "percent" },
@@ -112,6 +121,19 @@
         { "id": "w-next", "type": "card", "layout": { "x": 4, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Revenue next year"] }, "filters": [{ "field": "calendar.year", "op": "in", "values": ["2025"] }], "options": { "caption": "2026 at the Growth rate" } },
         { "id": "w-cats", "type": "card", "title": "Next year by category", "subtitle": "One card per category: Repeat for each", "layout": { "x": 0, "y": 3, "w": 12, "h": 3 }, "fields": { "values": ["sales.Revenue next year"] }, "filters": [{ "field": "calendar.year", "op": "in", "values": ["2025"] }], "repeat": { "field": "products.category" } },
         { "id": "w-regions", "type": "line", "title": "Revenue by year, for each region", "layout": { "x": 0, "y": 6, "w": 12, "h": 6 }, "fields": { "category": ["calendar.year"], "values": ["sales.Revenue"] }, "options": { "markers": true }, "repeat": { "field": "customers.region", "columns": 3 } }
+      ]
+    },
+    {
+      "id": "targets",
+      "name": "Targets",
+      "visuals": [
+        { "id": "g-title", "type": "text", "layout": { "x": 0, "y": 0, "w": 6, "h": 1 }, "fields": {}, "options": { "text": "# Targets\nRevenue (sales) beside the budget's targets: two facts, lined up by category and year" } },
+        { "id": "g-year", "type": "slicer", "layout": { "x": 6, "y": 0, "w": 6, "h": 1 }, "fields": { "field": ["year.year"] }, "options": { "style": "buttons", "single": true } },
+        { "id": "g-rev", "type": "card", "layout": { "x": 0, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Revenue"] } },
+        { "id": "g-tgt", "type": "card", "layout": { "x": 4, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["budget.Target"] } },
+        { "id": "g-pct", "type": "card", "layout": { "x": 8, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Revenue vs target"] }, "conditional": [{ "apply": "*", "op": "gte", "value": 1, "tone": "good", "icon": "up" }, { "apply": "*", "op": "lt", "value": 1, "tone": "bad", "icon": "down" }] },
+        { "id": "g-cat", "type": "column", "title": "Revenue and target by category", "layout": { "x": 0, "y": 3, "w": 6, "h": 6 }, "fields": { "category": ["category.category"], "values": ["sales.Revenue", "budget.Target"] }, "options": { "labels": false } },
+        { "id": "g-matrix", "type": "matrix", "title": "Revenue against target", "subtitle": "2026 has targets and no sales yet", "layout": { "x": 6, "y": 3, "w": 6, "h": 6 }, "fields": { "rows": ["category.category"], "columns": ["year.year"], "values": ["sales.Revenue vs target"] }, "options": { "format": "heat" } }
       ]
     },
     {

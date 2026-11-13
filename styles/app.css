@@ -316,3 +316,5 @@ input[type='color'].sbd-input { padding: 2px; height: 30px; }
 .sbd-mv-notunique .sbd-mv-path { stroke: var(--danger); }
 .sbd-mv-notuniquelabel { font-size: 11px; fill: var(--danger); }
 .sbd-mv-rolelabel { font-size: 11px; font-weight: 600; fill: var(--d-accent); paint-order: stroke; stroke: var(--d-bg); stroke-width: 3px; }
+/* "Make a … table" under a relationship to a non-unique column (ADR 0009, decision 3a). */
+.sbd-make-table { margin-top: 8px; }
