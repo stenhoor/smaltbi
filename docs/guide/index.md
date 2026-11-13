@@ -46,6 +46,11 @@ npm run serve      # http://localhost:8080/designer.html
      table; double-click the edge to fit the column to its contents again.
    - **Field search:** press `/` and type to find a field. Use ↓ and ↑ to move through the matches and Enter to add
      one; Space selects it, and Esc clears the search.
+   - **Maps:** the *Map* visual colours regions by a measure, or places points by latitude and longitude. The region
+     shapes are a GeoJSON or TopoJSON file you add to the report, like a data file, and name in *Format → Shapes
+     file*; public sources such as Natural Earth have country and state boundaries. Locations match the shapes'
+     `name` property (or their id or ISO code); *Match locations on property* picks another. Publishing copies the
+     shapes file.
    - **Plugins:** *File → Plugins…* adds a visual plugin by the URL of its file. smaltbi records the file's hash, so a
      changed file no longer loads. Plugin visuals appear at the end of the visual gallery. Writing one:
      [plugins](/PLUGINS).

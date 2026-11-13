@@ -1,0 +1,9 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature", "properties": { "name": "North America", "note": "rough rectangle for tests, not a boundary" }, "geometry": { "type": "Polygon", "coordinates": [[[-130, 15], [-60, 15], [-60, 60], [-130, 60], [-130, 15]]] } },
+    { "type": "Feature", "properties": { "name": "Europe", "note": "rough rectangle for tests, not a boundary" }, "geometry": { "type": "Polygon", "coordinates": [[[-10, 36], [30, 36], [30, 65], [-10, 65], [-10, 36]]] } },
+    { "type": "Feature", "properties": { "name": "Asia Pacific", "note": "rough rectangle for tests, not a boundary" }, "geometry": { "type": "Polygon", "coordinates": [[[70, -40], [150, -40], [150, 40], [70, 40], [70, -40]]] } },
+    { "type": "Feature", "properties": { "name": "Antarctica", "note": "rough rectangle for tests: no data" }, "geometry": { "type": "Polygon", "coordinates": [[[-180, -80], [180, -80], [180, -65], [-180, -65], [-180, -80]]] } }
+  ]
+}

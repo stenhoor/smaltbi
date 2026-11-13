@@ -57,6 +57,7 @@ Files:
   brand/                              favicon, the smaltbi mark and the "Powered by smaltbi" badge
   data/                               the data files the report loads
   plugins/                            the report's plugins, if it has any
+  maps/                               the shapes files its maps draw, if it has any
 `;
 
 async function fetchBytes(url: string): Promise<Uint8Array> {
@@ -144,6 +145,23 @@ export async function publishEntries(session: ReportSession, opts: PublishOption
       }),
     );
   }
+  // Map shapes files go with the site (maps/), so the published report has everything it draws.
+  const shapeFiles = new Map<string, string>();
+  for (const page of report.pages)
+    for (const v of page.visuals) {
+      const file = v.options?.shapes;
+      if (typeof file !== 'string' || !file.trim()) continue;
+      const url = new URL(file.trim(), session.base).href;
+      let path = shapeFiles.get(url);
+      if (!path) {
+        log(url);
+        path = `maps/${(new URL(url).pathname.split('/').pop() || 'shapes.json').replace(/[^\w.-]+/g, '_')}`;
+        for (let i = 2; [...shapeFiles.values()].includes(path); i++) path = path.replace(/(\.\w+)?$/, `-${i}$1`);
+        shapeFiles.set(url, path);
+        entries.push({ path, data: await fetchBytes(url) });
+      }
+      v.options = { ...v.options, shapes: path };
+    }
   entries.push({ path: 'report.json', data: JSON.stringify(report, null, 2) + '\n' });
   entries.push({ path: 'index.html', data: VIEWER_HTML(report.name) });
   entries.push({ path: '_headers', data: HEADERS_FILE });

@@ -75,6 +75,8 @@ export interface RenderContext {
   /** Number of colors in the theme palette (series classes cycle sk-c0 … sk-c{n-1}). */
   palette: number;
   locale?: string;
+  /** The report's URL: files a visual names (a map's shapes) resolve against it, like data files. */
+  base?: string;
   /** null when nothing is selected in this visual, else whether row `i` is selected. */
   selected(row: number): boolean | null;
   /** Conditional formatting of a measure value (report/conditional.ts); tables, matrices and cards use it. */

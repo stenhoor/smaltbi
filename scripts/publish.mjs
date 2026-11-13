@@ -65,6 +65,26 @@ if (report.plugins?.length) {
     ref.url = name;
   }
 }
+// Map shapes files are copied into the site (maps/).
+{
+  const copied = new Map();
+  for (const page of report.pages ?? [])
+    for (const v of page.visuals ?? []) {
+      const file = v.options?.shapes;
+      if (typeof file !== 'string' || !file.trim()) continue;
+      const remote = /^[a-z][a-z0-9+.-]*:/i.test(file);
+      const from = remote ? file : resolve(dirname(src), file);
+      let to = copied.get(from);
+      if (!to) {
+        to = 'maps/' + basename(remote ? new URL(file).pathname : file).replace(/[^\w.-]+/g, '_');
+        while ([...copied.values()].includes(to)) to = to.replace(/(\.\w+)?$/, '-2$1');
+        mkdirSync(join(out, 'maps'), { recursive: true });
+        writeFileSync(join(out, to), remote ? Buffer.from(await (await fetch(file)).arrayBuffer()) : readFileSync(from));
+        copied.set(from, to);
+      }
+      v.options.shapes = to;
+    }
+}
 // A theme given as a relative file is inlined.
 if (typeof report.theme === 'string' && /\.json$/i.test(report.theme)) report.theme = JSON.parse(readFileSync(resolve(dirname(src), report.theme), 'utf8'));
 
