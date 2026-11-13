@@ -69,7 +69,11 @@ environment manifests. To report on an existing OPFS database, use
   },
   "layout": { "sales": { "x": 368, "y": 40 }, "customers": { "x": 696, "y": 40 } },  // model diagram positions (display only)
   "dateTable": { "table": "calendar", "column": "date", "source": "sales.order_date",   // written by "Add date table"
-                 "fiscalStart": 7, "weekStart": 1, "isoWeeks": true }
+                 "fiscalStart": 7, "weekStart": 1, "isoWeeks": true },
+  "parameters": [                                            // what-if values, used as [@Name]
+    { "name": "Growth", "type": "number", "value": 0.1, "min": 0, "max": 0.5, "step": 0.05, "format": "percent" },
+    { "name": "Region", "type": "text", "value": "Europe", "choices": ["Europe", "North America"] }
+  ]
 }
 ```
 
@@ -77,6 +81,11 @@ environment manifests. To report on an existing OPFS database, use
   hierarchy of that table. The first dot separates the table.
 - **`[Name]`** inside measure or column SQL inlines a measure (searched model-wide) or a calculated
   column (of the same table, or `[table.Name]`). Other bracketed text is left alone.
+- **`[@Name]`** inside measure or column SQL is a **parameter**: a value readers change with a Parameter control
+  visual (a slider for a number with `min` and `max`, a number box, a dropdown for text with `choices`, or a text
+  box). It runs as a literal of the current value: the reader's choice, kept inside `min`/`max` or `choices`, or else
+  `value`. Custom visual SQL can use `[@Name]` too. The reader's values are part of the view state (`params`, in
+  the URL), like slicers.
 - **Quick measures** for time intelligence carry `time` instead of SQL (`sql` stays empty):
   `{ "table": "sales", "name": "Revenue YTD", "sql": "", "time": { "of": "sales.Revenue", "calc": "ytd" } }`.
   `calc` is `ytd`, `qtd` or `mtd` (to date; years and quarters follow the date table's fiscal year), `py` (the same
@@ -189,6 +198,7 @@ A field in `fields` can also be an object: `{ "field": "sales.quantity", "agg": 
 | `table` | columns (dim), values (measure) | `totals`, `format`: none/bars/heat, `density`, `pageSize` (rows per page; a pager under the table), `freeze` (leading columns kept in view when scrolling sideways), `widths` (px by field, set by dragging a header's edge) |
 | `matrix` | rows (dim), columns (dim, 2), values (measure) | `rowTotals`, `colTotals`, `format`, `layout` (`stepped`: one indented row-header column, parents expand and collapse; `tabular`: a column per row field), `subtotals` (stepped: parent rows show their level's subtotals), `collapsed` (start with parents collapsed) |
 | `slicer` | field (dim, 1) | `style`: list/dropdown/buttons/range/search, `single`, `sync` |
+| `parameter` | — | `param` (the parameter's name; the only one if there is one) |
 | `text` | values (measure) for `{0}`, `{1}` | `text` (markdown subset), `align` |
 | `image` | — | `url`, `alt`, `fit` |
 | `waterfall` | category (dim, 1), values (measure, 1) | `total`, `labels` |

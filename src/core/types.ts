@@ -66,6 +66,23 @@ export interface ModelSpec {
   /** Where each table card sits in the designer's model diagram (pixels). Display only. */
   layout?: Record<string, { x: number; y: number }>;  /** The date table added by "Add date table" (time-intelligence measures use it). */
   dateTable?: DateTableSpec;
+  /** What-if parameters: values readers change (a Parameter control), used in measures and columns as `[@Name]`. */
+  parameters?: Parameter[];
+}
+
+/** A what-if parameter: a number or text value, its default, and the range or choices a reader picks from. */
+export interface Parameter {
+  name: string;
+  type: 'number' | 'text';
+  /** The value until a reader changes it. */
+  value: number | string;
+  min?: number;
+  max?: number;
+  step?: number;
+  /** Text: the values to pick from (a dropdown); without them, a text box. */
+  choices?: string[];
+  format?: Format;
+  description?: string;
 }
 
 export interface Relationship {
@@ -308,6 +325,8 @@ export interface ViewState {
   drill?: Record<string, DrillState>;
   /** Filters set by a drill-through into the current page. */
   drillthrough?: { from: string; filters: Filter[] };
+  /** Parameter values the reader set (by parameter name); the rest keep their defaults. */
+  params?: Record<string, number | string>;
 }
 
 // ------------------------------------------------------------------ theme

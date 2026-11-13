@@ -35,7 +35,9 @@ npm run serve      # http://localhost:8080/designer.html
    references that don't exist, and Ctrl+Enter tests the expression. *Add date table* creates a calendar related to a date column, with Year › Quarter › Month ›
    Date to drill, and optionally fiscal years, Sunday weeks and ISO weeks. Then right-click a measure, *Quick
    measure…*, for year to date, same period last year (and the change vs it), previous month or quarter, or rolling
-   months: no SQL to write.
+   months: no SQL to write. *Parameters…* in the model view adds what-if values (a growth rate, a target) that
+   measures use as `[@Growth]`; a *Parameter* visual on the page lets readers change them with a slider or a
+   dropdown, and every visual follows.
 3. **Visuals.** Back in *Report*, click a field to add a visual, or drag fields onto the canvas and into a visual's
    wells. The side panel changes its type, format, filters and SQL.
    - **Wells:** drop a field where you want it in a well. Drag a field from one well to another to move it; its

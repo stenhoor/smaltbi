@@ -5,6 +5,7 @@ import { ICONS } from './icons.js';
 import { esc } from 'smaltkit/svg';
 import { choiceControl, rangeControl, searchControl } from 'smaltkit/controls';
 import { markdown } from 'smaltkit/markdown';
+import { formatter } from 'smaltkit/format';
 
 function selectedValues(ctx: RenderContext): SqlValue[] | null {
   const f = ctx.api.filters().find((x) => x.op === 'in');
@@ -112,5 +113,48 @@ registerVisual({
     ctx.el.innerHTML = /^(https?:|data:image\/|[\w./-]+$)/.test(url) && url
       ? `<img class="sb-image" src="${esc(url)}" alt="${esc(ctx.options.alt)}" style="object-fit:${esc(ctx.options.fit)}">`
       : '<div class="sb-empty">Set an image URL</div>';
+  },
+});
+
+// A what-if parameter's control: a slider (a number with a range), a number box, a dropdown (text with choices) or a
+// text box. Changing it runs every visual again with the new value.
+registerVisual({
+  type: 'parameter',
+  label: 'Parameter',
+  group: 'core',
+  icon: ICONS.parameter!,
+  roles: [],
+  options: [{ key: 'param', label: 'Parameter name', type: 'text', default: '' }],
+  static: true,
+  selfInteractive: true,
+  render(ctx) {
+    const all = ctx.api.parameters();
+    const wanted = String(ctx.options.param ?? '').trim().toLowerCase();
+    const p = wanted ? all.find((x) => x.name.toLowerCase() === wanted) : all.length === 1 ? all[0] : undefined;
+    if (!p) {
+      ctx.el.innerHTML = `<div class="sb-empty">${all.length ? `Choose a parameter: ${esc(all.map((x) => x.name).join(', '))}` : 'Add a parameter to the model first'}</div>`;
+      return;
+    }
+    const value = ctx.api.param(p.name);
+    const show = p.type === 'number' && p.format ? formatter(p.format, 'number') : null;
+    const fmt = (v: unknown) => (show ? show(Number(v)) : String(v ?? ''));
+    const id = `p-${Math.random().toString(36).slice(2, 8)}`;
+    let input: string;
+    if (p.type === 'number' && p.min !== undefined && p.max !== undefined) {
+      input = `<input class="sb-param-range" id="${id}" type="range" min="${p.min}" max="${p.max}" step="${p.step ?? 'any'}" value="${esc(value)}"><output class="sb-param-value" for="${id}">${esc(fmt(value))}</output>`;
+    } else if (p.type === 'number') {
+      input = `<input class="sb-param-input" id="${id}" type="number" step="${p.step ?? 'any'}" value="${esc(value)}">`;
+    } else if (p.choices?.length) {
+      input = `<select class="sb-param-input" id="${id}">${p.choices.map((c) => `<option${c === value ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select>`;
+    } else {
+      input = `<input class="sb-param-input" id="${id}" type="text" value="${esc(value)}">`;
+    }
+    ctx.el.innerHTML = `<div class="sb-param"><label class="sb-param-label" for="${id}">${esc(p.name)}</label><div class="sb-param-row">${input}</div></div>`;
+    const el = ctx.el.querySelector<HTMLInputElement | HTMLSelectElement>(`#${id}`)!;
+    const out = ctx.el.querySelector('output');
+    const read = () => (p.type === 'number' ? Number(el.value) : el.value);
+    // A slider shows its value as it moves and runs the queries when it is let go.
+    el.addEventListener('input', () => out && (out.textContent = fmt(el.value)));
+    el.addEventListener('change', () => ctx.api.setParam(p.name, read()));
   },
 });

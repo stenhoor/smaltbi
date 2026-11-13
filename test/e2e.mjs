@@ -456,6 +456,60 @@ try {
   // The map stays too: publishing must copy its shapes file.
   // The plugin and its visual stay: the published site below must carry the plugin.
 
+  // What-if parameters: add one in the model view, use it in a measure, and move its slider.
+  await page.click('.sbd-seg-btn:has-text("Model")');
+  await page.click('.sbd-mv-params');
+  await page.click('.sbd-param-add');
+  await page.locator('.sbd-param-name').fill('Growth');
+  await page.locator('.sbd-param-name').dispatchEvent('change');
+  for (const [cls, v] of [['sbd-param-value', '0.1'], ['sbd-param-min', '0'], ['sbd-param-max', '1'], ['sbd-param-step', '0.1']]) {
+    await page.locator(`.${cls}`).fill(v);
+    await page.locator(`.${cls}`).dispatchEvent('change');
+  }
+  await page.click('.sk-dialog[open] button:has-text("Apply")');
+  const paramAdded = await until(page, () => JSON.stringify(window.smaltbi.store.report.model.parameters) === '[{"name":"Growth","type":"number","value":0.1,"min":0,"max":1,"step":0.1}]');
+  await page.click('.sbd-seg-btn:has-text("Report")');
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('model', (r) => r.model.measures.push({ table: 'sales', name: 'Revenue grown', sql: '[Revenue] * (1 + [@Growth])', format: 'currency' }));
+    d.store.change('page', () => d.page.visuals.push(
+      { id: 'e2e-param', type: 'parameter', layout: { x: 0, y: 70, w: 4, h: 2 }, fields: {}, options: { param: 'Growth' } },
+      { id: 'e2e-grown', type: 'card', layout: { x: 4, y: 70, w: 3, h: 2 }, fields: { values: ['sales.Revenue grown'] } },
+      { id: 'e2e-plain', type: 'card', layout: { x: 7, y: 70, w: 3, h: 2 }, fields: { values: ['sales.Revenue'] } },
+    ), d.page.id);
+  });
+  const money = (sel) => page.evaluate((s) => Number((document.querySelector(s)?.textContent ?? '').replace(/[^\d.]/g, '')), sel);
+  await until(page, () => /\d/.test(document.querySelector('.sb-visual[data-id="e2e-grown"] .sk-kpi-value')?.textContent ?? '') && /\d/.test(document.querySelector('.sb-visual[data-id="e2e-plain"] .sk-kpi-value')?.textContent ?? ''), undefined, 15000);
+  const plain = await money('.sb-visual[data-id="e2e-plain"] .sk-kpi-value');
+  const at10 = await money('.sb-visual[data-id="e2e-grown"] .sk-kpi-value');
+  await page.locator('.sb-visual[data-id="e2e-param"] input[type=range]').fill('0.5');
+  await page.locator('.sb-visual[data-id="e2e-param"] input[type=range]').dispatchEvent('change');
+  const paramMoved = await until(page, (p) => {
+    const t = Number((document.querySelector('.sb-visual[data-id="e2e-grown"] .sk-kpi-value')?.textContent ?? '').replace(/[^\d.]/g, ''));
+    return Math.abs(t - p * 1.5) <= 1;
+  }, plain, 15000);
+  const at50 = await money('.sb-visual[data-id="e2e-grown"] .sk-kpi-value');
+  check(paramAdded && Math.abs(at10 - plain * 1.1) <= 1 && paramMoved, `parameters: Growth added in the model; the card follows the slider (${plain} → ${at10} at 10% → ${at50} at 50%)`);
+  // The measure editor completes [@ with the parameters, and knows them (no warning).
+  await page.locator('.sbd-field:has(.sbd-flabel:text-is("Revenue grown"))').click({ button: 'right' });
+  await page.click('.sk-menu-item:has-text("Edit measure…")');
+  await page.waitForSelector('.sk-dialog .sk-editor .sk-ed-input');
+  await page.locator('.sk-dialog .sk-ed-input').focus();
+  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.type(' + [@Gr');
+  const paramCompletes = await until(page, () => [...document.querySelectorAll('.sk-dialog .sk-ed-complete:not([hidden]) [data-i]')].some((li) => /@Growth/.test(li.textContent)), undefined, 5000);
+  const noWarn = await page.evaluate(() => ![...document.querySelectorAll('.sk-dialog mark.sk-ed-warn')].some((m) => /@Growth/.test(m.textContent)));
+  await page.click('.sk-dialog[open] button:has-text("Cancel")');
+  check(paramCompletes && noWarn, 'parameters: the measure editor completes [@ with them and does not flag [@Growth]');
+  await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('page', () => (d.page.visuals = d.page.visuals.filter((v) => !['e2e-param', 'e2e-grown', 'e2e-plain'].includes(v.id))), d.page.id);
+    d.store.change('model', (r) => {
+      r.model.measures = r.model.measures.filter((m) => m.name !== 'Revenue grown');
+      delete r.model.parameters;
+    });
+  });
+
   // Phone view: the page as one column in reading order; a visual hidden on phones, another moved up; a fixed-size
   // page reflows into the column too.
   await page.keyboard.press('Escape');

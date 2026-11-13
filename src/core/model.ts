@@ -1,6 +1,6 @@
 // The resolved semantic model: the database schema (from introspection) overlaid with the report's
 // model spec (relationships, measures, calculated columns, hierarchies, display settings).
-import type { Aggregation, ColumnType, FieldRef, Format, Hierarchy, Measure, ModelSpec, Relationship, TimeCalcKind } from './types.js';
+import type { Aggregation, ColumnType, FieldRef, Format, Hierarchy, Measure, ModelSpec, Parameter, Relationship, TimeCalcKind } from './types.js';
 import { quoteIdent, splitRef } from './sql.js';
 
 /** What introspection of the database returns. */
@@ -69,8 +69,11 @@ export class Model {
   readonly edges: Edge[] = [];
   /** Measure names, globally (for `[Name]` references). */
   private measureIndex = new Map<string, Measure>();
+  /** What-if parameters by lowercased name. */
+  readonly parameters = new Map<string, Parameter>();
 
   constructor(schema: SchemaInfo, readonly spec: ModelSpec = {}) {
+    for (const p of spec.parameters ?? []) if (p?.name) this.parameters.set(p.name.toLowerCase(), p);
     for (const t of schema.tables) {
       const settings = spec.tables?.[t.name];
       const info: TableInfo = {
@@ -241,6 +244,12 @@ export class Model {
   expandRefs(sql: string, home: string, seen: Set<string>): string {
     return sql.replace(/\[([^\[\]]+)\]/g, (whole, inner: string) => {
       const name = inner.trim();
+      // [@Name]: a what-if parameter, bound to its value when the query runs (bindParams).
+      if (name.startsWith('@')) {
+        const p = this.parameters.get(name.slice(1).trim().toLowerCase());
+        if (!p) throw new ModelError(`unknown parameter ${name}: add it under Parameters in the model`);
+        return paramToken(p.name);
+      }
       let table = home;
       let field = name;
       if (name.includes('.') && this.tables.has(splitRef(name)[0])) [table, field] = splitRef(name);
@@ -421,4 +430,48 @@ export function aggLabel(agg: Aggregation): string {
 
 export function refName(r: FieldRef): string {
   return typeof r === 'string' ? r : r.field;
+}
+
+// ------------------------------------------------------------------ parameters
+
+/** The placeholder a `[@Name]` reference compiles to; bindParams replaces it with the value. */
+export function paramToken(name: string): string {
+  return `/*@param*/(@@${encodeURIComponent(name.toLowerCase())}@@)`;
+}
+
+/** A parameter's value for a query: the reader's, if valid for its type and range, else its default. */
+export function paramValue(p: Parameter, given: unknown): number | string {
+  if (p.type === 'number') {
+    const n = typeof given === 'number' ? given : typeof given === 'string' && given.trim() !== '' ? Number(given) : NaN;
+    let v = Number.isFinite(n) ? n : Number(p.value);
+    if (!Number.isFinite(v)) v = 0;
+    if (p.min !== undefined && v < p.min) v = p.min;
+    if (p.max !== undefined && v > p.max) v = p.max;
+    return v;
+  }
+  const t = typeof given === 'string' || typeof given === 'number' ? String(given) : String(p.value ?? '');
+  return p.choices?.length && !p.choices.includes(t) ? String(p.value ?? p.choices[0]) : t;
+}
+
+/** Replace parameter placeholders in compiled SQL with SQL literals of their current values. */
+export function bindParams(sql: string, model: Model, values: Record<string, unknown> = {}): string {
+  if (!sql.includes('/*@param*/')) return sql;
+  const byLower = new Map(Object.entries(values).map(([k, v]) => [k.toLowerCase(), v]));
+  return sql.replace(/\/\*@param\*\/\(@@([^@]+)@@\)/g, (_, enc: string) => {
+    const key = decodeURIComponent(enc);
+    const p = model.parameters.get(key);
+    if (!p) return 'NULL';
+    const v = paramValue(p, byLower.get(key));
+    return typeof v === 'number' ? `(${String(v)})` : `'${v.replace(/'/g, "''")}'`;
+  });
+}
+
+/** `[@Name]` references in hand-written SQL (a visual's custom SQL) as placeholders, so bindParams can bind them. */
+export function paramRefs(sql: string, model: Model): string {
+  return sql.replace(/\[@([^\[\]]+)\]/g, (whole, name: string) => (model.parameters.has(name.trim().toLowerCase()) ? paramToken(name.trim()) : whole));
+}
+
+/** Placeholders back to `[@Name]`, for SQL shown to people (View SQL, Convert to SQL). */
+export function showParams(sql: string, model: Model): string {
+  return sql.replace(/\/\*@param\*\/\(@@([^@]+)@@\)/g, (_, enc: string) => `[@${model.parameters.get(decodeURIComponent(enc))?.name ?? decodeURIComponent(enc)}]`);
 }

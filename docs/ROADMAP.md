@@ -61,8 +61,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - ✓ A Map visual (filled regions and points, GeoJSON/TopoJSON shapes as the report's own files), drawn by
   `smaltkit/maps` so smaltnb can use it too; our own code, so built in rather than a plugin.
 - ✓ Data: refresh button and freshness indicator; optional auto-refresh interval per report.
-- Data: incremental reload; materialized views as a "cache this table" switch; parameters (what-if
-  values usable in measures).
+- ✓ Parameters: what-if values usable in measures (`[@Name]`), changed with a Parameter control.
+- Data: incremental reload; materialized views as a "cache this table" switch.
 - Large files are imported into OPFS by default (link in place stays available).
 - Credentials: reports declare connections that need them; the viewer asks the reader and keeps
   them in memory only.

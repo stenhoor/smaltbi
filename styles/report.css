@@ -191,3 +191,11 @@ body[data-mode=dark] .sbv-mark-dark { display: inline; }
 body[data-mode=dark] .sbv-badge-light { display: none; }
 body[data-mode=dark] .sbv-badge-dark { display: inline; }
 @media print { .sbv-foot { display: none; } }
+
+/* The Parameter control (visuals/controls.ts). */
+.sb-param { display: flex; flex-direction: column; gap: 6px; height: 100%; justify-content: center; }
+.sb-param-label { font-size: var(--sb-fs-sub); color: var(--sb-muted); font-weight: 600; }
+.sb-param-row { display: flex; align-items: center; gap: 10px; }
+.sb-param-range { flex: 1; accent-color: var(--sb-accent, var(--sk-accent)); }
+.sb-param-value { min-width: 3em; text-align: right; font-family: var(--sb-font-num, inherit); font-variant-numeric: tabular-nums; }
+.sb-param-input { font: inherit; color: var(--sb-text); background: var(--sb-surface); border: 1px solid var(--sb-border); border-radius: 6px; padding: 4px 8px; width: 100%; }
