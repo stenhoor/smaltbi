@@ -1,7 +1,7 @@
 // The bar above a report in view mode: title, page tabs, bookmarks, reset, color mode.
 // Used by the published viewer and the designer's preview.
 import type { ViewState } from '../core/types.js';
-import { h, showMenu } from 'smaltkit/dom';
+import { h, showMenu, toast } from 'smaltkit/dom';
 import type { ReportView } from './view.js';
 import { MODE_ICONS } from '../visuals/icons.js';
 
@@ -43,7 +43,7 @@ export function colorModeButton(selector: string, apply: (mode: ColorMode) => vo
 }
 
 /** `mode: false` leaves the colour-mode switch out (the designer's preview, whose top bar has one). */
-export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[]; mode?: boolean } = {}): HTMLElement & { renderTabs(): void } {
+export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[]; mode?: boolean } = {}): HTMLElement & { renderTabs(): void; refresh(): Promise<void> } {
   const report = view.report;
   const tabs = h('nav.sbv-tabs', { role: 'tablist' });
   const renderTabs = () => {
@@ -74,6 +74,29 @@ export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[]; mode?
     fitBtn.title = view.fitPage ? 'Show the page at full size (scroll to see all of it)' : 'Scale the page down to fit the window';
     fitBtn.setAttribute('aria-pressed', String(view.fitPage));
   };
+  // Refresh: the data steps run again; the label says when the data was loaded.
+  const fresh = h('span.sbv-fresh');
+  const showFresh = () => {
+    const at = view.session.loadedAt;
+    fresh.textContent = `Data from ${at.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+    fresh.title = `Loaded ${at.toLocaleString()}`;
+  };
+  const refresh = async () => {
+      if (refreshBtn.hasAttribute('disabled')) return;
+      refreshBtn.setAttribute('disabled', '');
+      refreshBtn.classList.add('sbv-busy');
+      try {
+        await view.refreshData();
+      } catch (e) {
+        toast(`The data could not be refreshed: ${(e as Error).message}`, 'error', 8000);
+      } finally {
+        refreshBtn.removeAttribute('disabled');
+        refreshBtn.classList.remove('sbv-busy');
+        showFresh();
+      }
+  };
+  const refreshBtn: HTMLElement = h('button.sbv-btn.sbv-refresh', { title: 'Load the data again', onclick: () => void refresh() }, '↻ Refresh');
+  showFresh();
   renderTabs();
   showFit();
   const modeBtn = opts.mode === false
@@ -108,13 +131,15 @@ export function viewerBar(view: ReportView, opts: { extra?: HTMLElement[]; mode?
             '☆ Bookmarks',
           )
         : null,
+      fresh,
+      refreshBtn,
       fitBtn,
       h('button.sbv-btn', { title: 'Clear all selections and slicers', onclick: () => view.clearSelections() }, '↺ Reset'),
       modeBtn,
       ...(opts.extra ?? []),
     ),
   );
-  return Object.assign(bar, { renderTabs });
+  return Object.assign(bar, { renderTabs, refresh });
 }
 
 /**

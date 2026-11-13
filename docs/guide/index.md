@@ -26,7 +26,9 @@ npm run serve      # http://localhost:8080/designer.html
 ## Build a report
 
 1. **Data.** Open *Data* and add steps: import or link CSV, TSV, JSON, NDJSON or Parquet from a URL or your computer,
-   or run SQL to create views. Steps run in order each time the report opens.
+   or run SQL to create views. Steps run in order each time the report opens, and again when a reader clicks
+   *Refresh* in the viewer bar, beside the time the data was loaded. To refresh on a timer as well, set *Refresh*
+   in the Data dialog to a number of minutes.
 2. **Model.** Switch to *Model* for the diagram of your tables. Drag a column onto another table's key to relate them,
    and add measures (`SUM(sales.quantity * sales.unit_price)`) and calculated columns. Measures can use each other:
    `[Revenue] - [Cost]`. The editor completes tables, `table.` columns and `[` measures from the model, underlines

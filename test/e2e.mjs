@@ -176,6 +176,47 @@ try {
     await pv.close();
   }
 
+  // ---------------------------------------------------------------- refreshing the data
+  // A report on a CSV that grows: the viewer's Refresh button loads it again and the label says when; with
+  // data.refresh.every set, the viewer does it on its own (the page's clock is fast-forwarded).
+  {
+    const dir = mkdtempSync(join(tmpdir(), 'smaltbi-refresh-'));
+    const csv = (n) => 'id,amount\n' + Array.from({ length: n }, (_, i) => `${i + 1},10`).join('\n') + '\n';
+    writeFileSync(join(dir, 'data.csv'), csv(3));
+    const rep = (every) => ({
+      smaltbi: 1,
+      name: 'Refresh fixture',
+      data: { database: { name: 'refresh-fixture', storage: 'memory' }, steps: [{ import: 'data.csv', table: 't' }], ...(every ? { refresh: { every } } : {}) },
+      model: { measures: [{ table: 't', name: 'Rows', sql: 'COUNT(*)', format: 'integer' }] },
+      pages: [{ id: 'p', name: 'P', visuals: [{ id: 'k', type: 'card', layout: { x: 0, y: 0, w: 3, h: 2 }, fields: { values: ['t.Rows'] } }] }],
+    });
+    writeFileSync(join(dir, 'report.json'), JSON.stringify(rep()));
+    writeFileSync(join(dir, 'auto.json'), JSON.stringify(rep(5)));
+    const refreshPort = port + 4;
+    await serve(dir, refreshPort);
+    const rv = await newPage(browser, { viewport: { width: 1200, height: 700 } });
+    rv.on('pageerror', (e) => errors.push('refresh viewer: ' + e.message));
+    await rv.goto(`http://localhost:${port}/viewer.html?report=http://localhost:${refreshPort}/report.json`);
+    const three = await until(rv, () => document.querySelector('.sk-kpi-value')?.textContent === '3', undefined, 30000);
+    const label = await rv.locator('.sbv-fresh').textContent();
+    writeFileSync(join(dir, 'data.csv'), csv(5));
+    await rv.click('.sbv-refresh');
+    const five = await until(rv, () => document.querySelector('.sk-kpi-value')?.textContent === '5' && !document.querySelector('.sbv-refresh[disabled]'), undefined, 30000);
+    check(three && five && /^Data from /.test(label ?? ''), `refresh: the Refresh button loads the data again (3 → 5 rows, "${label}")`);
+    await rv.close();
+    writeFileSync(join(dir, 'data.csv'), csv(3));
+    const av = await newPage(browser, { viewport: { width: 1200, height: 700 } });
+    av.on('pageerror', (e) => errors.push('auto refresh: ' + e.message));
+    await av.clock.install();
+    await av.goto(`http://localhost:${port}/viewer.html?report=http://localhost:${refreshPort}/auto.json`);
+    await until(av, () => document.querySelector('.sk-kpi-value')?.textContent === '3', undefined, 30000);
+    writeFileSync(join(dir, 'data.csv'), csv(7));
+    await av.clock.fastForward('05:01');
+    const auto = await until(av, () => document.querySelector('.sk-kpi-value')?.textContent === '7', undefined, 30000);
+    check(auto, 'refresh: with data.refresh.every = 5, the viewer loads the data again after 5 minutes');
+    await av.close();
+  }
+
   // ---------------------------------------------------------------- designer
   await page.goto(`http://localhost:${port}/designer.html`);
   await page.evaluate(() => localStorage.clear());

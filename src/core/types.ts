@@ -43,6 +43,8 @@ export interface DataSpec {
   /** OPFS only: rebuild on every load (`always`), only when missing (`once`), or never touch it (`none`). */
   init?: 'always' | 'once' | 'none';
   steps?: DataStep[];
+  /** The viewer reloads the data on its own every `every` minutes (while the page is visible). */
+  refresh?: { every: number };
 }
 
 import type { DateTableSpec } from './datetable.js';

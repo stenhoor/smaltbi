@@ -37,6 +37,9 @@ async function main(): Promise<void> {
     bar = viewerBar(view);
     app.replaceChildren(...[bar, host, poweredByBadge(report)].filter((x): x is HTMLElement => !!x));
     view.render();
+    // Auto-refresh (data.refresh.every minutes), skipped while the page is hidden.
+    const every = Number(report.data.refresh?.every);
+    if (every >= 1) setInterval(() => !document.hidden && void bar?.refresh(), every * 60_000);
     addEventListener('hashchange', () => {
       const s = stateFromHash();
       if (s) view.setState(s);
