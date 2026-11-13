@@ -113,7 +113,7 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
 
   const sql = [
     `SELECT ${select.join(', ')}`,
-    `FROM ${quoteIdent(root)}`,
+    `FROM ${model.tableSql(root)}`,
     ...model.joins(root, needed),
     where.length ? `WHERE ${where.join('\n  AND ')}` : '',
     groupBy.length ? `GROUP BY ${groupBy.join(', ')}` : '',

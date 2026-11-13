@@ -854,6 +854,35 @@ try {
     s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== 'c-fy')), pg.id);
   });
 
+  // Role-playing: the calendar a second time, as "Joined" (when customers joined), through its own relationship.
+  await page.click('.sbd-seg-btn:has-text("Model")');
+  const relIndex = await page.evaluate(() => {
+    const d = window.smaltbi;
+    d.store.change('model', (r) => r.model.relationships.push({ from: 'customers.joined', to: 'calendar.date' }));
+    const i = d.store.report.model.relationships.length - 1;
+    d.selectModel({ kind: 'rel', index: i });
+    return i;
+  });
+  await page.locator('.sbd-rel-role').fill('Joined');
+  await page.locator('.sbd-rel-role').dispatchEvent('change');
+  const roleSet = await until(page, (i) => window.smaltbi.store.report.model.relationships[i]?.role === 'Joined' && [...document.querySelectorAll('.sbd-mv-rolelabel')].some((t) => t.textContent === 'as Joined') && !document.querySelector('.sbd-mv-card[data-table="Joined"]'), relIndex);
+  await page.click('.sbd-seg-btn:has-text("Report")');
+  const inFields = await until(page, () => [...document.querySelectorAll('.sbd-table')].some((b) => /Joined/.test(b.textContent) && /calendar role/.test(b.textContent)));
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const pg = s.report.pages[0];
+    s.change('page', () => pg.visuals.push({ id: 'c-joined', type: 'column', layout: { x: 0, y: 40, w: 6, h: 4 }, fields: { category: ['Joined.year'], values: ['sales.Revenue'] } }), pg.id);
+  });
+  const joinedBars = await until(page, () => document.querySelectorAll('.sb-visual[data-id=c-joined] .sk-bar').length >= 2, undefined, 20000);
+  const joinedLabels = await page.evaluate(() => [...document.querySelectorAll('.sb-visual[data-id=c-joined] .sk-tick.sk-cat')].map((t) => t.textContent));
+  check(roleSet && inFields && joinedBars, `role-playing: the calendar again as "Joined" (a dashed line, a table in Fields); revenue by the year customers joined (${joinedLabels})`);
+  await page.evaluate((i) => {
+    const s = window.smaltbi.store;
+    const pg = s.report.pages[0];
+    s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== 'c-joined')), pg.id);
+    s.change('model', (r) => r.model.relationships.splice(i, 1));
+  }, relIndex);
+
   // The measure editor (smaltkit's SQL editor): highlighting, completion from the model, reference warnings, errors.
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Avg Order Value"))').click({ button: 'right' });
   await page.click('.sk-menu-item:has-text("Edit measure…")');

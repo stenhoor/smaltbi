@@ -28,6 +28,8 @@ export interface TableInfo {
   name: string;
   label: string;
   kind: string;
+  /** A role (an alias of another table, through its own relationship): the table it plays. */
+  source?: string;
   hidden?: boolean;
   description?: string;
   columns: Map<string, ColumnInfo>;
@@ -128,11 +130,30 @@ export class Model {
     for (const h of spec.hierarchies ?? []) this.tables.get(h.table)?.hierarchies.set(h.name, h);
     const rels = spec.relationships ?? schema.foreignKeys ?? [];
     for (const r of rels) {
-      if (r.active === false) continue;
+      if (r.active === false || r.role) continue;
       const [ft, fc] = splitRef(r.from);
       const [tt, tc] = splitRef(r.to);
       if (this.tables.has(ft) && this.tables.has(tt)) this.edges.push({ from: { table: ft, column: fc }, to: { table: tt, column: tc } });
     }
+    // Roles: the target table again, under the role's name, joined through the role's own relationship. Only the
+    // table itself: tables beyond it stay reached through the original (copying those relationships would make
+    // every one of them reachable two ways, an ambiguous model).
+    for (const r of rels) {
+      const role = r.role?.trim();
+      if (!role || r.active === false) continue;
+      const [ft, fc] = splitRef(r.from);
+      const [tt, tc] = splitRef(r.to);
+      const src = this.tables.get(tt);
+      if (!src || src.source || !this.tables.has(ft) || this.tables.has(role) || role.includes('.')) continue;
+      this.tables.set(role, roleOf(src, role));
+      this.edges.push({ from: { table: ft, column: fc }, to: { table: role, column: tc } });
+    }
+  }
+
+  /** How a table is named in FROM and JOIN: a role is its source table under the role's name. */
+  tableSql(name: string): string {
+    const src = this.tables.get(name)?.source;
+    return src ? `${quoteIdent(src)} AS ${quoteIdent(name)}` : quoteIdent(name);
   }
 
   /** Problems with the spec, for the designer's model view. */
@@ -143,6 +164,8 @@ export class Model {
     for (const r of this.spec.relationships ?? []) {
       const [ft, fc] = splitRef(r.from);
       const [tt, tc] = splitRef(r.to);
+      const role = r.role?.trim();
+      if (role && (role.includes('.') || (this.tables.get(role) && !this.tables.get(role)!.source))) out.push(`relationship ${r.from} → ${r.to}: the role name ${role} is ${role.includes('.') ? 'not usable (no dots)' : 'already a table'}`);
       if (!this.tables.get(ft)?.columns.has(fc)) out.push(`relationship ${r.from} → ${r.to}: unknown column ${r.from}`);
       if (!this.tables.get(tt)?.columns.has(tc)) out.push(`relationship ${r.from} → ${r.to}: unknown column ${r.to}`);
     }
@@ -373,7 +396,7 @@ export class Model {
     for (const t of needed) add(t);
     return used.map(
       (e) =>
-        `LEFT JOIN ${quoteIdent(e.to.table)} ON ${quoteIdent(e.from.table)}.${quoteIdent(e.from.column)} = ${quoteIdent(e.to.table)}.${quoteIdent(e.to.column)}`,
+        `LEFT JOIN ${this.tableSql(e.to.table)} ON ${quoteIdent(e.from.table)}.${quoteIdent(e.from.column)} = ${quoteIdent(e.to.table)}.${quoteIdent(e.to.column)}`,
     );
   }
 
@@ -474,4 +497,13 @@ export function paramRefs(sql: string, model: Model): string {
 /** Placeholders back to `[@Name]`, for SQL shown to people (View SQL, Convert to SQL). */
 export function showParams(sql: string, model: Model): string {
   return sql.replace(/\/\*@param\*\/\(@@([^@]+)@@\)/g, (_, enc: string) => `[@${model.parameters.get(decodeURIComponent(enc))?.name ?? decodeURIComponent(enc)}]`);
+}
+
+/** A role-playing copy of a table: the same columns (calculated ones pointed at the alias) and drill paths. */
+function roleOf(src: TableInfo, role: string): TableInfo {
+  const own = new RegExp(`(^|[^\\w".])(?:"${src.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/"/g, '""')}"|${src.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\s*\\.`, 'g');
+  const columns = new Map<string, ColumnInfo>();
+  for (const [n, c] of src.columns) columns.set(n, { ...c, table: role, ...(c.calc && c.sql ? { sql: c.sql.replace(own, (_m, pre: string) => `${pre}${quoteIdent(role)}.`) } : {}) });
+  const hierarchies = new Map([...src.hierarchies].map(([n, h]) => [n, { ...h, table: role }]));
+  return { name: role, label: role, kind: 'ROLE', source: src.name, hidden: src.hidden, description: `${src.label} as ${role}`, columns, measures: new Map(), hierarchies };
 }

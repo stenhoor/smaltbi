@@ -186,7 +186,8 @@ export class ModelView {
     );
     this.board.replaceChildren(this.svg);
     this.cards.clear();
-    for (const t of this.model.tables.values()) this.board.append(this.card(t));
+    // A role is drawn as its relationship (labelled with the role), not as a card of its own.
+    for (const t of this.model.tables.values()) if (!t.source) this.board.append(this.card(t));
     this.root.replaceChildren(toolbar, this.scroller);
     this.applyZoom();
     requestAnimationFrame(() => {
@@ -307,11 +308,13 @@ export class ModelView {
       const ty = p2.y + c2.y - c1.y - p1.y;
       const ang = (Math.atan2(-ty, -tx) * 180) / Math.PI;
       const on = sel?.kind === 'rel' && sel.index === i;
-      const cls = `sbd-mv-rel${r.active === false ? ' sbd-mv-inactive' : ''}${on ? ' sbd-on' : ''}`;
+      const cls = `sbd-mv-rel${r.active === false ? ' sbd-mv-inactive' : ''}${r.role ? ' sbd-mv-role' : ''}${on ? ' sbd-on' : ''}`;
       out += `<g class="${cls}" data-rel="${i}"><path class="sbd-mv-hit" d="${d}"/><path class="sbd-mv-path" d="${d}"/>`;
       out += `<path class="sbd-mv-arrow" d="M-6,-5 L6,0 L-6,5 Z" transform="translate(${mx.toFixed(1)},${my.toFixed(1)}) rotate(${ang.toFixed(1)})"/>`;
       out += `<text class="sbd-mv-mark" x="${p1.x + d1 * 12}" y="${p1.y - 5}" text-anchor="middle">*</text>`;
-      out += `<text class="sbd-mv-mark" x="${p2.x + d2 * 12}" y="${p2.y - 5}" text-anchor="middle">1</text></g>`;
+      out += `<text class="sbd-mv-mark" x="${p2.x + d2 * 12}" y="${p2.y - 5}" text-anchor="middle">1</text>`;
+      if (r.role) out += `<text class="sbd-mv-rolelabel" x="${mx.toFixed(1)}" y="${(my - 9).toFixed(1)}" text-anchor="middle">as ${r.role.replace(/[<&"]/g, '')}</text>`;
+      out += '</g>';
     });
     this.svg.innerHTML = out + (this.temp ? this.temp.outerHTML : '');
     this.svg.querySelectorAll<SVGGElement>('.sbd-mv-rel').forEach((g) => {
