@@ -960,7 +960,7 @@ class Designer {
           this.renderReport();
           break;
         case 'model':
-          this.session.rebuildModel();
+          await this.session.rebuildModel();
           this.renderFields();
           this.renderReport();
           this.modelView?.render();
@@ -982,7 +982,7 @@ class Designer {
           this.renderReport();
           break;
         default:
-          this.session.rebuildModel();
+          await this.session.rebuildModel();
           this.renderFields();
           this.renderReport();
       }

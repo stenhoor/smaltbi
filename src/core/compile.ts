@@ -80,6 +80,8 @@ export function compileQuery(model: Model, q: QuerySpec): CompiledQuery {
   }
 
   model.assertUnambiguous(root, needed);
+  // Measures add up rows: a join that repeats them would inflate every number (ADR 0009).
+  if (measures.length) model.assertCountable(root, needed);
 
   const select: string[] = [];
   const groupBy: string[] = [];

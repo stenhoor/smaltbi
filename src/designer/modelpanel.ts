@@ -4,6 +4,7 @@ import type { Hierarchy } from '../core/types.js';
 import { splitRef } from '../core/sql.js';
 import { h, toast } from 'smaltkit/dom';
 import { checkbox, field, textInput } from './panel.js';
+import { notUniqueMessage } from '../core/model.js';
 import { ambiguousPaths, type ModelSelection, type ModelView } from './modelview.js';
 import type { DocStore } from './store.js';
 import type { ReportSession } from '../report/session.js';
@@ -136,7 +137,11 @@ function relPanel(ctx: ModelPanelContext, index: number): HTMLElement {
     {},
     h('div.sbd-section-title', {}, 'Relationship'),
     h('div.sbd-mv-relcard', {}, h('div', {}, h('b', {}, '*'), ' many: ', h('code', {}, r.from)), h('div', {}, h('b', {}, '1'), ' one: ', h('code', {}, r.to))),
-    hint(`Each ${tt} row matches many ${ft} rows. Filters on ${tt} flow to ${ft}; measures on ${ft} can be grouped by ${tt}'s columns.`),
+    // ADR 0009: a "one" side with repeated values would count the many side more than once; then the usual
+    // "each row matches many" explanation isn't true, so the problem is shown instead.
+    r.active !== false && m.notUnique.has(r.to)
+      ? h('div.sbd-test.sbd-bad.sbd-rel-notunique', {}, notUniqueMessage(r.from, r.to))
+      : hint(`Each ${tt} row matches many ${ft} rows. Filters on ${tt} flow to ${ft}; measures on ${ft} can be grouped by ${tt}'s columns.`),
     field('Many side (foreign key)', colSelect(r.from, 'from')),
     field('One side (key)', colSelect(r.to, 'to')),
     checkbox('Active (used by queries)', r.active !== false, (on) => update({ active: on ? undefined : false })),

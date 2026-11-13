@@ -42,6 +42,8 @@ export interface Edge {
   from: { table: string; column: string };
   /** one side */
   to: { table: string; column: string };
+  /** The "one" side's column has repeated values: joining through it would count rows more than once (ADR 0009). */
+  notUnique?: boolean;
 }
 
 /** A field reference resolved against the model, ready to be compiled. */
@@ -74,7 +76,11 @@ export class Model {
   /** What-if parameters by lowercased name. */
   readonly parameters = new Map<string, Parameter>();
 
-  constructor(schema: SchemaInfo, readonly spec: ModelSpec = {}) {
+  /**
+   * `notUnique`: relationship target columns ("table.column") found to have repeated values in the data (the session
+   * checks them when the data loads). A relationship to one is kept, flagged: queries with measures refuse it.
+   */
+  constructor(schema: SchemaInfo, readonly spec: ModelSpec = {}, readonly notUnique: ReadonlySet<string> = new Set()) {
     for (const p of spec.parameters ?? []) if (p?.name) this.parameters.set(p.name.toLowerCase(), p);
     for (const t of schema.tables) {
       const settings = spec.tables?.[t.name];
@@ -133,7 +139,7 @@ export class Model {
       if (r.active === false || r.role) continue;
       const [ft, fc] = splitRef(r.from);
       const [tt, tc] = splitRef(r.to);
-      if (this.tables.has(ft) && this.tables.has(tt)) this.edges.push({ from: { table: ft, column: fc }, to: { table: tt, column: tc } });
+      if (this.tables.has(ft) && this.tables.has(tt)) this.edges.push({ from: { table: ft, column: fc }, to: { table: tt, column: tc }, ...(notUnique.has(`${tt}.${tc}`) ? { notUnique: true } : {}) });
     }
     // Roles: the target table again, under the role's name, joined through the role's own relationship. Only the
     // table itself: tables beyond it stay reached through the original (copying those relationships would make
@@ -146,7 +152,7 @@ export class Model {
       const src = this.tables.get(tt);
       if (!src || src.source || !this.tables.has(ft) || this.tables.has(role) || role.includes('.')) continue;
       this.tables.set(role, roleOf(src, role));
-      this.edges.push({ from: { table: ft, column: fc }, to: { table: role, column: tc } });
+      this.edges.push({ from: { table: ft, column: fc }, to: { table: role, column: tc }, ...(notUnique.has(`${tt}.${tc}`) ? { notUnique: true } : {}) });
     }
   }
 
@@ -168,6 +174,7 @@ export class Model {
       if (role && (role.includes('.') || (this.tables.get(role) && !this.tables.get(role)!.source))) out.push(`relationship ${r.from} → ${r.to}: the role name ${role} is ${role.includes('.') ? 'not usable (no dots)' : 'already a table'}`);
       if (!this.tables.get(ft)?.columns.has(fc)) out.push(`relationship ${r.from} → ${r.to}: unknown column ${r.from}`);
       if (!this.tables.get(tt)?.columns.has(tc)) out.push(`relationship ${r.from} → ${r.to}: unknown column ${r.to}`);
+      else if (this.notUnique.has(`${tt}.${tc}`)) out.push(notUniqueMessage(r.from, r.to));
     }
     return out;
   }
@@ -380,6 +387,27 @@ export class Model {
     return out;
   }
 
+  /**
+   * Refuse a query with measures that joins through a relationship to a non-unique column (ADR 0009): each row on the
+   * many side would be counted once per repeated value, so every total would be too large. A query without measures
+   * (a slicer's values) only lists distinct values, so it may still use the relationship.
+   */
+  assertCountable(root: string, needed: Iterable<string>): void {
+    const r = this.reach(root);
+    const seen = new Set<string>();
+    const walk = (t: string): Edge | undefined => {
+      if (seen.has(t)) return undefined;
+      seen.add(t);
+      const e = r.get(t);
+      if (!e) return undefined;
+      return e.notUnique ? e : walk(e.from.table);
+    };
+    for (const t of needed) {
+      const bad = walk(t);
+      if (bad) throw new ModelError(notUniqueMessage(`${bad.from.table}.${bad.from.column}`, `${this.tables.get(bad.to.table)?.source ?? bad.to.table}.${bad.to.column}`));
+    }
+  }
+
   /** The LEFT JOIN clauses that bring `needed` tables in, starting from `root`. */
   joins(root: string, needed: Iterable<string>): string[] {
     const r = this.reach(root);
@@ -506,4 +534,10 @@ function roleOf(src: TableInfo, role: string): TableInfo {
   for (const [n, c] of src.columns) columns.set(n, { ...c, table: role, ...(c.calc && c.sql ? { sql: c.sql.replace(own, (_m, pre: string) => `${pre}${quoteIdent(role)}.`) } : {}) });
   const hierarchies = new Map([...src.hierarchies].map(([n, h]) => [n, { ...h, table: role }]));
   return { name: role, label: role, kind: 'ROLE', source: src.name, hidden: src.hidden, description: `${src.label} as ${role}`, columns, measures: new Map(), hierarchies };
+}
+
+/** Why a relationship to a non-unique column is refused, and what to do (ADR 0009). */
+export function notUniqueMessage(from: string, to: string): string {
+  const [ft] = splitRef(from);
+  return `${to} is not unique: the relationship ${from} → ${to} would count ${ft} rows more than once. Point it at a column with one row per value (a table of ${splitRef(to)[1]} values).`;
 }
