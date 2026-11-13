@@ -140,6 +140,13 @@ try {
     const giftOnly = await until(landing, () => document.querySelectorAll('[data-id=p-tagbar] .sk-bar').length === 1 && /Gift idea/.test(document.querySelector('[data-id=p-tagbar] .sk-tick.sk-cat')?.textContent ?? ''), undefined, 20000);
     check(tagged && giftOnly, `sample Products page: revenue by tag through the link table, the overlap note, and a tag slicer (${tagged}, ${giftOnly})`);
     await landing.locator('[data-id=p-tag] label:has-text("Gift idea") input').uncheck();
+    // Two facts lined up (ADR 0009): revenue beside the budget's target, by the category and year tables made for it.
+    await landing.click('.sbv-tab:text-is("Targets")');
+    await until(landing, () => document.querySelectorAll('[data-id=g-cat] .sk-bar').length === 8, undefined, 30000);
+    await landing.click('[data-id=g-year] button:has-text("2025")');
+    const targets = await until(landing, () => /^\$347,437$/.test(document.querySelector('[data-id=g-rev] .sk-kpi-value')?.textContent ?? '') && /^\$344,000$/.test(document.querySelector('[data-id=g-tgt] .sk-kpi-value')?.textContent ?? '') && /101\.0%/.test(document.querySelector('[data-id=g-pct] .sk-kpi-value')?.textContent ?? ''), undefined, 20000);
+    check(targets, `sample Targets page: 2025 revenue against its target, 101.0% (${await landing.evaluate(() => [...document.querySelectorAll('[data-id^=g-] .sk-kpi-value')].map((e) => e.textContent).join(', '))})`);
+    await landing.click('[data-id=g-year] button:has-text("2025")');
     await landing.click('.sbv-tab:text-is("Regions")');
     // The country cards expand: the visual grows to show every row of cards and the charts below move down.
     const grown = await until(landing, () => {
@@ -829,8 +836,8 @@ try {
 
   // Model view: the ER diagram of tables and relationships.
   await page.click('.sbd-seg-btn:has-text("Model")');
-  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 7 && document.querySelectorAll('.sbd-mv-rel').length === 7);
-  check((await page.locator('.sbd-mv-card').count()) === 7 && (await page.locator('.sbd-mv-rel').count()) === 7, 'model view shows 7 tables and 7 relationships (one of them a role)');
+  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 10 && document.querySelectorAll('.sbd-mv-rel').length === 11);
+  check((await page.locator('.sbd-mv-card').count()) === 10 && (await page.locator('.sbd-mv-rel').count()) === 11, 'model view shows 10 tables and 11 relationships (one of them a role)');
   // product_tags links products and tags many-to-many (ADR 0009): a dashed card marked "⇄ link", explained in its panel.
   const linkCard = await page.evaluate(() => {
     const c = document.querySelector('.sbd-mv-card[data-table=product_tags]');
@@ -846,8 +853,8 @@ try {
   await until(page, () => /sales\.store_id/.test(document.querySelector('.sbd-mv-relcard')?.textContent ?? ''));
   check(/sales\.store_id/.test((await page.locator('.sbd-mv-relcard').textContent()) ?? ''), 'clicking a line selects the relationship');
   await page.click('.sbd-btn.sbd-danger:has-text("Delete")');
-  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 6);
-  check((await rels()).length === 6, 'a relationship can be deleted');
+  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 10);
+  check((await rels()).length === 10, 'a relationship can be deleted');
   // Re-create it by dragging sales.store_id onto stores.id.
   const src = await page.locator('.sbd-mv-card[data-table=sales] .sbd-mv-col[data-col=store_id]').boundingBox();
   const dst = await page.locator('.sbd-mv-card[data-table=stores] .sbd-mv-col[data-col=id]').boundingBox();
@@ -856,7 +863,7 @@ try {
   await page.mouse.move((src.x + dst.x) / 2, (src.y + dst.y) / 2, { steps: 5 });
   await page.mouse.move(dst.x + 30, dst.y + dst.height / 2, { steps: 5 });
   await page.mouse.up();
-  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 7);
+  await until(page, () => document.querySelectorAll('.sbd-mv-rel').length === 11);
   check((await rels()).includes('sales.store_id>stores.id'), 'dragging a column onto a key creates the relationship (many → one)');
   // Move a card: its position is saved in the report.
   const head = await page.locator('.sbd-mv-card[data-table=products] .sbd-mv-head').boundingBox();
@@ -873,7 +880,7 @@ try {
     document.querySelector('.sbd-mv-rel[data-rel="0"]').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
     return [...document.querySelectorAll('.sbd-mv-count')].map((c) => c.textContent);
   });
-  check(countsAfterClick.length === 7 && countsAfterClick.every((t) => /rows/.test(t)), `row counts stay visible when the diagram re-renders (${countsAfterClick})`);
+  check(countsAfterClick.length === 10 && countsAfterClick.every((t) => /rows/.test(t)), `row counts stay visible when the diagram re-renders (${countsAfterClick})`);
 
   // An ambiguous model is an error, not a guess (ADR 0004, decision 9): add a second path
   // sales → stores → customers, look at a visual that crosses it, then undo.
@@ -888,7 +895,7 @@ try {
   check(restored, 'undoing the extra relationship restores the visual');
   await page.click('.sbd-page-tab:has-text("Overview")');
   await page.click('.sbd-seg-btn:has-text("Model")');
-  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 7);
+  await until(page, () => document.querySelectorAll('.sbd-mv-card').length === 10);
 
   // Preview from Model view (review on #5): Delete must not remove the relationship that was
   // selected in the hidden diagram, and returning must bring back the diagram and both side panes.
@@ -996,52 +1003,65 @@ try {
   });
   const refused = await until(page, () => /customers\.country is not unique/.test(document.querySelector('.sb-visual[data-id=e2e-fanout] .sb-visual-body')?.textContent ?? '') && !document.querySelector('.sb-visual[data-id=e2e-fanout] .sk-bar'), undefined, 15000);
   check(marked && explained && refused, `a relationship to a column that isn't unique is marked in the model view, explained, and refused by a visual with a measure (${marked}, ${explained}, ${refused})`);
-  await page.evaluate((i) => {
+  // The fix, one click (decision 3a): "Make a country table" adds a data step with one row per country and relates
+  // both columns to it; stores counted by that table's country are right (17 stores).
+  const stepsBefore = await page.evaluate(() => window.smaltbi.store.report.data.steps.length);
+  await page.click('.sbd-seg-btn:has-text("Model")');
+  await page.evaluate((i) => window.smaltbi.selectModel({ kind: 'rel', index: i }), badIndex);
+  await page.click('.sbd-make-table:has-text("Make a country table")');
+  const madeTable = await until(page, () => {
+    const r = window.smaltbi.store.report;
+    const rels = r.model.relationships.map((x) => `${x.from}>${x.to}`);
+    return /CREATE TABLE "country"/.test(r.data.steps.at(-1)?.sql ?? '') && rels.includes('stores.country>country.country') && rels.includes('customers.country>country.country') && !!window.smaltbi.session?.schema?.tables.some((t) => t.name === 'country');
+  }, undefined, 30000);
+  await page.click('.sbd-seg-btn:has-text("Report")');
+  await page.evaluate(() => {
+    const s = window.smaltbi.store;
+    const v = s.report.pages[0].visuals.find((x) => x.id === 'e2e-fanout');
+    s.change('visual', () => (v.fields = { category: ['country.country'], values: ['stores.Store count'] }), v.id);
+  });
+  const countedOnce = await until(page, () => {
+    return document.querySelectorAll('.sb-visual[data-id=e2e-fanout] .sk-bar').length >= 7;
+  }, undefined, 20000);
+  const storeTotal = await page.evaluate(async () => {
+    const d = window.smaltbi;
+    const rows = await d.session.db.query('SELECT COUNT(*) AS n FROM stores JOIN country ON country.country = stores.country');
+    return Number(rows[0].n);
+  });
+  check(madeTable && countedOnce && storeTotal === 17, `"Make a country table" adds the step and relationships; stores by country are counted once (${madeTable}, ${countedOnce}, ${storeTotal})`);
+  await page.evaluate((n) => {
     const s = window.smaltbi.store;
     const pg = s.report.pages[0];
     s.change('page', () => (pg.visuals = pg.visuals.filter((v) => v.id !== 'e2e-fanout')), pg.id);
     s.change('model', (r) => {
-      r.model.relationships.splice(i, 1);
+      r.model.relationships = r.model.relationships.filter((x) => !x.to.startsWith('country.'));
       r.model.measures = r.model.measures.filter((m) => m.name !== 'Store count');
     });
-  }, badIndex);
+    s.change('data', (r) => r.data.steps.splice(n));
+  }, stepsBefore);
+  await until(page, () => !window.smaltbi.session?.schema?.tables.some((t) => t.name === 'country'), undefined, 30000);
 
-  // Two facts in one visual (ADR 0009, drill-across): a budget by category beside the sales. Each is computed on its
-  // own and lined up by category; [Revenue] / [Target] after the line-up; the totals row the same way.
+  // Two facts in one visual (ADR 0009, drill-across): the sample's budget beside its sales, lined up by the category
+  // table both relate to; [Revenue] / [Target] after the line-up; the totals row the same way.
   await page.evaluate(() => {
     const s = window.smaltbi.store;
-    s.change('data', (r) => r.data.steps.push({ sql: "CREATE TABLE budget (category TEXT, target REAL);\nINSERT INTO budget VALUES ('Coffee', 400000), ('Tea', 300000), ('Equipment', 250000), ('Accessories', 100000);\nCREATE TABLE cats (category TEXT PRIMARY KEY);\nINSERT INTO cats SELECT DISTINCT category FROM products;" }));
-  });
-  await until(page, () => !!window.smaltbi.session?.schema?.tables.some((t) => t.name === 'budget'), undefined, 30000);
-  await page.evaluate(() => {
-    const s = window.smaltbi.store;
-    s.change('model', (r) => {
-      r.model.relationships.push({ from: 'products.category', to: 'cats.category' }, { from: 'budget.category', to: 'cats.category' });
-      r.model.measures.push({ table: 'budget', name: 'Target', sql: 'SUM(budget.target)', format: 'currency' }, { table: 'sales', name: 'vs Target', sql: '[Revenue] / NULLIF([Target], 0)', format: 'percent' });
-    });
     const pg = s.report.pages[0];
     s.change('page', () => pg.visuals.push(
-      { id: 'e2e-across', type: 'table', layout: { x: 0, y: 40, w: 8, h: 5 }, fields: { columns: ['cats.category'], values: ['sales.Revenue', 'budget.Target', 'sales.vs Target'] }, sort: [{ by: 'columns:0', dir: 'asc' }] },
+      { id: 'e2e-across', type: 'table', layout: { x: 0, y: 40, w: 8, h: 5 }, fields: { columns: ['category.category'], values: ['sales.Revenue', 'budget.Target', 'sales.Revenue vs target'] }, sort: [{ by: 'columns:0', dir: 'asc' }] },
       { id: 'e2e-across-bad', type: 'column', layout: { x: 8, y: 40, w: 4, h: 5 }, fields: { category: ['products.name'], values: ['budget.Target'] } },
     ), pg.id);
   });
-  const across = await until(page, () => document.querySelectorAll('.sb-visual[data-id=e2e-across] tbody tr').length === 4 && /\$1,050,000/.test(document.querySelector('.sb-visual[data-id=e2e-across] tfoot')?.textContent ?? ''), undefined, 30000);
+  const across = await until(page, () => document.querySelectorAll('.sb-visual[data-id=e2e-across] tbody tr').length === 4 && /\$1,372,000/.test(document.querySelector('.sb-visual[data-id=e2e-across] tfoot')?.textContent ?? ''), undefined, 30000);
   const acrossRows = await page.evaluate(() => [...document.querySelectorAll('.sb-visual[data-id=e2e-across] tbody tr')].map((tr) => [...tr.cells].map((c) => c.textContent)));
-  const tea = acrossRows.find((r) => r[0] === 'Tea') ?? [];
-  const ratioOk = tea.length === 4 && Math.abs(Number(tea[1].replace(/[^\d.]/g, '')) / 300000 * 100 - Number(tea[3].replace(/[^\d.]/g, ''))) < 0.15;
+  const num = (t) => Number(String(t).replace(/[^\d.]/g, ''));
+  const ratioOk = acrossRows.length === 4 && acrossRows.every((r) => Math.abs((num(r[1]) / num(r[2])) * 100 - num(r[3])) < 0.15);
   const refusedAcross = await until(page, () => /Target has no relationship to name/.test(document.querySelector('.sb-visual[data-id=e2e-across-bad] .sb-visual-body')?.textContent ?? ''), undefined, 15000);
   check(across && ratioOk && refusedAcross, `two facts in one table: revenue and target by category, the ratio after the line-up, the target total; a field only sales has is refused (${JSON.stringify(acrossRows)}, ${refusedAcross})`);
   await page.evaluate(() => {
     const s = window.smaltbi.store;
     const pg = s.report.pages[0];
     s.change('page', () => (pg.visuals = pg.visuals.filter((v) => !v.id.startsWith('e2e-across'))), pg.id);
-    s.change('model', (r) => {
-      r.model.relationships = r.model.relationships.filter((x) => !x.to.startsWith('cats.'));
-      r.model.measures = r.model.measures.filter((m) => m.name !== 'Target' && m.name !== 'vs Target');
-    });
-    s.change('data', (r) => r.data.steps.pop());
   });
-  await until(page, () => !window.smaltbi.session?.schema?.tables.some((t) => t.name === 'budget'), undefined, 30000);
 
   // The measure editor (smaltkit's SQL editor): highlighting, completion from the model, reference warnings, errors.
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Avg Order Value"))').click({ button: 'right' });

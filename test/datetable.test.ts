@@ -2,7 +2,7 @@
 // the sales dates, and the model queries through it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { addDateTable, planDateTable, removeDateTable } from '../src/core/datetable.js';
+import { addDateTable, planDateTable, removeDateTable, stepsReadingDateTable } from '../src/core/datetable.js';
 import { compileQuery } from '../src/core/compile.js';
 import { Model } from '../src/core/model.js';
 import { introspect } from '../src/data/introspect.js';
@@ -73,12 +73,35 @@ test('hierarchies, labels and removal', async () => {
   assert.equal(report.model.dateTable!.fiscalStart, 4);
   // Replacing keeps one date table.
   addDateTable(report, { source: 'sales.order_date', table: 'calendar' });
-  assert.equal(report.data.steps!.filter((s) => 'sql' in s).length, 1);
-  assert.equal(report.model.relationships!.filter((r) => r.to === 'calendar.date').length, 1);
+  const dateSteps = () => report.data.steps!.filter((s) => 'sql' in s && /^-- Date table/.test(s.sql));
+  assert.equal(dateSteps().length, 1);
+  assert.equal(report.model.relationships!.filter((r) => r.to === 'calendar.date' && !r.role).length, 1, 'one date-table relationship (the Ship date role is another)');
   removeDateTable(report);
   assert.equal(report.model.dateTable, undefined);
-  assert.equal(report.data.steps!.some((s) => 'sql' in s), false);
+  assert.equal(dateSteps().length, 0);
   assert.equal(report.model.hierarchies!.some((h) => h.table === 'calendar'), false);
   assert.throws(() => planDateTable({ source: 'order_date' }), /table\.column/);
   assert.throws(() => addDateTable(report, { source: 'sales.order_date', table: 'sales' }), /already creates a table named "sales"/);
+});
+
+test('replacing the date table keeps its place among the steps, and other relationships to it', async () => {
+  const report = structuredClone((await sampleSession()).report);
+  // The sample: a "year" step after the calendar step reads it; a role (Ship date) relates to the calendar too.
+  const before = report.data.steps!.findIndex((x) => 'sql' in x && /^-- Date table/.test(x.sql));
+  const yearStep = report.data.steps!.findIndex((x) => 'sql' in x && /CREATE TABLE "year"/.test(x.sql));
+  assert.ok(before >= 0 && yearStep > before);
+  addDateTable(report, { source: 'sales.order_date', table: 'calendar', fiscalStart: 7 });
+  const after = report.data.steps!.findIndex((x) => 'sql' in x && /^-- Date table/.test(x.sql));
+  assert.equal(after, before, 'the calendar is still built before the year table that reads it');
+  assert.ok(report.model.relationships!.some((r) => r.role === 'Ship date'), 'the role stays');
+  assert.equal(report.model.relationships!.filter((r) => r.from === 'sales.order_date' && r.to === 'calendar.date').length, 1);
+});
+
+test('steps that read the date table are found, so removing it can be refused', async () => {
+  const report = structuredClone((await sampleSession()).report);
+  const readers = stepsReadingDateTable(report);
+  assert.equal(readers.length, 1, JSON.stringify(readers));
+  assert.match(readers[0]!, /One row per year, from calendar\.year/);
+  report.data.steps = report.data.steps!.filter((x) => !('sql' in x && /CREATE TABLE "year"/.test(x.sql)));
+  assert.deepEqual(stepsReadingDateTable(report), []);
 });

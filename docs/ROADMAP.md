@@ -72,8 +72,8 @@ Decisions behind this milestone: [ADR 0004](adr/0004-product-decisions.md).
 - Publishing: multi-report sites (index page, shared themes and data), optional "Edit a copy"
   (ships the designer).
 - ✓ Role-playing dimensions (a dimension related twice, e.g. order date and ship date): a relationship's role.
-- Many-to-many (ADR 0009): link tables, several facts in one visual (drill-across), and a check for
-  relationships to non-unique columns.
+- ✓ Many-to-many (ADR 0009): link tables (product tags), several facts in one visual (revenue against a budget, by
+  drill-across), a check for relationships to non-unique columns, and "Make a table" to fix one.
 
 ## 0.4: Performance and scale
 

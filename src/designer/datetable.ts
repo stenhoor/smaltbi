@@ -1,5 +1,5 @@
 // The "Add date table" dialog (model view). The table itself is planned in core/datetable.ts.
-import { addDateTable, removeDateTable, type DateTableOptions } from '../core/datetable.js';
+import { addDateTable, removeDateTable, stepsReadingDateTable, type DateTableOptions } from '../core/datetable.js';
 import type { Model } from '../core/model.js';
 import { dialog, h, toast } from 'smaltkit/dom';
 import { field } from './panel.js';
@@ -53,7 +53,12 @@ export async function dateTableDialog(store: DocStore, model: Model): Promise<vo
     },
   });
   const choice = await dialog<string>(current ? 'Date table' : 'Add date table', body, buttons);
-  if (choice === 'remove') store.change('data', (r) => removeDateTable(r));
+  if (choice === 'remove') {
+    // A step that reads the calendar (a year table made from it) would have nothing to read.
+    const readers = stepsReadingDateTable(store.report);
+    if (readers.length) return void toast(`Another data step reads ${current!.table}: remove it first (${readers.join('; ')})`, 'error', 8000);
+    store.change('data', (r) => removeDateTable(r));
+  }
   else if (choice === 'add') {
     const o = options();
     try {

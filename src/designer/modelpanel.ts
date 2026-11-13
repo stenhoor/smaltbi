@@ -5,6 +5,7 @@ import { splitRef } from '../core/sql.js';
 import { h, toast } from 'smaltkit/dom';
 import { checkbox, field, textInput } from './panel.js';
 import { notUniqueMessage } from '../core/model.js';
+import { applyValueTable } from '../core/valuetable.js';
 import { ambiguousPaths, type ModelSelection, type ModelView } from './modelview.js';
 import type { DocStore } from './store.js';
 import type { ReportSession } from '../report/session.js';
@@ -144,7 +145,20 @@ function relPanel(ctx: ModelPanelContext, index: number): HTMLElement {
     // ADR 0009: a "one" side with repeated values would count the many side more than once; then the usual
     // "each row matches many" explanation isn't true, so the problem is shown instead.
     r.active !== false && m.notUnique.has(r.to)
-      ? h('div.sbd-test.sbd-bad.sbd-rel-notunique', {}, notUniqueMessage(r.from, r.to))
+      ? h(
+          'div',
+          {},
+          h('div.sbd-test.sbd-bad.sbd-rel-notunique', {}, notUniqueMessage(r.from, r.to)),
+          // Decision 3a: one click makes the table with one row per value and relates both columns to it.
+          h(
+            'button.sbd-btn.sbd-primary.sbd-make-table',
+            {
+              title: `Adds a data step that builds a table with one row per ${splitRef(r.to)[1]} (from ${r.to} and ${r.from}), and relates both columns to it`,
+              onclick: () => ctx.store.change('data', (rep) => void applyValueTable(rep, index, ctx.session.schema)),
+            },
+            `Make a ${splitRef(r.to)[1]} table`,
+          ),
+        )
       : hint(`Each ${tt} row matches many ${ft} rows. Filters on ${tt} flow to ${ft}; measures on ${ft} can be grouped by ${tt}'s columns.`),
     field('Many side (foreign key)', colSelect(r.from, 'from')),
     field('One side (key)', colSelect(r.to, 'to')),
