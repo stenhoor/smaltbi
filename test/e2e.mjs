@@ -119,6 +119,16 @@ try {
     await landing.goto(`${base}?report=examples/sales/report.json`);
     await landing.waitForURL(/designer\.html\?report=/);
     check(true, 'old ?report= links at the root forward to the designer');
+    // The sample as the site serves it: the Regions page draws its maps from the shapes file beside the report, and
+    // its repeated visuals (a card per country, a chart per region).
+    await landing.goto(`${base}viewer.html?report=examples/sales/report.json`);
+    await landing.click('.sbv-tab:text-is("Regions")');
+    const regions = await until(landing, () =>
+      document.querySelectorAll('[data-id=r-countries] path.sk-map-region').length === 7 &&
+      document.querySelectorAll('[data-id=r-stores] circle').length === 16 &&
+      document.querySelectorAll('[data-id=r-cards] .sk-kpi-value').length === 7 &&
+      document.querySelectorAll('[data-id=r-cats] .sk-bar').length === 12, undefined, 30000);
+    check(regions, 'sample Regions page: a country map, a store map, seven repeated cards and three repeated charts');
     await landing.close();
   } else {
     check(!process.env.E2E_SITE, 'product site checks skipped: _site/ is missing (run npm run site)');
