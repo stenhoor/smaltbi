@@ -103,7 +103,16 @@ try {
     });
     check(docBadges.stage === 1 && docBadges.first && docBadges.endorsement === 1, `doc pages show the work-in-progress badge at the top and one endorsement (${JSON.stringify(docBadges)})`);
     await doc.close();
-    check(JSON.stringify(hero.actions) === JSON.stringify([['Getting started', '/smaltbi/guide/']]), `the hero's only button is Getting started (${JSON.stringify(hero.actions)})`);
+    // Docs for agents (smalt-brand BRAND.md, Documentation, rule 9): /llms.txt, /agents.md and a twin of every page.
+    const agentFile = async (p) => {
+      const r = await landing.request.get(`${base}${p}`);
+      return r.ok() ? r.text() : '';
+    };
+    const [llms, agentsMd, twin] = await Promise.all([agentFile('llms.txt'), agentFile('agents.md'), agentFile('guide/quick-start.md')]);
+    check(/^# smaltbi/.test(llms) && llms.includes('reference/visuals/bar.md'), 'the site serves /llms.txt, listing the visual types');
+    check(agentsMd.includes('## What smaltbi is') && agentsMd.includes('"type": "card"') && agentsMd.includes('Keyboard shortcuts'), 'the site serves /agents.md: the agent intro, the format, the visual types and the shortcuts');
+    check(twin.includes('# Quick start'), 'every page has a Markdown twin (guide/quick-start.md)');
+    check(JSON.stringify(hero.actions) === JSON.stringify([['Quick start', '/smaltbi/guide/quick-start']]), `the hero's only button is Quick start (${JSON.stringify(hero.actions)})`);
     // The home page embeds no demo; the Demo nav item, first, opens the designer (smalt-brand BRAND.md, rule 12).
     const demoNav = await landing.evaluate(() => ({
       iframes: document.querySelectorAll('iframe').length,
@@ -471,6 +480,29 @@ try {
   });
   check(twoSelected && multiAdded && made === 'bar {"category":["stores.channel"],"values":["sales.Revenue"]}', `fields: multi-select adds both to one new chart (${made})`);
   await page.keyboard.press('Delete');
+  await page.locator('.sbd-field-sel button:has-text("Clear")').click().catch(() => {});
+  // The Quick start's step 2 (docs/guide/quick-start.md), as written: Ctrl-click Revenue, then the Products category,
+  // then Add: a bar chart of revenue by category; clicking a bar selects it.
+  await page.keyboard.press('Escape');
+  const before3 = await count();
+  await page.locator('.sbd-field[data-ref="sales.Revenue"]').click({ modifiers: ['ControlOrMeta'] });
+  await page.locator('.sbd-field[data-ref="products.category"]').click({ modifiers: ['ControlOrMeta'] });
+  await until(page, () => /2 fields selected/.test(document.querySelector('.sbd-field-sel')?.textContent ?? ''));
+  await page.click('.sbd-field-sel button:has-text("Add")');
+  await until(page, (n) => document.querySelectorAll('.sb-page > .sb-visual').length === n + 1, before3);
+  const qsId = await page.evaluate(() => document.querySelector('.sb-visual.sb-selected').dataset.id);
+  const qsMade = await page.evaluate((id) => {
+    const v = window.smaltbi.store.visual(id).visual;
+    return `${v.type} ${JSON.stringify(v.fields)}`;
+  }, qsId);
+  const qsBars = await until(page, (id) => document.querySelectorAll(`.sb-visual[data-id="${id}"] rect.sk-bar`).length === 4, qsId);
+  await page.locator(`.sb-visual[data-id="${qsId}"] rect.sk-bar >> nth=0`).click({ force: true });
+  const qsPicked = await until(page, (id) => document.querySelectorAll(`.sb-visual[data-id="${id}"] rect.sk-bar.sk-on`).length === 1, qsId);
+  check(qsMade === 'bar {"category":["products.category"],"values":["sales.Revenue"]}' && qsBars && qsPicked, `quick start: Revenue and category, Add, make a bar chart; a bar click selects it (${qsMade})`);
+  await page.evaluate(() => window.smaltbi.view.clearSelections?.());
+  await page.locator(`.sb-visual[data-id="${qsId}"]`).click({ position: { x: 4, y: 4 } });
+  await page.keyboard.press('Delete');
+  await until(page, (n) => document.querySelectorAll('.sb-page > .sb-visual').length === n, before3);
   await page.locator('.sbd-field-sel button:has-text("Clear")').click().catch(() => {});
 
   // Plugins in the designer: File → Plugins…, add the example by URL (its hash is recorded), and draw its visual.

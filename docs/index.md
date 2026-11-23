@@ -11,8 +11,8 @@ hero:
     alt: smaltbi
   actions:
     - theme: brand
-      text: Getting started
-      link: /guide/
+      text: Quick start
+      link: /guide/quick-start
 features:
   - title: Drag fields, get charts
     details: Drop a field on the canvas and smaltbi picks a visual. Change its type, add fields to its axis, legend or values, and format it from the side panel.
@@ -32,7 +32,7 @@ features:
     linkText: Themes
   - title: Publish a static site
     details: A report is one JSON file that diffs well in git. Publishing packs it with the viewer, smaltdb and its data into a folder for any static host.
-    link: /guide/#publish
+    link: /guide/publishing
     linkText: Publishing
 ---
 
