@@ -28,7 +28,7 @@ on a timer as well, set *Refresh* in the Data dialog to a number of minutes.
 
 ## In `report.json`
 
-The steps are `data.steps`: [Report format, data](/REPORT_FORMAT#data).
+The steps are `data.steps`: [Report format, Data](/reference/format/data).
 
 ```jsonc
 "data": {

@@ -28,5 +28,5 @@ In the Format tab; `options` in `report.json`.
 
 ## See also
 
-- [Visuals](/guide/visuals), [filters and slicers](/REPORT_FORMAT#filters)
+- [Visuals](/guide/visuals), [filters](/reference/format/filters)
 - [All visual types](./)

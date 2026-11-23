@@ -34,8 +34,8 @@ web server.
 ## Where a report lives
 
 A report is one JSON file, `report.json`: its data steps, its model, its pages and their visuals, and its theme. The
-designer reads and writes it; the viewer only reads it. It diffs well in git. [Report format](/REPORT_FORMAT)
-describes it field by field.
+designer reads and writes it; the viewer only reads it. It diffs well in git. [Report format](/reference/format/)
+describes it section by section.
 
 - **Open one:** `designer.html?report=<url>` or `viewer.html?report=<url>`, a URL relative to the page or absolute.
   In the designer, *File* opens a file from your computer or a URL.

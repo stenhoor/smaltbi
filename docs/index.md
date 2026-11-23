@@ -18,7 +18,7 @@ features:
     details: Drop a field on the canvas and smaltbi picks a visual. Change its type, add fields to its axis, legend or values, and format it from the side panel.
   - title: Model with SQL
     details: Relationships, measures written as SQL aggregates that build on each other ([Revenue] - [Cost]), calculated columns and drill hierarchies. The model view draws it all as a diagram.
-    link: /REPORT_FORMAT#model
+    link: /reference/format/model
     linkText: The model
   - title: Every visual shows its SQL
     details: Each chart runs one readable query, joined along your relationships. Open the SQL tab to see it, copy it, or replace it with your own.

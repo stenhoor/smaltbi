@@ -14,6 +14,6 @@ Working in the app, one part at a time. New here? The [Quick start](./quick-star
 - [Pages and interaction](./pages): filtering between visuals, arranging, copy and paste, phones, page sizes.
 - [Publishing](./publishing): a static site from the designer or from a script.
 
-The designer writes one file, `report.json`: [Report format](/REPORT_FORMAT) describes it field by field, and
+The designer writes one file, `report.json`: [Report format](/reference/format/) describes it section by section, and
 [Visual types](/reference/visuals/) lists every visual's fields and options. Every shortcut:
 [Keyboard shortcuts](/reference/shortcuts).

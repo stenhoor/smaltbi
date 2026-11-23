@@ -133,7 +133,7 @@ static host. `node scripts/publish.mjs report.json out/` does the same from the 
 |---|---|
 | [docs/VISION.md](docs/VISION.md) | Mandates, principles, 1.0 scope and non-goals |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, data flow, the query compiler, rendering, performance |
-| [docs/REPORT_FORMAT.md](docs/REPORT_FORMAT.md) | The report JSON file, field by field |
+| [docs/reference/format/](docs/reference/format/index.md) | The report JSON file, section by section |
 | [docs/THEMES.md](docs/THEMES.md) | Theme tokens and the CSS variables they become |
 | [docs/PLUGINS.md](docs/PLUGINS.md) | Visual plugins and the plugin policy |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Milestones to 1.0 |

@@ -46,7 +46,7 @@ previous month or quarter, or rolling months: no SQL to write.
 
 ## In `report.json`
 
-The model is `model`: [Report format, model](/REPORT_FORMAT#model).
+The model is `model`: [Report format, Model](/reference/format/model).
 
 ```json
 {

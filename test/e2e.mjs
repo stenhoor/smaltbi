@@ -112,6 +112,20 @@ try {
     check(/^# smaltbi/.test(llms) && llms.includes('reference/visuals/bar.md'), 'the site serves /llms.txt, listing the visual types');
     check(agentsMd.includes('## What smaltbi is') && agentsMd.includes('"type": "card"') && agentsMd.includes('Keyboard shortcuts'), 'the site serves /agents.md: the agent intro, the format, the visual types and the shortcuts');
     check(twin.includes('# Quick start'), 'every page has a Markdown twin (guide/quick-start.md)');
+    // The report format is a page per section, listed under Report format in the sidebar. Its old single page's links
+    // land on the section's page: GitHub Pages serves 404.html for /REPORT_FORMAT, as this route does.
+    const fmt = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await fmt.route('**/REPORT_FORMAT', (r) => r.fulfill({ status: 404, contentType: 'text/html', body: readFileSync(join(siteDir, '404.html'), 'utf8') }));
+    await fmt.goto(`${base}REPORT_FORMAT#filters`);
+    await fmt.waitForURL(/\/reference\/format\/filters$/);
+    await fmt.goto(`${base}reference/format/filters.html`); // GitHub Pages serves clean URLs; this server, the file
+    await fmt.waitForSelector('.VPDoc h1');
+    const fmtPage = await fmt.evaluate(() => ({
+      h1: document.querySelector('.VPDoc h1')?.textContent.replace(/\s*#?\s*$/, ''),
+      sections: [...document.querySelectorAll('.VPSidebar a')].filter((a) => /\/reference\/format\/./.test(a.getAttribute('href') ?? '')).length,
+    }));
+    check(/^Filters/.test(fmtPage.h1 ?? '') && fmtPage.sections === 10, `report format: a page per section in the sidebar; old /REPORT_FORMAT#filters links land on Filters (${JSON.stringify(fmtPage)})`);
+    await fmt.close();
     check(JSON.stringify(hero.actions) === JSON.stringify([['Quick start', '/smaltbi/guide/quick-start']]), `the hero's only button is Quick start (${JSON.stringify(hero.actions)})`);
     // The home page embeds no demo; the Demo nav item, first, opens the designer (smalt-brand BRAND.md, rule 12).
     const demoNav = await landing.evaluate(() => ({

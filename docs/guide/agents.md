@@ -74,5 +74,5 @@ it. An agent can write the file directly: everything the designer does is in it.
 
 There is no validator command yet. Open the report in the viewer (`viewer.html?report=<url>`) or the designer, served
 by `npm run serve`: a visual that can't run shows its error in its place, and the designer's model view marks
-problems in the model. [Report format](/REPORT_FORMAT) is the full description; its source of truth is the TypeScript
+problems in the model. [Report format](/reference/format/) is the full description; its source of truth is the TypeScript
 types in [`src/core/types.ts`](https://github.com/stenhoor/smaltbi/blob/HEAD/src/core/types.ts).

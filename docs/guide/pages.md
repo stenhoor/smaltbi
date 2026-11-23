@@ -11,8 +11,8 @@ and **Edit** goes back.
 
 Click a bar, a slice or a row: the other visuals on the page filter to it; click it again to clear. Slicers are
 visuals readers click to filter: a list, a dropdown, buttons, a range or a search box. Pages can also be drill-through
-targets, and bookmarks save a view of the report. In `report.json`: [filters](/REPORT_FORMAT#filters) and
-[bookmarks](/REPORT_FORMAT#bookmarks-and-view-state).
+targets, and bookmarks save a view of the report. In `report.json`: [filters](/reference/format/filters) and
+[bookmarks](/reference/format/bookmarks).
 
 ## Arranging visuals
 
