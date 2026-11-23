@@ -248,6 +248,8 @@ A field in `fields` can also be an object: `{ "field": "sales.quantity", "agg": 
 
 ### Visual types and roles
 
+Each type's page in [Visual types](reference/visuals/index.md) lists all its roles and options, generated from the code. In short:
+
 | Type | Roles (kind) | Notable options |
 |---|---|---|
 | `bar`, `column` | category (dim, drill), series (dim, 1), values (measure), multiples (dim, 1) | `stack`: none/stacked/percent, `labels`, `legend`, and the axis options below |

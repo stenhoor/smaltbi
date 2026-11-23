@@ -106,6 +106,7 @@ npm install            # also vendors the smaltdb engine into vendor/smaltdb/
 npm run build          # dist/ (designer.js, viewer.js, css)
 npm run serve          # http://localhost:8080: /designer.html, /viewer.html (COOP/COEP headers)
 npm run docs:dev       # the product site (docs/, VitePress), live reload
+npm run docs:visuals   # regenerate docs/reference/visuals/ from the visual registry (npm test fails when stale)
 npm run typecheck      # tsc --noEmit, on TypeScript 7 (smaltty ADR 0030)
 npm test               # unit tests; compiled SQL runs against the real smaltdb engine
 node test/e2e.mjs      # Chromium end-to-end (Playwright); run after npm run build

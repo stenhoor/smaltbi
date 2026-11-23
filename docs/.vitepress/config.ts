@@ -3,12 +3,28 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { smaltLight, smaltDark } from './theme/shiki';
 import { smaltworksMenu, smaltworksFooter } from './theme/smaltworks';
+import { agentDocs, packageVersion } from './theme/agents';
+import { readFileSync } from 'node:fs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const REPO = 'https://github.com/stenhoor/smaltbi';
 // Served at stenhoor.github.io/smaltbi/ until the site has a domain of its own: then DOCS_BASE is '/'.
 const base = process.env.DOCS_BASE ?? '/smaltbi/';
 const WORKS = 'https://smaltworks.dev';
+
+// The visual types' pages are generated from the visual registry (npm run docs:visuals); the sidebar follows their
+// index, group by group, so the two cannot disagree.
+function visualGroups() {
+  const index = readFileSync(path.resolve(here, '../reference/visuals/index.md'), 'utf8');
+  const groups: { text: string; collapsed: boolean; items: { text: string; link: string }[] }[] = [];
+  for (const line of index.split('\n')) {
+    const head = /^## (.+)$/.exec(line);
+    if (head) groups.push({ text: head[1], collapsed: true, items: [] });
+    const row = /^\| \[`([\w-]+)`\]\(\.\/[\w-]+\) \| ([^|]+) \|/.exec(line);
+    if (row && groups.length) groups[groups.length - 1].items.push({ text: row[2].trim(), link: `/reference/visuals/${row[1]}` });
+  }
+  return groups;
+}
 
 export default defineConfig({
   title: 'smaltbi',
@@ -20,6 +36,17 @@ export default defineConfig({
   vite: { publicDir: path.resolve(here, '../../brand') },
   // The designer, the viewer and the published sample are deployed beside the site (scripts/site.mjs).
   ignoreDeadLinks: [/designer\.html/, /viewer\.html/, /\/sample\//],
+  // Docs for agents (BRAND.md, Documentation, rule 9): a Markdown twin of every page, /llms.txt and /agents.md.
+  buildEnd: (config) => {
+    agentDocs(config, {
+      product: 'smaltbi',
+      version: packageVersion(path.resolve(here, '../../package.json')),
+      versions: { 'report format': '1' },
+      url: `https://stenhoor.github.io${base}`,
+      intro: 'guide/agents.md',
+      guide: ['REPORT_FORMAT', 'reference/visuals/', 'THEMES', 'reference/shortcuts'],
+    });
+  },
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}favicon-32.svg` }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
@@ -52,22 +79,55 @@ export default defineConfig({
     siteTitle: false,
     nav: [
       { text: 'Demo', link: '/designer.html?report=examples/sales/report.json', target: '_self' },
+      { text: 'Quick start', link: '/guide/quick-start' },
       { text: 'Guide', link: '/guide/' },
-      { text: 'Report format', link: '/REPORT_FORMAT' },
+      {
+        text: 'Reference',
+        items: [
+          { text: 'Report format', link: '/REPORT_FORMAT' },
+          { text: 'Visual types', link: '/reference/visuals/' },
+          { text: 'Themes', link: '/THEMES' },
+          { text: 'Plugins', link: '/PLUGINS' },
+          { text: 'Keyboard shortcuts', link: '/reference/shortcuts' },
+        ],
+      },
       smaltworksMenu(),
     ],
     sidebar: [
+      { text: 'Quick start', items: [{ text: 'Quick start', link: '/guide/quick-start' }] },
       {
-        text: 'Guide',
+        text: 'Getting started',
         items: [
-          { text: 'Getting started', link: '/guide/' },
-          { text: 'Report format', link: '/REPORT_FORMAT' },
-          { text: 'Themes', link: '/THEMES' },
-          { text: 'Plugins', link: '/PLUGINS' },
+          { text: 'Getting started', link: '/guide/getting-started' },
+          { text: 'Tutorial', link: '/guide/tutorial' },
+          { text: 'FAQ', link: '/guide/faq' },
+          { text: 'For AI agents', link: '/guide/agents' },
         ],
       },
       {
-        text: 'Design',
+        text: 'User guide',
+        items: [
+          { text: 'Overview', link: '/guide/' },
+          { text: 'Data', link: '/guide/data' },
+          { text: 'The model', link: '/guide/model' },
+          { text: 'Visuals', link: '/guide/visuals' },
+          { text: 'Pages and interaction', link: '/guide/pages' },
+          { text: 'Publishing', link: '/guide/publishing' },
+        ],
+      },
+      {
+        text: 'Reference',
+        items: [
+          { text: 'Report format', link: '/REPORT_FORMAT' },
+          { text: 'Visual types', link: '/reference/visuals/', items: visualGroups() },
+          { text: 'Themes', link: '/THEMES' },
+          { text: 'Plugins', link: '/PLUGINS' },
+          { text: 'Keyboard shortcuts', link: '/reference/shortcuts' },
+        ],
+      },
+      {
+        text: 'Project',
+        collapsed: true,
         items: [
           { text: 'Vision', link: '/VISION' },
           { text: 'Architecture', link: '/ARCHITECTURE' },
