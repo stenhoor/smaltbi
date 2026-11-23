@@ -1,8 +1,8 @@
 # smaltbi: notes for Claude
 
 Browser-based BI (designer + viewer) on smaltdb. Static by default. Start with `README.md`;
-design docs are in `docs/` (VISION, ARCHITECTURE, REPORT_FORMAT, THEMES, PLUGINS, ROADMAP,
-OPEN_QUESTIONS, adr/).
+design docs are in `docs/` (VISION, ARCHITECTURE, THEMES, PLUGINS, ROADMAP, OPEN_QUESTIONS, adr/), and the
+report format in `docs/reference/format/`, a page per section.
 
 Several Claude Code sessions work on the smalt repos in parallel and cannot see each other: this file
 is the shared starting point. smaltdb and smaltui have matching files (stenhoor/smaltdb#30); keep the

@@ -1,5 +1,5 @@
 // The smaltbi report document: a plain, human-readable JSON file that diffs well in git.
-// See docs/REPORT_FORMAT.md for the full description of every field.
+// See docs/reference/format/ for the full description of every field.
 
 export type SqlValue = null | number | bigint | string | Uint8Array;
 

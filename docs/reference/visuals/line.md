@@ -38,5 +38,5 @@ In the Format tab; `options` in `report.json`.
 
 ## See also
 
-- [Visuals](/guide/visuals), [reference lines](/REPORT_FORMAT#pages-and-visuals)
+- [Visuals](/guide/visuals), [reference lines](/reference/format/axes)
 - [All visual types](./)

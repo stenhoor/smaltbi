@@ -68,9 +68,9 @@ export function visualPage(def: VisualDef): string {
     lines.push('');
   }
   const also: string[] = [];
-  if (def.conditional) also.push('[conditional formatting](/REPORT_FORMAT#pages-and-visuals)');
-  if (def.refLines) also.push('[reference lines](/REPORT_FORMAT#pages-and-visuals)');
-  if (def.slicer) also.push('[filters and slicers](/REPORT_FORMAT#filters)');
+  if (def.conditional) also.push('[conditional formatting](/reference/format/conditional)');
+  if (def.refLines) also.push('[reference lines](/reference/format/axes)');
+  if (def.slicer) also.push('[filters](/reference/format/filters)');
   lines.push('## See also', '', `- [Visuals](/guide/visuals)${also.length ? ', ' + also.join(', ') : ''}`, '- [All visual types](./)', '');
   return lines.join('\n');
 }

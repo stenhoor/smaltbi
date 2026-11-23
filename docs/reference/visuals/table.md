@@ -31,5 +31,5 @@ In the Format tab; `options` in `report.json`.
 
 ## See also
 
-- [Visuals](/guide/visuals), [conditional formatting](/REPORT_FORMAT#pages-and-visuals)
+- [Visuals](/guide/visuals), [conditional formatting](/reference/format/conditional)
 - [All visual types](./)

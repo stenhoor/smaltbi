@@ -12,6 +12,26 @@ const REPO = 'https://github.com/stenhoor/smaltbi';
 const base = process.env.DOCS_BASE ?? '/smaltbi/';
 const WORKS = 'https://smaltworks.dev';
 
+// The report format, a page per section, in the order of its index page.
+const FORMAT = [
+  ['Data', 'data'],
+  ['Model', 'model'],
+  ['Formats', 'formats'],
+  ['Pages', 'pages'],
+  ['Visuals', 'visuals'],
+  ['Repeat for each', 'repeat'],
+  ['Conditional formatting', 'conditional'],
+  ['Chart axes', 'axes'],
+  ['Filters', 'filters'],
+  ['Bookmarks and view state', 'bookmarks'],
+].map(([text, page]) => ({ text, link: `/reference/format/${page}` }));
+// The report format was one page, /REPORT_FORMAT: its links (served the 404 page, which runs this) go to the section's
+// page now.
+const FORMAT_MOVED: Record<string, string> = {
+  '': '', data: 'data', model: 'model', formats: 'formats', 'pages-and-visuals': 'pages', 'visual-types-and-roles': 'visuals#visual-types-and-roles',
+  filters: 'filters', 'bookmarks-and-view-state': 'bookmarks', compatibility: '#compatibility',
+};
+
 // The visual types' pages are generated from the visual registry (npm run docs:visuals); the sidebar follows their
 // index, group by group, so the two cannot disagree.
 function visualGroups() {
@@ -44,7 +64,7 @@ export default defineConfig({
       versions: { 'report format': '1' },
       url: `https://stenhoor.github.io${base}`,
       intro: 'guide/agents.md',
-      guide: ['REPORT_FORMAT', 'reference/visuals/', 'THEMES', 'reference/shortcuts'],
+      guide: ['reference/format/', 'reference/visuals/', 'THEMES', 'reference/shortcuts'],
     });
   },
   head: [
@@ -52,6 +72,7 @@ export default defineConfig({
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
     ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&family=Geist+Mono:wght@400;500&family=Martian+Mono:wght@400;600&display=swap' }],
+    ['script', {}, `if (location.pathname.split('/').pop().split('.')[0] === 'REPORT_FORMAT') location.replace(${JSON.stringify(base)} + 'reference/format/' + (${JSON.stringify(FORMAT_MOVED)}[location.hash.slice(1)] ?? ''));`],
     // Links made for the designer (?report=…) used to point at the site root: forward them.
     ['script', {}, `if (location.pathname === ${JSON.stringify(base)} && /[?&]report=/.test(location.search)) location.replace(${JSON.stringify(base)} + 'designer.html' + location.search + location.hash);`],
   ],
@@ -84,7 +105,7 @@ export default defineConfig({
       {
         text: 'Reference',
         items: [
-          { text: 'Report format', link: '/REPORT_FORMAT' },
+          { text: 'Report format', link: '/reference/format/' },
           { text: 'Visual types', link: '/reference/visuals/' },
           { text: 'Themes', link: '/THEMES' },
           { text: 'Plugins', link: '/PLUGINS' },
@@ -118,7 +139,7 @@ export default defineConfig({
       {
         text: 'Reference',
         items: [
-          { text: 'Report format', link: '/REPORT_FORMAT' },
+          { text: 'Report format', link: '/reference/format/', collapsed: true, items: FORMAT },
           { text: 'Visual types', link: '/reference/visuals/', items: visualGroups() },
           { text: 'Themes', link: '/THEMES' },
           { text: 'Plugins', link: '/PLUGINS' },
