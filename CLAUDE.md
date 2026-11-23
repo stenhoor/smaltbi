@@ -1,8 +1,8 @@
 # smaltbi: notes for Claude
 
 Browser-based BI (designer + viewer) on smaltdb. Static by default. Start with `README.md`;
-design docs are in `docs/` (VISION, ARCHITECTURE, REPORT_FORMAT, THEMES, PLUGINS, ROADMAP,
-OPEN_QUESTIONS, adr/).
+design docs are in `docs/` (VISION, ARCHITECTURE, ROADMAP, OPEN_QUESTIONS, adr/), and the product site's guide and
+reference (report format, themes, plugin API, shortcuts) in `docs/guide/` and `docs/reference/`.
 
 Several Claude Code sessions work on the smalt repos in parallel and cannot see each other: this file
 is the shared starting point. smaltdb and smaltui have matching files (stenhoor/smaltdb#30); keep the
@@ -119,7 +119,7 @@ test that fails without the fix. Playwright is not a project dependency; CI inst
 ## Conventions
 
 - TypeScript, esbuild. Runtime dependencies: smaltdb (loaded at run time from `vendor/`) and smaltkit (bundled). No UI
-  framework, chart library or CSS framework; anything else is a plugin first (docs/PLUGINS.md).
+  framework, chart library or CSS framework; anything else is a plugin first (docs/guide/plugins.md).
 - Charts are hand-written SVG/HTML strings (in smaltkit) styled only through CSS variables: the theme's `--sb-*`,
   passed to the kit's `--sk-*` in `styles/report.css`.
 - e2e checks wait for conditions (`until()`), never fixed sleeps; record console errors on every page.

@@ -11,6 +11,8 @@
 
 Business intelligence in the browser, powered by [smaltdb](https://github.com/stenhoor/smaltdb).
 
+[Documentation](https://stenhoor.github.io/smaltbi/) · [smaltworks.dev](https://smaltworks.dev)
+
 smaltbi is a report designer and viewer, built as a static web app. Load CSV, JSON or Parquet files
 (or open an existing smaltdb database), model them with relationships and SQL measures, drag fields
 onto a canvas, and publish the result as a static site. Every report runs entirely in its reader's
@@ -46,7 +48,7 @@ Every push to `main` deploys to GitHub Pages. This needs **Settings → Pages �
 Actions**; with "Deploy from a branch", GitHub also publishes the raw branch, which has no built app
 (the deploy workflow checks this setting and fails if it is wrong):
 
-- <https://stenhoor.github.io/smaltbi/>: the product site (guide, report format, design docs), with a live sample report.
+- <https://stenhoor.github.io/smaltbi/>: the product site (quick start, guide, reference, design docs), with a live sample report.
 - <https://stenhoor.github.io/smaltbi/designer.html?report=examples/sales/report.json>: the designer, with the sample.
 - <https://stenhoor.github.io/smaltbi/sample/>: the sample report, published as a standalone static site.
 - <https://stenhoor.github.io/smaltbi/viewer.html?report=examples/sales/report.json>: the viewer.
@@ -129,13 +131,17 @@ static host. `node scripts/publish.mjs report.json out/` does the same from the 
 
 ## Documentation
 
+The [documentation site](https://stenhoor.github.io/smaltbi/) has a quick start, a guide to working in the app, and
+the reference: the report format, visual types, themes, the plugin API and shortcuts. It also publishes Markdown for
+AI agents: a twin of every page, [`llms.txt`](https://stenhoor.github.io/smaltbi/llms.txt) and the agent guide,
+[`agents.md`](https://stenhoor.github.io/smaltbi/agents.md). Its sources are in `docs/`:
+
 | Document | Contents |
 |---|---|
+| [docs/guide/](docs/guide/) | Quick start, getting started, and working in the app |
+| [docs/reference/](docs/reference/) | The report format (an object per page), visual types, themes, the plugin API, shortcuts |
 | [docs/VISION.md](docs/VISION.md) | Mandates, principles, 1.0 scope and non-goals |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, data flow, the query compiler, rendering, performance |
-| [docs/REPORT_FORMAT.md](docs/REPORT_FORMAT.md) | The report JSON file, field by field |
-| [docs/THEMES.md](docs/THEMES.md) | Theme tokens and the CSS variables they become |
-| [docs/PLUGINS.md](docs/PLUGINS.md) | Visual plugins and the plugin policy |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Milestones to 1.0 |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Decisions that still need input |
 | [docs/adr/](docs/adr/) | Architecture decision records |
@@ -148,7 +154,7 @@ are on npm) and
 [**smaltkit**](https://github.com/stenhoor/smaltkit), the smalt apps' shared browser code (charts, tables,
 formatting, DOM helpers), bundled at build time. Build: esbuild and TypeScript. The UI, charts and styles
 are plain HTML, CSS and SVG. Anything else goes through
-the plugin policy in [docs/PLUGINS.md](docs/PLUGINS.md).
+the plugin policy in [docs/guide/plugins.md](docs/guide/plugins.md).
 
 ## Brand
 

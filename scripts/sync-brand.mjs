@@ -37,6 +37,8 @@ const files = {
   // The smaltworks menu and footer, and the stage and "A smaltworks project" badges (BRAND.md, "Sites and READMEs").
   'themes/vitepress/smaltworks.ts': '../docs/.vitepress/theme/smaltworks.ts',
   'themes/vitepress/stage.ts': '../docs/.vitepress/theme/stage.ts',
+  // Docs for agents (BRAND.md, Documentation, rule 9): page twins, /llms.txt and /agents.md, written by the build.
+  'themes/vitepress/agents.ts': '../docs/.vitepress/theme/agents.ts',
 };
 mkdirSync(out, { recursive: true });
 for (const [from, to] of Object.entries(files)) {

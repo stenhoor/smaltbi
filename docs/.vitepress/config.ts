@@ -3,12 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { smaltLight, smaltDark } from './theme/shiki';
 import { smaltworksMenu, smaltworksFooter } from './theme/smaltworks';
+import { agentDocs, packageVersion } from './theme/agents';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const REPO = 'https://github.com/stenhoor/smaltbi';
 // Served at stenhoor.github.io/smaltbi/ until the site has a domain of its own: then DOCS_BASE is '/'.
 const base = process.env.DOCS_BASE ?? '/smaltbi/';
-const WORKS = 'https://smaltworks.dev';
+const SITE = `https://stenhoor.github.io${base}`;
 
 export default defineConfig({
   title: 'smaltbi',
@@ -20,6 +21,17 @@ export default defineConfig({
   vite: { publicDir: path.resolve(here, '../../brand') },
   // The designer, the viewer and the published sample are deployed beside the site (scripts/site.mjs).
   ignoreDeadLinks: [/designer\.html/, /viewer\.html/, /\/sample\//],
+  // Docs for agents (BRAND.md, Documentation, rule 9): a Markdown twin of every page, /llms.txt and /agents.md.
+  buildEnd: (config) => {
+    agentDocs(config, {
+      product: 'smaltbi',
+      version: packageVersion('package.json'),
+      url: SITE,
+      summary: 'Business intelligence in the browser, powered by smaltdb: a report designer and viewer whose reports are JSON files.',
+      intro: 'guide/agents.md',
+      guide: ['reference/'],
+    });
+  },
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}favicon-32.svg` }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
@@ -52,22 +64,80 @@ export default defineConfig({
     siteTitle: false,
     nav: [
       { text: 'Demo', link: '/designer.html?report=examples/sales/report.json', target: '_self' },
+      { text: 'Quick start', link: '/guide/quick-start' },
       { text: 'Guide', link: '/guide/' },
-      { text: 'Report format', link: '/REPORT_FORMAT' },
+      {
+        text: 'Reference',
+        items: [
+          {
+            text: 'Formats',
+            items: [
+              { text: 'Report format', link: '/reference/report' },
+              { text: 'Visual types', link: '/reference/visual-types' },
+              { text: 'Themes', link: '/reference/themes' },
+              { text: 'Plugin API', link: '/reference/plugin-api' },
+              { text: 'Shortcuts', link: '/reference/shortcuts' },
+            ],
+          },
+          {
+            text: 'Internals',
+            items: [
+              { text: 'Architecture', link: '/ARCHITECTURE' },
+              { text: 'Decisions', link: '/adr/0001-initial-decisions' },
+            ],
+          },
+        ],
+      },
       smaltworksMenu(),
     ],
     sidebar: [
+      { text: 'Quick start', items: [{ text: 'Quick start', link: '/guide/quick-start' }] },
       {
-        text: 'Guide',
+        text: 'Getting started',
         items: [
           { text: 'Getting started', link: '/guide/' },
-          { text: 'Report format', link: '/REPORT_FORMAT' },
-          { text: 'Themes', link: '/THEMES' },
-          { text: 'Plugins', link: '/PLUGINS' },
+          { text: 'For AI agents', link: '/guide/agents' },
         ],
       },
       {
-        text: 'Design',
+        text: 'User guide',
+        items: [
+          { text: 'Data', link: '/guide/data' },
+          { text: 'Model', link: '/guide/model' },
+          { text: 'Visuals', link: '/guide/visuals' },
+          { text: 'Pages', link: '/guide/pages' },
+          { text: 'Reading a report', link: '/guide/reading' },
+          { text: 'Themes', link: '/guide/themes' },
+          { text: 'Publishing', link: '/guide/publish' },
+          { text: 'Plugins', link: '/guide/plugins' },
+        ],
+      },
+      {
+        text: 'Reference',
+        items: [
+          { text: 'Overview', link: '/reference/' },
+          {
+            text: 'Report format',
+            items: [
+              { text: 'Report', link: '/reference/report' },
+              { text: 'Data', link: '/reference/data' },
+              { text: 'Model', link: '/reference/model' },
+              { text: 'Formats', link: '/reference/formats' },
+              { text: 'Page', link: '/reference/page' },
+              { text: 'Visual', link: '/reference/visual' },
+              { text: 'Visual types', link: '/reference/visual-types' },
+              { text: 'Filters', link: '/reference/filters' },
+              { text: 'View state', link: '/reference/view-state' },
+            ],
+          },
+          { text: 'Themes', link: '/reference/themes' },
+          { text: 'Plugin API', link: '/reference/plugin-api' },
+          { text: 'Shortcuts', link: '/reference/shortcuts' },
+        ],
+      },
+      {
+        text: 'Internals',
+        collapsed: true,
         items: [
           { text: 'Vision', link: '/VISION' },
           { text: 'Architecture', link: '/ARCHITECTURE' },

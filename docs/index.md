@@ -18,7 +18,7 @@ features:
     details: Drop a field on the canvas and smaltbi picks a visual. Change its type, add fields to its axis, legend or values, and format it from the side panel.
   - title: Model with SQL
     details: Relationships, measures written as SQL aggregates that build on each other ([Revenue] - [Cost]), calculated columns and drill hierarchies. The model view draws it all as a diagram.
-    link: /REPORT_FORMAT#model
+    link: /reference/model
     linkText: The model
   - title: Every visual shows its SQL
     details: Each chart runs one readable query, joined along your relationships. Open the SQL tab to see it, copy it, or replace it with your own.
@@ -28,11 +28,11 @@ features:
     details: Cross-filtering, slicers, report, page and visual filters, drill down and drill-through, tooltips, bookmarks, and the view state in the link.
   - title: Themes
     details: Portable theme files set colours, palettes, fonts and layout, in light and dark. Switching themes never re-runs a query.
-    link: /THEMES
+    link: /guide/themes
     linkText: Themes
   - title: Publish a static site
     details: A report is one JSON file that diffs well in git. Publishing packs it with the viewer, smaltdb and its data into a folder for any static host.
-    link: /guide/#publish
+    link: /guide/publish
     linkText: Publishing
 ---
 

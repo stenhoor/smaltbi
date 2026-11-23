@@ -3,7 +3,7 @@
 A theme is a portable `.theme.json` file of design tokens: colors, the categorical palette,
 sequential and diverging ramps, fonts, sizes, visual chrome (radius, padding, border, shadow) and
 page layout. smaltbi compiles it to CSS custom properties, so switching themes never re-runs a
-query. See [docs/THEMES.md](../docs/THEMES.md) for every token.
+query. See [docs/reference/themes.md](../docs/reference/themes.md) for every token.
 
 | File | Look |
 |---|---|

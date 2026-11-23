@@ -1,7 +1,7 @@
 # Themes
 
-A theme is a portable JSON file of design tokens. smaltbi compiles it into CSS custom properties on
-`.sb-themed` (the report and its viewer chrome); every visual reads only those variables. Switching or
+The theme format: a portable JSON file (`.theme.json`) of design tokens. smaltbi compiles it into CSS custom
+properties on `.sb-themed` (the report and its viewer chrome); every visual reads only those variables. Switching or
 editing a theme is therefore a stylesheet swap: no query, no re-render.
 
 Use a theme by name (`"theme": "paper"`), by path or URL (`"theme": "brand.theme.json"`), or inline.
@@ -79,3 +79,7 @@ example `{ "surface": "#fff8e6", "text": "#3b2f00" }`.
 | `smalt` | Default. The smalt brand ([stenhoor/smalt-brand](https://github.com/stenhoor/smalt-brand)): the Kiln palette (smalt `#003399` on graphite neutrals), Geist with tabular numbers, light and dark. Chart colours start from the brand's smalt, kiln orange, smaltbi violet and smaltui cerulean; every series colour is at least 3:1 against the card surface in both modes (checked by a unit test). |
 | `paper` | Editorial: warm paper, Source Serif, flat cards, no markers. |
 | `midnight` | Dark control room: teal accent, IBM Plex Sans with Plex Mono numbers. |
+
+## See also
+
+[Themes in the guide](../guide/themes) · [Visual](./visual) · [Report](./report)

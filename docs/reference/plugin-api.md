@@ -1,20 +1,11 @@
-# Plugins
+# Plugin API
 
-## Policy
+A plugin is one JavaScript file that adds visual types to smaltbi. This page is its API: what it exports, what
+`setup(api)` gets, and what a visual's `render(ctx)` gets.
 
-smaltbi's core depends on smaltdb and nothing else at run time. Before any third-party package is
-used, it is evaluated as a **plugin**:
+## A plugin file
 
-1. Can it be done in a few hundred lines of our own code? Then write it (the zip writer, the treemap
-   layout and the markdown subset are examples).
-2. Otherwise it becomes a plugin: an ES module, loaded only when a report asks for it, that talks to
-   smaltbi through a documented API. Its license stays with it; the core stays MIT and small.
-3. Server-side features (refresh schedules, sharing, sign-in, row-level security) are plugins or a
-   wrapper environment around the static app, never core.
-
-## Visual plugins
-
-A plugin is **one ES module file** with no imports ([ADR 0008](adr/0008-plugin-loading.md)). It exports `setup(api)`,
+A plugin is **one ES module file** with no imports ([ADR 0008](../adr/0008-plugin-loading.md)). It exports `setup(api)`,
 and smaltbi calls it with everything the plugin needs. A visual is a `VisualDef`, the same definition the built-in
 visuals use (`src/visuals/`), so a plugin visual is a peer of a bar chart. A complete example is
 [`examples/plugins/bullet.js`](https://github.com/stenhoor/smaltbi/blob/main/examples/plugins/bullet.js).
@@ -79,7 +70,7 @@ all dimension roles and aggregates all measure roles.
 Style marks with the theme's variables (`var(--c)` is the series color on `sk-cN` elements, plus
 `--sk-text`, `--sk-muted`, `--sk-grid`, …) so the visual follows every theme and dark mode.
 
-### Loading plugins
+## Loading plugins
 
 In the designer, **File → Plugins…** adds a plugin by URL: smaltbi fetches it, records its hash and loads it. In the
 report it is listed as:
@@ -97,12 +88,8 @@ report it is listed as:
   asked.
 - **Failures:** a plugin that fails to load never stops the report; its visuals say the plugin is missing.
 
-## Other plugin kinds (planned)
+Visuals are the only plugin kind so far; the planned kinds are listed in [the guide](../guide/plugins#planned-kinds).
 
-| Kind | Purpose | Examples |
-|---|---|---|
-| Visual | New chart types | Sankey, Gantt, box plot |
-| Data connector | New data step kinds | REST/JSON APIs with paging, Google Sheets, SQL servers via a proxy |
-| Expression language | Alternative to SQL measures | A DAX-like formula language compiled to SQL |
-| Export | Output formats | PDF/PNG export, PowerPoint |
-| Host | Server-side wrapper | Scheduled refresh, sharing and permissions, row-level security |
+## See also
+
+[Plugins in the guide](../guide/plugins) · [Visual types](./visual-types) · [Visual](./visual)
