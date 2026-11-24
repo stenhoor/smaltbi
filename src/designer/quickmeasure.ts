@@ -1,7 +1,7 @@
 // The "Quick measure" dialog: a time-intelligence measure (year to date, same period last year, rolling months, …)
 // over a measure of the model, worked out from the date table (core/timeintel.ts). No SQL to write.
 import type { Measure, TimeCalcKind } from '../core/types.js';
-import { hasEntry, putEntry, removeEntry } from '../core/edits.js';
+import { hasEntry, measureNameTaken, putEntry, removeEntry } from '../core/edits.js';
 import { TIME_CALCS } from '../core/timeintel.js';
 import { dialog, h, toast } from 'smaltkit/dom';
 import { field } from './panel.js';
@@ -85,7 +85,7 @@ export async function quickMeasureDialog(ctx: DialogContext, table: string, name
         const { base, calc, n } = current();
         const newName = nameIn.value.trim();
         if (!newName) return (toast('Give the measure a name', 'error'), undefined);
-        if (list.some((m) => m !== existing && m.name.toLowerCase() === newName.toLowerCase())) return (toast(`There is already a measure named ${newName}`, 'error'), undefined);
+        if (measureNameTaken(ctx.store.report, newName, existing ? { table, name: name! } : undefined)) return (toast(`There is already a measure named ${newName}`, 'error'), undefined);
         const m: Measure = {
           table: base.table,
           name: newName,

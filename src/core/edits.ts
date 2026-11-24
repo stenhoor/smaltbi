@@ -13,7 +13,10 @@ import type { Aggregation, CalcColumn, ConditionalRule, DataSpec, FieldRef, Filt
 
 // ---------------------------------------------------------------- ids, places and lookups
 
-/** A change whose target isn't in the report: `no page "page7"`. */
+/**
+ * A change the report can't take: its target isn't in the report (`no page "page7"`), or the name it gives a measure is
+ * another measure's.
+ */
 export class EditError extends Error {}
 
 const missing = (what: string): never => {
@@ -504,13 +507,25 @@ export function hasEntry(report: Report, list: 'measures' | 'columns', table: st
 }
 
 /**
+ * True if another measure of the model, in any table, has this name, whatever its case (as `[Name]` refers to it). The
+ * measure being edited, `except` (the first with its table and name, the one {@link putEntry} replaces), doesn't count.
+ */
+export function measureNameTaken(report: Report, name: string, except?: { table: string; name: string }): boolean {
+  const measures = report.model.measures ?? [];
+  const skip = except ? measures.findIndex((m) => m.table === except.table && m.name === except.name) : -1;
+  return measures.some((m, i) => i !== skip && m.name.toLowerCase() === name.toLowerCase());
+}
+
+/**
  * Adds a measure or a calculated column, or replaces the first with the table and name of `replacing`
- * (one being edited).
+ * (one being edited). A measure whose name another measure has is refused ({@link measureNameTaken}; the owner,
+ * 2026-11-24).
  */
 export function putEntry(report: Report, list: 'measures' | 'columns', entry: Measure | CalcColumn, replacing?: { table: string; name: string }): void {
   const l = [...((report.model[list] ?? []) as (Measure | CalcColumn)[])];
   const i = replacing ? l.findIndex((x) => x.table === replacing.table && x.name === replacing.name) : -1;
   if (replacing && i < 0) missing(entryName(list, replacing.table, replacing.name));
+  if (list === 'measures' && measureNameTaken(report, entry.name, replacing)) throw new EditError(`a measure named ${entry.name} already exists`);
   if (i >= 0) l[i] = entry;
   else l.push(entry);
   (report.model[list] as (Measure | CalcColumn)[]) = l;

@@ -1131,6 +1131,16 @@ try {
   await page.click('.sk-dialog-foot button:has-text("Cancel")');
   const aov = await page.evaluate(() => window.smaltbi.store.report.model.measures.find((m) => m.name === 'Avg Order Value').sql);
   check(errMarked && aov === '[Revenue] / NULLIF([Orders], 0)', `measure editor: a failed test marks the error; Cancel keeps the measure (${errMarked}, ${aov})`);
+  // A name another measure has, whatever its case, is refused, as in the quick-measure dialog; the dialog stays open.
+  await page.locator('.sbd-field:has(.sbd-flabel:text-is("Avg Order Value"))').click({ button: 'right' });
+  await page.click('.sk-menu-item:has-text("Edit measure…")');
+  await page.waitForSelector('.sk-dialog .sk-editor .sk-ed-input');
+  await page.locator('.sk-dialog input[placeholder="Revenue"]').fill('revenue');
+  await page.click('.sk-dialog-foot button:has-text("Save")');
+  const nameTaken = await until(page, () => /There is already a measure named revenue\./.test(document.querySelector('.sk-dialog[open] .sbd-test')?.textContent ?? ''), undefined, 5000);
+  await page.click('.sk-dialog-foot button:has-text("Cancel")');
+  const revenues = await page.evaluate(() => window.smaltbi.store.report.model.measures.filter((m) => m.name.toLowerCase() === 'revenue').length);
+  check(nameTaken && revenues === 1, `measure editor: a name another measure has is refused, and the dialog stays open (${nameTaken}, ${revenues})`);
 
   // Quick measure (time intelligence): Revenue, same period last year, from the Fields pane's menu.
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Revenue"))').click({ button: 'right' });

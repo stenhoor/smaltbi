@@ -290,12 +290,23 @@ test('measures and calculated columns: added, replaced, removed', () => {
   edit.putEntry(r, 'columns', { table: 'orders', name: 'Year', sql: "strftime('%Y', orders.date)", type: 'text' });
   assert.equal(r.model.columns!.length, 1);
 
-  // Two measures with one table and name: the measure dialog removes the first, the quick-measure dialog every one.
-  edit.putEntry(r, 'measures', { table: 'orders', name: 'Orders', sql: 'COUNT(orders.id)' });
-  edit.removeEntry(r, 'measures', 'orders', 'Orders');
+  // A name another measure has, in any table and whatever its case, is refused; the one being edited keeps its own.
+  assert.equal(edit.measureNameTaken(r, 'orders'), true);
+  assert.equal(edit.measureNameTaken(r, 'Orders', { table: 'orders', name: 'Orders' }), false);
+  refused(r, () => edit.putEntry(r, 'measures', { table: 'customers', name: 'REVENUE', sql: 'COUNT(*)' }), 'a measure named REVENUE already exists');
+  refused(r, () => edit.putEntry(r, 'measures', { table: 'orders', name: 'Revenue', sql: '1' }, { table: 'orders', name: 'Orders' }), 'a measure named Revenue already exists');
+  edit.putEntry(r, 'measures', { table: 'orders', name: 'Order count', sql: 'COUNT(*)' }, { table: 'orders', name: 'Orders' });
+  assert.deepEqual(r.model.measures!.map((m) => m.name), ['Revenue', 'Order count']);
+  edit.putEntry(r, 'columns', { table: 'orders', name: 'Revenue', sql: 'orders.net', type: 'number' });
+  assert.equal(r.model.columns!.length, 2, 'calculated columns are not held to measure names');
+
+  // Reports from before this rule can have two measures with one table and name: the measure dialog removes the first,
+  // the quick-measure dialog every one.
+  r.model.measures!.push({ table: 'orders', name: 'Order count', sql: 'COUNT(orders.id)' });
+  edit.removeEntry(r, 'measures', 'orders', 'Order count');
   assert.deepEqual(r.model.measures!.map((m) => m.sql), ['SUM(orders.net)', 'COUNT(orders.id)']);
-  edit.putEntry(r, 'measures', { table: 'orders', name: 'Orders', sql: 'COUNT(*)' });
-  edit.removeEntry(r, 'measures', 'orders', 'Orders', 'all');
+  r.model.measures!.push({ table: 'orders', name: 'Order count', sql: 'COUNT(*)' });
+  edit.removeEntry(r, 'measures', 'orders', 'Order count', 'all');
   assert.deepEqual(r.model.measures!.map((m) => m.name), ['Revenue']);
 });
 

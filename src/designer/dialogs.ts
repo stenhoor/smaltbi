@@ -210,6 +210,12 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
       result.textContent = 'Enter a name and an expression.';
       return false;
     }
+    // A measure's name is the model's: another measure, in any table, can't have it (the quick-measure dialog's rule).
+    if (kind === 'measure' && edit.measureNameTaken(ctx.store.report, m.name, existing)) {
+      result.className = 'sbd-test sbd-bad';
+      result.textContent = `There is already a measure named ${m.name}.`;
+      return false;
+    }
     const others = list.filter((x) => x !== existing);
     const spec = { ...model, [listKey]: [...others, m] };
     try {
