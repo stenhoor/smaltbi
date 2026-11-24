@@ -9,13 +9,14 @@
 // report (they come from the data), so a function that names a table doesn't check it. The designer gives a new page or
 // visual an id no other page or visual of the report has (`newId`), and finds a visual by the first with its id
 // (`DocStore.visual`); these functions find one the same way.
+import type { SchemaInfo } from './model.js';
 import type { Aggregation, CalcColumn, ConditionalRule, DataSpec, FieldRef, Filter, Hierarchy, Measure, Page, PageSize, Parameter, PluginRef, Relationship, Report, TableSettings, Theme, Visual } from './types.js';
 
 // ---------------------------------------------------------------- ids, places and lookups
 
 /**
- * A change the report can't take: its target isn't in the report (`no page "page7"`), or the name it gives a measure is
- * another measure's.
+ * A change the report can't take: its target isn't in the report (`no page "page7"`), or the name it gives a measure or
+ * a calculated column is taken.
  */
 export class EditError extends Error {}
 
@@ -517,15 +518,38 @@ export function measureNameTaken(report: Report, name: string, except?: { table:
 }
 
 /**
- * Adds a measure or a calculated column, or replaces the first with the table and name of `replacing`
- * (one being edited). A measure whose name another measure has is refused ({@link measureNameTaken}; the owner,
- * 2026-11-24).
+ * True if a calculated column can't have this name on its table: the table already has a field by that name, whatever
+ * its case (the owner, 2026-11-24). A table's fields are what `table.Name` finds: its data's columns (from `schema`),
+ * its calculated columns, its measures and its hierarchies. The column being edited, `except` (the first with its table
+ * and name, the one {@link putEntry} replaces), doesn't count.
  */
-export function putEntry(report: Report, list: 'measures' | 'columns', entry: Measure | CalcColumn, replacing?: { table: string; name: string }): void {
+export function columnNameTaken(report: Report, schema: SchemaInfo, table: string, name: string, except?: { table: string; name: string }): boolean {
+  const calc = report.model.columns ?? [];
+  const skip = except ? calc.findIndex((c) => c.table === except.table && c.name === except.name) : -1;
+  const names = [
+    ...(schema.tables.find((t) => t.name === table)?.columns.map((c) => c.name) ?? []),
+    ...calc.filter((c, i) => i !== skip && c.table === table).map((c) => c.name),
+    ...(report.model.measures ?? []).filter((m) => m.table === table).map((m) => m.name),
+    ...(report.model.hierarchies ?? []).filter((h) => h.table === table).map((h) => h.name),
+  ];
+  return names.some((n) => n.toLowerCase() === name.toLowerCase());
+}
+
+/**
+ * Adds a measure or a calculated column, or replaces the first with the table and name of `replacing`
+ * (one being edited). A measure whose name another measure has is refused ({@link measureNameTaken}), and so is a
+ * calculated column whose name its table already has ({@link columnNameTaken}, which needs the data's `schema`); the
+ * owner, 2026-11-24.
+ */
+export function putEntry(report: Report, list: 'measures' | 'columns', entry: Measure | CalcColumn, replacing?: { table: string; name: string }, schema?: SchemaInfo): void {
   const l = [...((report.model[list] ?? []) as (Measure | CalcColumn)[])];
   const i = replacing ? l.findIndex((x) => x.table === replacing.table && x.name === replacing.name) : -1;
   if (replacing && i < 0) missing(entryName(list, replacing.table, replacing.name));
   if (list === 'measures' && measureNameTaken(report, entry.name, replacing)) throw new EditError(`a measure named ${entry.name} already exists`);
+  if (list === 'columns') {
+    if (!schema) throw new Error("putEntry needs the data's schema for a calculated column");
+    if (columnNameTaken(report, schema, entry.table, entry.name, replacing)) throw new EditError(`${entry.table} already has a field named ${entry.name}`);
+  }
   if (i >= 0) l[i] = entry;
   else l.push(entry);
   (report.model[list] as (Measure | CalcColumn)[]) = l;

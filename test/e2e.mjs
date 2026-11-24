@@ -1141,6 +1141,17 @@ try {
   await page.click('.sk-dialog-foot button:has-text("Cancel")');
   const revenues = await page.evaluate(() => window.smaltbi.store.report.model.measures.filter((m) => m.name.toLowerCase() === 'revenue').length);
   check(nameTaken && revenues === 1, `measure editor: a name another measure has is refused, and the dialog stays open (${nameTaken}, ${revenues})`);
+  // A calculated column can't take a name its table already has: here one of the data's columns, in another case.
+  await page.locator('button.sbd-table:has(span:text-is("Sales"))').click({ button: 'right' });
+  await page.click('.sk-menu-item:has-text("New calculated column…")');
+  await page.waitForSelector('.sk-dialog .sk-editor .sk-ed-input');
+  await page.locator('.sk-dialog input[placeholder="Order Month"]').fill('Quantity');
+  await page.locator('.sk-dialog .sk-ed-input').fill('sales.quantity * 2');
+  await page.click('.sk-dialog-foot button:has-text("Save")');
+  const columnTaken = await until(page, () => /sales already has a field named Quantity\./.test(document.querySelector('.sk-dialog[open] .sbd-test')?.textContent ?? ''), undefined, 5000);
+  await page.click('.sk-dialog-foot button:has-text("Cancel")');
+  const quantities = await page.evaluate(() => (window.smaltbi.store.report.model.columns ?? []).filter((c) => c.name.toLowerCase() === 'quantity').length);
+  check(columnTaken && quantities === 0, `calculated column editor: a name its table already has is refused, and the dialog stays open (${columnTaken}, ${quantities})`);
 
   // Quick measure (time intelligence): Revenue, same period last year, from the Fields pane's menu.
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Revenue"))').click({ button: 'right' });
