@@ -140,6 +140,10 @@ export function reportActions(ctx: ReportActionContext): Action[] {
   const write = (name: string, description: string, inputSchema: Record<string, unknown>, run: (input: Record<string, unknown>) => Promise<unknown>): Action => ({
     name, description, inputSchema, resultSchema: DONE, kind: 'write', touches, undoable: true, grantedByDefault: false, run: (input) => run(input),
   });
+  /** A write that stores SQL the model wrote, which the report then runs: smaltai asks for it until the user grants it by name. */
+  const code = (name: string, description: string, inputSchema: Record<string, unknown>, run: (input: Record<string, unknown>) => Promise<unknown>): Action => ({
+    ...write(name, description, inputSchema, run), runsCode: true,
+  });
   const report = () => ctx.store.report;
   const grant = async () => (await ctx.grants()).data;
   const change = <T>(kind: ChangeKind, fn: (r: Report) => T, at?: string) => ctx.store.change(kind, fn, at);
@@ -307,7 +311,7 @@ export function reportActions(ctx: ReportActionContext): Action[] {
       change('visual', (r) => edit.changeVisualType(r, visualId, to.type, { from: from.roles, to: to.roles }), visualId);
       return { ok: true };
     }),
-    write('edit_visual', "Changes a visual: title, subtitle, options (see list_visual_types; null takes one off), row limit, interactions, background, place and size, how it shows on phones, custom SQL (null: the generated query), conditional formatting, repeat for each value.", OBJECT({
+    write('edit_visual', "Changes a visual: title, subtitle, options (see list_visual_types; null takes one off), row limit, interactions, background, place and size, how it shows on phones, conditional formatting, repeat for each value. Custom SQL is set_visual_sql.", OBJECT({
       visual: id('visual'),
       title: text('Empty: no title.', { maxLength: 200 }),
       subtitle: text('Empty: no subtitle.', { maxLength: 200 }),
@@ -318,7 +322,6 @@ export function reportActions(ctx: ReportActionContext): Action[] {
       background: { type: ['string', 'null'], pattern: '^#[0-9a-fA-F]{6}$', description: 'A colour like #f4f4f4, or null for the theme\'s.' },
       layout: LAYOUT,
       phone: OBJECT({ hidden: { type: 'boolean' }, rows: { type: ['integer', 'null'], minimum: 1, maximum: 40 } }),
-      sql: { type: ['string', 'null'], description: 'Custom SQL for the visual, or null for the generated query.' },
       conditional: { type: 'array', items: CONDITIONAL, description: 'Its rules, in order; [] for none.' },
       repeat: REPEAT,
     }, ['visual']), async (i) => {
@@ -347,10 +350,20 @@ export function reportActions(ctx: ReportActionContext): Action[] {
           const p = i.phone as { hidden?: boolean; rows?: number | null };
           edit.setVisualPhone(r, visualId, { ...(p.hidden !== undefined ? { hidden: p.hidden } : {}), ...(p.rows !== undefined ? { h: p.rows ?? undefined } : {}) });
         }
-        if (i.sql !== undefined) edit.setCustomSql(r, visualId, (i.sql as string | null) ?? undefined);
         if (i.conditional !== undefined) edit.setConditional(r, visualId, i.conditional as NonNullable<Visual['conditional']>);
         if (i.repeat !== undefined) edit.setRepeat(r, visualId, (i.repeat as Visual['repeat'] | null) ?? undefined);
       }, visualId);
+      return { ok: true };
+    }),
+    code('set_visual_sql', "Replaces a visual's generated query with SQL, or with null goes back to the generated query. Its output columns map to the visual's fields in order.", OBJECT({
+      visual: id('visual'),
+      sql: { type: ['string', 'null'], minLength: 1, description: 'A SELECT over the report\'s tables, or null.' },
+    }, ['visual', 'sql']), async (i) => {
+      const visualId = i.visual as string;
+      visualOf(visualId);
+      const sql = i.sql as string | null;
+      if (sql !== null && namesExcluded(await grant(), sql)) fail('the SQL names a table or column the user excluded');
+      change('visual', (r) => edit.setCustomSql(r, visualId, sql ?? undefined), visualId);
       return { ok: true };
     }),
     write('duplicate_visual', 'Copies a visual onto the first free place of its page.', OBJECT({ visual: id('visual') }, ['visual']), async (i) => {

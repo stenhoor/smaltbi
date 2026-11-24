@@ -46,6 +46,7 @@ test('every action is declared as smaltai checks it, with schemas in the subset 
     assert.equal(a.touches.rows, false, `${a.name} reads no rows`);
   }
   for (const a of actions.filter((x) => x.kind === 'read')) assert.equal(a.reads, 'schema', `${a.name} reads names only`);
+  assert.deepEqual(actions.filter((a) => a.runsCode).map((a) => a.name), ['set_visual_sql'], 'only the action that stores SQL the model wrote runs code');
 });
 
 test('reading: the report outline, the tables, the visual types', async () => {
@@ -73,6 +74,8 @@ test('what the user excluded is never shown, and cannot be used', async () => {
   await assert.rejects(s.run('add_visual', { page: firstPage(s).id, type: 'card', fields: { values: ['sales.discount'] } }), /no field sales\.discount/);
   await assert.rejects(s.run('add_filter', { scope: 'report', filter: { field: 'stores.region', op: 'in', values: ['North'] } }), /no field stores\.region/);
   await assert.rejects(s.run('edit_table', { table: 'stores', hidden: true }), /no table stores/);
+  await assert.rejects(s.run('set_visual_sql', { visual: 'c-cat', sql: 'SELECT region, COUNT(*) FROM stores GROUP BY 1' }), /names a table or column the user excluded/);
+  await assert.rejects(s.run('set_visual_sql', { visual: 'c-cat', sql: 'SELECT SUM(discount) FROM sales' }), /names a table or column the user excluded/);
 });
 
 test('pages: add, edit, move, duplicate, remove; a report keeps one page', async () => {
@@ -131,7 +134,12 @@ test('visuals: add with fields, set a role, change the type, edit, duplicate, re
     (({ title, options, limit, interactions, style, layout, phone }) => ({ title, options, limit, interactions, style, layout, phone }))(v()),
     { title: 'Revenue by category', options: { labels: true }, limit: 10, interactions: { filterOthers: false }, style: { surface: '#f4f4f4' }, layout: { x: 0, y: 20, w: 6, h: 4 }, phone: { hidden: true } },
   );
-  await s.run('edit_visual', { visual, options: { labels: null }, background: null, sql: 'SELECT 1 AS c, 2 AS v', repeat: { field: 'stores.region' } });
+  await s.run('edit_visual', { visual, options: { labels: null }, background: null, repeat: { field: 'stores.region' } });
+  await s.run('set_visual_sql', { visual, sql: 'SELECT 1 AS c, 2 AS v' });
+  assert.equal(v().sql, 'SELECT 1 AS c, 2 AS v');
+  await s.run('set_visual_sql', { visual, sql: null });
+  assert.equal(v().sql, undefined);
+  await s.run('set_visual_sql', { visual, sql: 'SELECT 1 AS c, 2 AS v' });
   assert.deepEqual([v().options, v().style, v().sql, v().repeat], [{}, undefined, 'SELECT 1 AS c, 2 AS v', { field: 'stores.region' }]);
   await assert.rejects(s.run('edit_visual', { visual, options: { sparkle: true } }), /column has no option sparkle/);
   await assert.rejects(s.run('edit_visual', { visual, options: { labels: 'yes' } }), /takes true or false/);
