@@ -109,13 +109,12 @@ function tablePanel(ctx: ModelPanelContext, table: string): HTMLElement {
       'button.sbd-btn',
       {
         onclick: () => {
-          const levels = levelsIn.value.split(',').map((s) => s.trim()).filter(Boolean);
-          const missing = levels.filter((l) => !t.columns.has(l));
-          if (!nameIn.value.trim() || levels.length < 2) return toast('A hierarchy needs a name and at least two levels', 'error');
-          if (missing.length) return toast(`Not columns of ${table}: ${missing.join(', ')}`, 'error');
-          const collision = edit.nameCollision(ctx.store.report, ctx.session.schema, 'hierarchy', table, nameIn.value.trim());
+          const hierarchy: Hierarchy = { table, name: nameIn.value.trim(), levels: levelsIn.value.split(',').map((s) => s.trim()).filter(Boolean) };
+          const problem = edit.hierarchyProblem(ctx.store.report, ctx.session.schema, hierarchy);
+          if (problem !== null) return toast(problem, 'error');
+          const collision = edit.nameCollision(ctx.store.report, ctx.session.schema, 'hierarchy', table, hierarchy.name);
           if (collision !== null) return toast(`Name taken: ${collision}`, 'error');
-          ctx.store.change('model', (r) => edit.addHierarchy(r, { table, name: nameIn.value.trim(), levels } as Hierarchy, ctx.session.schema));
+          ctx.store.change('model', (r) => edit.addHierarchy(r, hierarchy, ctx.session.schema));
         },
       },
       '+ Add hierarchy',

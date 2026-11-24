@@ -272,9 +272,9 @@ test('the model: tables, hierarchies, relationships and the diagram', () => {
   edit.setTableSettings(r, 'orders', { hidden: true });
   assert.deepEqual(r.model.tables, { orders: { label: 'Orders', hidden: true } });
 
-  edit.addHierarchy(r, { table: 'orders', name: 'Calendar', levels: ['year', 'month'] }, schema);
-  refused(r, () => edit.addHierarchy(r, { table: 'orders', name: 'calendar', levels: ['date'] }, schema), 'orders already has a field named calendar');
-  refused(r, () => edit.addHierarchy(r, { table: 'orders', name: 'AMOUNT', levels: ['date'] }, schema), 'orders already has a field named AMOUNT');
+  edit.addHierarchy(r, { table: 'orders', name: 'Calendar', levels: ['date', 'amount'] }, schema);
+  refused(r, () => edit.addHierarchy(r, { table: 'orders', name: 'calendar', levels: ['date', 'amount'] }, schema), 'orders already has a field named calendar');
+  refused(r, () => edit.addHierarchy(r, { table: 'orders', name: 'AMOUNT', levels: ['date', 'amount'] }, schema), 'orders already has a field named AMOUNT');
   edit.removeHierarchy(r, 'orders', 'Calendar');
   assert.deepEqual(r.model.hierarchies, []);
 
@@ -384,4 +384,37 @@ test('DocStore.change: a change that throws leaves no undo step, and the redo hi
   assert.equal(store.canRedo, true, 'redo still there');
   assert.equal(store.change('pages', (r) => edit.addPage(r)), 'page3', 'change returns what its function returns');
   assert.equal(store.canUndo, true);
+});
+
+test('a hierarchy needs a name and two levels or more, each a column of its table; addHierarchy refuses one that does not', async () => {
+  const { report, schema } = await sampleSession();
+  const problem = (levels: string[], name = 'H') => edit.hierarchyProblem(report, schema, { table: 'sales', name, levels });
+  assert.equal(problem(['quantity', 'Year']), null, 'a data column and a calculated column');
+  assert.equal(problem(['quantity']), 'A hierarchy needs a name and at least two levels');
+  assert.equal(problem(['quantity', 'Year'], ' '), 'A hierarchy needs a name and at least two levels');
+  assert.equal(problem(['quantity', 'colour', 'size']), 'Not columns of sales: colour, size');
+  assert.throws(() => edit.addHierarchy(report, { table: 'sales', name: 'H', levels: ['colour', 'size'] }, schema), (e: unknown) => e instanceof edit.EditError && e.message === 'Not columns of sales: colour, size');
+});
+
+test('what-if parameters: usable names, one of each name, values of their type, ranges on numbers and choices on text', () => {
+  const ok = { name: 'Growth', type: 'number', value: 0.1, min: 0, max: 1 } as const;
+  assert.equal(edit.parameterProblem([ok, { name: 'Region', type: 'text', value: 'North', choices: ['North'] }]), null);
+  assert.equal(edit.parameterProblem([{ ...ok, name: '1st' }]), '"1st" is not a usable name: letters, digits, spaces and _ (starting with a letter)');
+  assert.equal(edit.parameterProblem([ok, { ...ok, name: 'GROWTH' }]), 'Two parameters are named GROWTH');
+  assert.equal(edit.parameterProblem([{ ...ok, value: 'x' }]), "Growth: a number parameter's value is a number");
+  assert.equal(edit.parameterProblem([{ name: 'T', type: 'text', value: 1 }]), "T: a text parameter's value is a text");
+  assert.equal(edit.parameterProblem([{ name: 'T', type: 'text', value: 'a', max: 3 }]), 'T: min, max and step are for number parameters');
+  assert.equal(edit.parameterProblem([{ ...ok, choices: ['a'] }]), 'Growth: choices are for text parameters');
+  assert.equal(edit.parameterProblem([{ ...ok, min: 2 }]), 'Growth: the minimum is above the maximum');
+  const report = { model: {} } as Report;
+  assert.throws(() => edit.setParameters(report, [ok, ok]), (e: unknown) => e instanceof edit.EditError && e.message === 'Two parameters are named Growth');
+  assert.equal(report.model.parameters, undefined, 'a refused list changes nothing');
+});
+
+test('two columns are related already either way round, except by the relationship being changed', () => {
+  const report = { model: { relationships: [{ from: 'sales.customer_id', to: 'customers.id' }] } } as Report;
+  assert.equal(edit.relatedAlready(report, { from: 'sales.customer_id', to: 'customers.id' }), true);
+  assert.equal(edit.relatedAlready(report, { from: 'customers.id', to: 'sales.customer_id' }), true);
+  assert.equal(edit.relatedAlready(report, { from: 'sales.customer_id', to: 'customers.id' }, 0), false);
+  assert.equal(edit.relatedAlready(report, { from: 'sales.product_id', to: 'products.id' }), false);
 });

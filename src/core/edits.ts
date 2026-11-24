@@ -15,8 +15,9 @@ import type { Aggregation, CalcColumn, ConditionalRule, DataSpec, FieldRef, Filt
 // ---------------------------------------------------------------- ids, places and lookups
 
 /**
- * A change the report can't take: its target isn't in the report (`no page "page7"`), or the name it gives a measure, a
- * calculated column or a hierarchy collides with another ({@link nameCollision}).
+ * A change the report can't take: its target isn't in the report (`no page "page7"`), the name it gives a measure, a
+ * calculated column or a hierarchy collides with another ({@link nameCollision}), or a hierarchy or the what-if
+ * parameters it gives aren't valid ({@link hierarchyProblem}, {@link parameterProblem}).
  */
 export class EditError extends Error {}
 
@@ -455,8 +456,27 @@ export function setTableSettings(report: Report, table: string, patch: Partial<T
   report.model.tables = tables;
 }
 
-/** Adds a hierarchy (a drill path). A name that collides is refused ({@link nameCollision}). */
+/**
+ * Why a hierarchy can't be added as it is, or `null`: it needs a name and at least two levels, each a column of its
+ * table (of the data, or a calculated column). Its name is checked by {@link nameCollision}.
+ */
+export function hierarchyProblem(report: Report, schema: SchemaInfo, hierarchy: Hierarchy): string | null {
+  if (!hierarchy.name.trim() || hierarchy.levels.length < 2) return 'A hierarchy needs a name and at least two levels';
+  const columns = new Set([
+    ...(schema.tables.find((t) => t.name === hierarchy.table)?.columns.map((c) => c.name) ?? []),
+    ...(report.model.columns ?? []).filter((c) => c.table === hierarchy.table).map((c) => c.name),
+  ]);
+  const notColumns = hierarchy.levels.filter((l) => !columns.has(l));
+  return notColumns.length ? `Not columns of ${hierarchy.table}: ${notColumns.join(', ')}` : null;
+}
+
+/**
+ * Adds a hierarchy (a drill path). One {@link hierarchyProblem} finds, or whose name collides ({@link nameCollision}),
+ * is refused.
+ */
 export function addHierarchy(report: Report, hierarchy: Hierarchy, schema: SchemaInfo): void {
+  const problem = hierarchyProblem(report, schema, hierarchy);
+  if (problem !== null) throw new EditError(problem);
   const collision = nameCollision(report, schema, 'hierarchy', hierarchy.table, hierarchy.name);
   if (collision !== null) throw new EditError(collision);
   report.model.hierarchies = [...(report.model.hierarchies ?? []), hierarchy];
@@ -471,6 +491,11 @@ export function removeHierarchy(report: Report, table: string, name: string): vo
 /** Adds relationships after the model's others. */
 export function addRelationships(report: Report, relationships: Relationship[]): void {
   report.model.relationships = [...(report.model.relationships ?? []), ...relationships];
+}
+
+/** True if another of the model's relationships (not the one at `except`) relates these two columns, either way round. */
+export function relatedAlready(report: Report, rel: Pick<Relationship, 'from' | 'to'>, except?: number): boolean {
+  return (report.model.relationships ?? []).some((r, i) => i !== except && ((r.from === rel.from && r.to === rel.to) || (r.from === rel.to && r.to === rel.from)));
 }
 
 /** Changes the relationship at `index` of the model's. */
@@ -553,8 +578,30 @@ export function removeEntry(report: Report, list: 'measures' | 'columns', table:
   (report.model[list] as (Measure | CalcColumn)[]) = which === 'all' ? l.filter((x) => !matches(x)) : l.filter((_, j) => j !== first);
 }
 
-/** The model's what-if parameters; none takes them off. */
+const PARAMETER_NAME = /^[A-Za-z_][\w ]{0,40}$/;
+
+/**
+ * Why a list of what-if parameters can't be the model's, or `null`: a name that isn't usable, two with one name (whatever
+ * their case), a value of the other type, a range on text or choices on a number, a minimum above the maximum.
+ */
+export function parameterProblem(parameters: readonly Parameter[]): string | null {
+  const names = new Set<string>();
+  for (const p of parameters) {
+    if (!PARAMETER_NAME.test(p.name)) return `"${p.name}" is not a usable name: letters, digits, spaces and _ (starting with a letter)`;
+    if (names.has(p.name.toLowerCase())) return `Two parameters are named ${p.name}`;
+    names.add(p.name.toLowerCase());
+    if ((p.type === 'number') !== (typeof p.value === 'number')) return `${p.name}: a ${p.type} parameter's value is a ${p.type}`;
+    if (p.type === 'text' && (p.min !== undefined || p.max !== undefined || p.step !== undefined)) return `${p.name}: min, max and step are for number parameters`;
+    if (p.type === 'number' && p.choices !== undefined) return `${p.name}: choices are for text parameters`;
+    if (p.type === 'number' && p.min !== undefined && p.max !== undefined && p.min > p.max) return `${p.name}: the minimum is above the maximum`;
+  }
+  return null;
+}
+
+/** The model's what-if parameters; none takes them off. A list {@link parameterProblem} finds fault with is refused. */
 export function setParameters(report: Report, parameters: Parameter[]): void {
+  const problem = parameterProblem(parameters);
+  if (problem !== null) throw new EditError(problem);
   if (parameters.length) report.model.parameters = parameters;
   else delete report.model.parameters;
 }

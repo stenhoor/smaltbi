@@ -1,9 +1,8 @@
 // Designer dialogs: data sources, the measure / calculated column editor, themes, and publishing.
 // Relationships and hierarchies are edited in the model view (modelview.ts, modelpanel.ts).
 import type { CalcColumn, DataStep, Format, Measure, SqlValue, Theme } from '../core/types.js';
-import { formatter } from '../core/format.js';
-import { compileQuery } from '../core/compile.js';
-import { Model } from '../core/model.js';
+import { FORMAT_PRESETS, formatter } from '../core/format.js';
+import { columnTypeOf, entryTest } from '../core/entrytest.js';
 import * as edit from '../core/edits.js';
 import { BUILTIN_THEMES, mergeTheme } from '../theme/theme.js';
 import { formatFromName } from 'smaltkit/manifest';
@@ -24,20 +23,7 @@ export interface DialogContext {
   appBase: string;
 }
 
-const FORMATS: [string, string][] = [
-  ['', 'Default'],
-  ['number', 'Number'],
-  ['integer', 'Whole number'],
-  ['decimal', 'Decimal (2)'],
-  ['percent', 'Percent'],
-  ['currency', 'Currency'],
-  ['currency0', 'Currency, no cents'],
-  ['compact', 'Compact (1.2K)'],
-  ['currency-compact', 'Currency compact'],
-  ['date', 'Date'],
-  ['month', 'Month'],
-  ['year', 'Year'],
-];
+const FORMATS: (readonly [string, string])[] = [['', 'Default'], ...FORMAT_PRESETS];
 
 function formatSelect(value: Format | undefined): HTMLSelectElement {
   const cur = typeof value === 'string' ? value : value ? 'custom' : '';
@@ -217,18 +203,16 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
       result.textContent = `Name taken: ${collision}.`;
       return false;
     }
-    const others = list.filter((x) => x !== existing);
-    const spec = { ...model, [listKey]: [...others, m] };
     try {
-      const tmp = new Model(ctx.session.schema, spec, ctx.session.notUnique);
-      const f = tmp.resolve(`${m.table}.${m.name}`);
-      const q = compileQuery(tmp, kind === 'measure' ? { dims: [], measures: [f] } : { dims: [f], measures: [], limit: 5 });
+      // The same test the agent's model actions run (core/entrytest.ts).
+      const { field: f, query: q } = entryTest(ctx.session.schema, model, ctx.session.notUnique, kind, m, existing);
       const frame = await ctx.session.runner.run(q.sql);
       const vals = Array.from(frame.data[q.columns[0]!.key] ?? []).slice(0, 5);
       result.className = 'sbd-test sbd-ok';
       const fmt = formatter(m.format ?? f.format, kind === 'measure' ? 'number' : f.type);
       result.textContent = '✓ ' + vals.map((v) => fmt(v as SqlValue)).join(', ');
-      if (kind === 'column' && vals.length) (m as CalcColumn).type = vals.every((v) => typeof v === 'number' || v === null) ? 'number' : /^\d{4}-\d{2}(-\d{2})?$/.test(String(vals.find((v) => v !== null))) ? 'date' : 'text';
+      const type = kind === 'column' ? columnTypeOf(vals) : undefined;
+      if (type) (m as CalcColumn).type = type;
       return true;
     } catch (e) {
       result.className = 'sbd-test sbd-bad';

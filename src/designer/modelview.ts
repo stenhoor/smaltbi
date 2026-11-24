@@ -425,7 +425,7 @@ export class ModelView {
     let rel: Relationship = { from: `${t1}.${c1}`, to: `${t2}.${c2}` };
     if (isKey(t1, c1) && !isKey(t2, c2)) rel = { from: `${t2}.${c2}`, to: `${t1}.${c1}` };
     const rels = this.report.model.relationships ?? [];
-    if (rels.some((r) => (r.from === rel.from && r.to === rel.to) || (r.from === rel.to && r.to === rel.from))) {
+    if (edit.relatedAlready(this.report, rel)) {
       toast('Those columns are already related');
       this.drawLines();
       return;

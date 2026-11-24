@@ -1,11 +1,9 @@
 // Model → Parameters…: what-if parameters, values readers change with a Parameter control and measures use as
 // `[@Name]`. Each has a name, a type (number or text), a default, and a range (numbers) or choices (text).
 import type { Parameter } from '../core/types.js';
-import { setParameters } from '../core/edits.js';
+import { parameterProblem, setParameters } from '../core/edits.js';
 import { dialog, h, toast } from 'smaltkit/dom';
 import type { DocStore } from './store.js';
-
-const NAME = /^[A-Za-z_][\w ]{0,40}$/;
 
 export async function parametersDialog(store: DocStore): Promise<void> {
   const list: Parameter[] = structuredClone(store.report.model.parameters ?? []);
@@ -89,13 +87,8 @@ export async function parametersDialog(store: DocStore): Promise<void> {
       label: 'Apply',
       primary: true,
       value: () => {
-        const names = new Set<string>();
-        for (const p of list) {
-          if (!NAME.test(p.name)) return (toast(`"${p.name}" is not a usable name: letters, digits, spaces and _ (starting with a letter)`, 'error'), undefined);
-          if (names.has(p.name.toLowerCase())) return (toast(`Two parameters are named ${p.name}`, 'error'), undefined);
-          names.add(p.name.toLowerCase());
-          if (p.type === 'number' && p.min !== undefined && p.max !== undefined && p.min > p.max) return (toast(`${p.name}: the minimum is above the maximum`, 'error'), undefined);
-        }
+        const problem = parameterProblem(list);
+        if (problem !== null) return (toast(problem, 'error'), undefined);
         return true;
       },
     },

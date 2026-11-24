@@ -6,7 +6,6 @@ import { checkActions, defaultGrants, grants as checkGrants, inputProblem, memor
 import { reportActions, WITHHELD } from '../src/agent/report-actions.js';
 import { DocStore } from '../src/designer/store.js';
 import { EditError, findPage, findVisual } from '../src/core/edits.js';
-import { Model } from '../src/core/model.js';
 import { BUILTIN_THEMES } from '../src/theme/theme.js';
 import type { Report } from '../src/core/types.js';
 import { sampleSession } from './helpers.js';
@@ -19,7 +18,9 @@ function setup(given: Partial<Grants['data']> = {}) {
   let g: Grants = checkGrants({ data: given });
   const actions = reportActions({
     store,
-    model: () => new Model(session.schema, store.report.model),
+    schema: () => session.schema,
+    notUnique: () => new Set(),
+    run: (sql) => session.runner.run(sql),
     theme: () => BUILTIN_THEMES.smalt!,
     grants: async () => g,
     database: 'sales',
@@ -43,10 +44,8 @@ test('every action is declared as smaltai checks it, with schemas in the subset 
   for (const a of writes) {
     assert.equal(a.grantedByDefault, false, `${a.name} asks first until the user allows it`);
     assert.equal(a.undoable, true, `${a.name} can be undone`);
-    assert.equal(a.touches.rows, false, `${a.name} reads no rows`);
   }
   for (const a of actions.filter((x) => x.kind === 'read')) assert.equal(a.reads, 'schema', `${a.name} reads names only`);
-  assert.deepEqual(actions.filter((a) => a.runsCode).map((a) => a.name), ['set_visual_sql'], 'only the action that stores SQL the model wrote runs code');
 });
 
 test('reading: the report outline, the tables, the visual types', async () => {
@@ -205,4 +204,119 @@ test('through the agent: a report change waits for the user, and the schema refu
   assert.equal(r(s).name, 'From the agent');
   assert.match(result.messages.find((m) => m.toolCallId === 'c2')!.content, /"visual" is required/);
   assert.ok(findVisual(r(s), 'c-cat'));
+});
+
+// ---------------------------------------------------------------- the model (part A2)
+
+const measure = (s: { store: DocStore }, table: string, name: string) => (r(s).model.measures ?? []).find((m) => m.table === table && m.name === name);
+const column = (s: { store: DocStore }, table: string, name: string) => (r(s).model.columns ?? []).find((m) => m.table === table && m.name === name);
+
+test('the actions that write SQL run code, and the ones that test it read rows', () => {
+  const { actions } = setup();
+  const code = actions.filter((a) => a.runsCode).map((a) => a.name);
+  assert.deepEqual(code, ['set_visual_sql', 'add_measure', 'edit_measure', 'add_calculated_column', 'edit_calculated_column']);
+  assert.deepEqual(actions.filter((a) => a.touches.rows).map((a) => a.name), ['add_measure', 'edit_measure', 'add_calculated_column', 'edit_calculated_column']);
+});
+
+test('measures: added after a test, usable by the next action at once, changed, removed', async () => {
+  const s = setup();
+  await s.run('add_measure', { table: 'sales', name: 'Big orders', sql: 'COUNT(*) FILTER (WHERE sales.quantity > 5)', format: 'integer', description: 'Orders of more than five' });
+  assert.deepEqual(measure(s, 'sales', 'Big orders'), { table: 'sales', name: 'Big orders', sql: 'COUNT(*) FILTER (WHERE sales.quantity > 5)', format: 'integer', description: 'Orders of more than five' });
+  const { visual } = (await s.run('add_visual', { page: firstPage(s).id, type: 'card', fields: { values: ['sales.Big orders'] } })) as { visual: string };
+  assert.ok(findVisual(r(s), visual), 'the new measure is a field for the next action');
+
+  await s.run('edit_measure', { table: 'sales', name: 'Big orders', newName: 'Large orders', format: null, description: '' });
+  assert.deepEqual(measure(s, 'sales', 'Large orders'), { table: 'sales', name: 'Large orders', sql: 'COUNT(*) FILTER (WHERE sales.quantity > 5)' });
+  assert.equal(measure(s, 'sales', 'Big orders'), undefined);
+  await assert.rejects(s.run('edit_measure', { table: 'sales', name: 'Revenue YTD', sql: 'SUM(1)' }), /time-intelligence quick measure/);
+  await s.run('remove_measure', { table: 'sales', name: 'Large orders' });
+  assert.equal(measure(s, 'sales', 'Large orders'), undefined);
+  await assert.rejects(s.run('remove_measure', { table: 'sales', name: 'Large orders' }), (e: unknown) => e instanceof EditError && e.message === 'no measure sales.Large orders');
+});
+
+test('measures: a colliding name or a failed test is refused, and changes nothing', async () => {
+  const s = setup();
+  const before = JSON.stringify(r(s));
+  await assert.rejects(s.run('add_measure', { table: 'sales', name: 'revenue', sql: 'SUM(sales.quantity)' }), (e: unknown) => e instanceof EditError && e.message === 'a measure named revenue already exists');
+  await assert.rejects(s.run('add_measure', { table: 'sales', name: 'Quantity', sql: 'SUM(sales.quantity)' }), /sales already has a field named Quantity/);
+  await assert.rejects(s.run('edit_measure', { table: 'sales', name: 'Units', newName: 'Cost' }), /a measure named Cost already exists/);
+  await assert.rejects(s.run('add_measure', { table: 'sales', name: 'Loop', sql: '[Loop] + 1' }), /^Error: the test failed: /);
+  await assert.rejects(s.run('add_measure', { table: 'nowhere', name: 'X', sql: 'COUNT(*)' }), /no table nowhere/);
+  assert.equal(JSON.stringify(r(s)), before);
+  assert.equal(s.store.canUndo, false);
+});
+
+test("a failed test's engine message reaches the model only where sample rows are granted", async () => {
+  const s = setup();
+  await assert.rejects(s.run('add_measure', { table: 'sales', name: 'Bad', sql: 'SUM(sales.no_such_column)' }), /the test query failed; the engine's message is withheld/);
+  const sample = setup({ level: 'sample' });
+  await assert.rejects(sample.run('add_measure', { table: 'sales', name: 'Bad', sql: 'SUM(sales.no_such_column)' }), (e: unknown) => /^the test query failed: /.test((e as Error).message) && !/withheld/.test((e as Error).message));
+});
+
+test('measures and calculated columns: what the user excluded cannot be used, or learned through a name', async () => {
+  const s = setup({ excludeTables: ['stores'], excludeColumns: ['sales.discount'] });
+  await assert.rejects(s.run('add_measure', { table: 'sales', name: 'D', sql: 'SUM(sales.discount)' }), /names a table or column the user excluded/);
+  await assert.rejects(s.run('add_measure', { table: 'sales', name: 'Regions', sql: 'COUNT(DISTINCT stores.region)' }), /names a table or column the user excluded/);
+  await assert.rejects(s.run('add_measure', { table: 'sales', name: 'discount', sql: 'COUNT(*)' }), (e: unknown) => (e as Error).message === "the name discount can't be used");
+  await assert.rejects(s.run('add_measure', { table: 'stores', name: 'Shops', sql: 'COUNT(*)' }), /no table stores/);
+  const noProducts = setup({ excludeTables: ['products'] });
+  await assert.rejects(noProducts.run('add_measure', { table: 'sales', name: 'Double cost', sql: '[Cost] * 2' }), /reaches a table or column the user excluded, through a measure or column it uses/);
+});
+
+test('calculated columns: added after a test with the type of their values, changed, removed', async () => {
+  const s = setup();
+  await s.run('add_calculated_column', { table: 'sales', name: 'Big', sql: 'sales.quantity > 5' });
+  assert.equal(column(s, 'sales', 'Big')!.type, 'number');
+  await s.run('add_calculated_column', { table: 'sales', name: 'Size', sql: "CASE WHEN sales.quantity > 5 THEN 'big' ELSE 'small' END" });
+  assert.equal(column(s, 'sales', 'Size')!.type, 'text');
+  await s.run('add_visual', { page: firstPage(s).id, type: 'bar', fields: { category: ['sales.Size'], values: ['sales.Revenue'] } });
+  await s.run('edit_calculated_column', { table: 'sales', name: 'Size', newName: 'Order size' });
+  assert.ok(column(s, 'sales', 'Order size') && !column(s, 'sales', 'Size'));
+  await assert.rejects(s.run('add_calculated_column', { table: 'sales', name: 'year', sql: '1' }), /sales already has a field named year/);
+  await s.run('remove_calculated_column', { table: 'sales', name: 'Big' });
+  assert.equal(column(s, 'sales', 'Big'), undefined);
+});
+
+test('relationships: add, change, remove by place; one table, a calculated column or a pair already related is refused', async () => {
+  const s = setup();
+  const n = r(s).model.relationships!.length;
+  const { index } = (await s.run('add_relationship', { from: 'budget.year', to: 'calendar.year', active: false, role: 'Budget year' })) as { index: number };
+  assert.equal(index, n);
+  assert.deepEqual(r(s).model.relationships![index], { from: 'budget.year', to: 'calendar.year', active: false, role: 'Budget year' });
+  await s.run('edit_relationship', { index, active: true, role: '' });
+  assert.deepEqual(r(s).model.relationships![index], { from: 'budget.year', to: 'calendar.year', active: undefined, role: undefined });
+  await assert.rejects(s.run('add_relationship', { from: 'customers.id', to: 'sales.customer_id' }), /sales\.customer_id and customers\.id are already related|customers\.id and sales\.customer_id are already related/);
+  await assert.rejects(s.run('add_relationship', { from: 'sales.store_id', to: 'sales.product_id' }), /columns of one table/);
+  await assert.rejects(s.run('add_relationship', { from: 'sales.Year', to: 'year.year' }), /no column sales\.Year of the data/);
+  await assert.rejects(s.run('edit_relationship', { index: 0, from: 'sales.product_id', to: 'products.id' }), /sales\.product_id and products\.id are already related/);
+  await s.run('remove_relationship', { index });
+  assert.equal(r(s).model.relationships!.length, n);
+  await assert.rejects(s.run('remove_relationship', { index: 99 }), (e: unknown) => e instanceof EditError && e.message === 'no relationship at 99');
+
+  const hidden = setup({ excludeTables: ['stores'] });
+  const at = r(hidden).model.relationships!.findIndex((x) => x.to === 'stores.id');
+  await assert.rejects(hidden.run('remove_relationship', { index: at }), /joins a table or column the user excluded/);
+  await assert.rejects(hidden.run('add_relationship', { from: 'customers.city', to: 'stores.city' }), /no column/);
+});
+
+test('hierarchies: add with two levels or more, each a column of the table; remove', async () => {
+  const s = setup();
+  await s.run('add_hierarchy', { table: 'products', name: 'Range', levels: ['category', 'name'] });
+  assert.deepEqual(r(s).model.hierarchies!.at(-1), { table: 'products', name: 'Range', levels: ['category', 'name'] });
+  await assert.rejects(s.run('add_hierarchy', { table: 'products', name: 'Bad', levels: ['category', 'colour'] }), /Not columns of products: colour/);
+  await assert.rejects(s.run('add_hierarchy', { table: 'sales', name: 'date', levels: ['Year', 'Month'] }), /sales already has a field named date/);
+  await s.run('remove_hierarchy', { table: 'products', name: 'Range' });
+  await assert.rejects(s.run('remove_hierarchy', { table: 'products', name: 'Range' }), /no hierarchy "Range" on products/);
+});
+
+test('parameters: the whole list, checked as the designer checks it', async () => {
+  const s = setup();
+  const growth = r(s).model.parameters![0]!;
+  await s.run('set_parameters', { parameters: [growth, { name: 'Region', type: 'text', value: 'North', choices: ['North', 'South'] }] });
+  assert.deepEqual(r(s).model.parameters!.map((p) => p.name), ['Growth', 'Region']);
+  await assert.rejects(s.run('set_parameters', { parameters: [growth, { ...growth, name: 'growth' }] }), /Two parameters are named growth/);
+  await assert.rejects(s.run('set_parameters', { parameters: [{ name: 'N', type: 'number', value: 'five' }] }), /a number parameter's value is a number/);
+  await assert.rejects(s.run('set_parameters', { parameters: [{ name: 'N', type: 'number', value: 1, min: 5, max: 2 }] }), /the minimum is above the maximum/);
+  await s.run('set_parameters', { parameters: [] });
+  assert.equal(r(s).model.parameters, undefined);
 });
