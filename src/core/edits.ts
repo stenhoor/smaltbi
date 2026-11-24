@@ -162,9 +162,10 @@ export function movePage(report: Report, id: string, by: number): void {
   report.pages.splice(Math.max(0, Math.min(report.pages.length, i + by)), 0, p!);
 }
 
-/** Removes a page. */
+/** Removes a page. A report keeps at least one page (the designer offers no Delete on the last). */
 export function removePage(report: Report, id: string): void {
   pageOf(report, id);
+  if (report.pages.length < 2) throw new EditError('a report keeps at least one page');
   report.pages = report.pages.filter((p) => p.id !== id);
 }
 

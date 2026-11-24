@@ -336,6 +336,9 @@ test('a target that is not in the report: an EditError, and nothing changes', ()
   const r = report();
   refused(r, () => edit.renamePage(r, 'page9', 'X'), 'no page "page9"');
   refused(r, () => edit.removePage(r, 'page9'), 'no page "page9"');
+  const one = report();
+  edit.removePage(one, 'page2');
+  refused(one, () => edit.removePage(one, 'page1'), 'a report keeps at least one page');
   refused(r, () => edit.setVisualText(r, 'v9', 'title', 'X'), 'no visual "v9"');
   refused(r, () => edit.changeVisualType(r, 'v9', 'bar', { from: [], to: [] }), 'no visual "v9"');
   refused(r, () => edit.removeDrillthrough(r, 'page1', 0), 'no drill-through field at 0 on page "page1"');

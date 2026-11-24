@@ -36,6 +36,7 @@ bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worke
 | `report/view.ts` | `ReportView`: lays out a page, plans and runs each visual's queries, renders, and handles every interaction. Used by both the designer and the viewer. |
 | `visuals/` | The plugin API (`api.ts`) and the built-in visuals: their roles, options and queries. The charts and tables are drawn by `smaltkit/charts` and `smaltkit/table`, and styled by its `ui.css`. |
 | `theme/theme.ts` | Theme merge (`extends`) and compilation to CSS custom properties. |
+| `agent/report-actions.ts` | The agent's actions on the report (smaltai's `Action`s): read the report's outline, its tables and the visual types; add, change and remove pages, visuals, their fields, filters, the report's name and theme, and table settings. Each change goes through `core/edits.ts` in one `DocStore.change`, so it can be undone, and asks the user first until they allow it. What the user excluded is never shown to the model. Not loaded by the designer yet: the chat panel comes later. |
 | `designer/` | The designer: document store with undo/autosave, fields pane, panels, dialogs, canvas editing, and the model view (`modelview.ts`: the ER diagram; `modelpanel.ts`: table and relationship details). |
 | `publish/publish.ts` | Builds the static site file set and zips it (`kit/zip.ts`). |
 | `report/engine.ts` | smaltbi's settings for `smaltkit/engine`: loads `vendor/smaltdb/` (built from `engine/`), npm engines off. |
