@@ -1,6 +1,7 @@
 // The Format tab's "Reference lines" section for cartesian charts: lines across the plot at a fixed value (a target)
 // or at a statistic of the first series (average, median, min, max). Stored in options.refLines; drawn by smaltkit.
 import type { Visual } from '../core/types.js';
+import { clearVisualOption, setVisualOption } from '../core/edits.js';
 import { h } from 'smaltkit/dom';
 import type { RefLine } from 'smaltkit/charts';
 import type { PanelContext } from './panel.js';
@@ -58,16 +59,7 @@ function lineCard(r: RefLine, save: (r: RefLine) => void, remove: () => void): H
 export function referenceSection(ctx: PanelContext, v: Visual): HTMLElement {
   const lines = (Array.isArray(v.options?.refLines) ? v.options!.refLines : []) as RefLine[];
   const set = (next: RefLine[]) =>
-    ctx.store.change(
-      'visual',
-      () => {
-        const o = { ...(v.options ?? {}) };
-        if (next.length) o.refLines = next;
-        else delete o.refLines;
-        v.options = o;
-      },
-      v.id,
-    );
+    ctx.store.change('visual', (r) => (next.length ? setVisualOption(r, v.id, 'refLines', next) : clearVisualOption(r, v.id, 'refLines')), v.id);
   return h(
     'div.sbd-reflines',
     {},

@@ -1,6 +1,7 @@
 // The Format tab's "Conditional formatting" section: rules that colour measure values and add icons (tables,
 // matrices, KPI cards). Rules are evaluated in report/conditional.ts and drawn by smaltkit.
 import type { ConditionalRule, Visual } from '../core/types.js';
+import { setConditional } from '../core/edits.js';
 import type { VisualDef } from '../visuals/api.js';
 import { h } from 'smaltkit/dom';
 import { checkbox } from './panel.js';
@@ -99,7 +100,7 @@ function ruleCard(ctx: PanelContext, v: Visual, def: VisualDef, r: ConditionalRu
 
 /** The section: the visual's rules, first match wins, and a button to add one. */
 export function conditionalSection(ctx: PanelContext, v: Visual, def: VisualDef): HTMLElement {
-  const set = (rules: ConditionalRule[]) => ctx.store.change('visual', () => (v.conditional = rules.length ? rules : undefined), v.id);
+  const set = (rules: ConditionalRule[]) => ctx.store.change('visual', (r) => setConditional(r, v.id, rules), v.id);
   const rules = v.conditional ?? [];
   const first = visualMeasures(ctx, v, def)[0]?.[0] ?? '*';
   return h(

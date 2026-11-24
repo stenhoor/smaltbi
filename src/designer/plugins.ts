@@ -1,6 +1,7 @@
 // File → Plugins…: the report's plugins (ADR 0008). Adding one by URL fetches it, records its integrity hash, loads it
 // and lists the visuals it adds; they appear in the visual gallery's Plugins group.
 import type { PluginRef } from '../core/types.js';
+import { addPlugin, removePlugin } from '../core/edits.js';
 import { dialog, h, toast } from 'smaltkit/dom';
 import { fetchPlugin, integrityOf, loadPlugin, trustPlugins } from '../plugins/loader.js';
 import { visualDefs } from '../visuals/index.js';
@@ -24,10 +25,8 @@ export async function pluginsDialog(ctx: DialogContext, onChange: () => void): P
                 {
                   title: 'Remove the plugin (its visuals stop working when the report is opened again)',
                   onclick: () => {
-                    ctx.store.change('report', (rep) => {
-                      rep.plugins = (rep.plugins ?? []).filter((_, j) => j !== i);
-                      if (!rep.plugins.length) delete rep.plugins;
-                    });
+                    // Undo can run while the dialog is open and take the plugin away.
+                    if (i < (ctx.store.report.plugins ?? []).length) ctx.store.change('report', (rep) => removePlugin(rep, i));
                     render();
                   },
                 },
@@ -55,7 +54,7 @@ export async function pluginsDialog(ctx: DialogContext, onChange: () => void): P
       const ref: PluginRef = { url: raw, integrity: await integrityOf(bytes) };
       const loaded = await loadPlugin(ref, base);
       trustPlugins([ref], base);
-      ctx.store.change('report', (rep) => (rep.plugins = [...(rep.plugins ?? []), ref]));
+      ctx.store.change('report', (rep) => addPlugin(rep, ref));
       url.value = '';
       render();
       onChange();

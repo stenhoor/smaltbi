@@ -1,7 +1,7 @@
 // Arranging visuals on the page grid: align and distribute several, match sizes, find a place for pasted visuals,
 // and the guides shown while dragging. Pure functions on grid layouts (cells), so they are unit-tested.
 import type { Page, Visual } from '../core/types.js';
-import { newId } from './store.js';
+import { newId } from '../core/edits.js';
 
 export type Layout = Visual['layout'];
 export type AlignMode = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';

@@ -1,6 +1,7 @@
 // The "Quick measure" dialog: a time-intelligence measure (year to date, same period last year, rolling months, …)
 // over a measure of the model, worked out from the date table (core/timeintel.ts). No SQL to write.
 import type { Measure, TimeCalcKind } from '../core/types.js';
+import { hasEntry, putEntry, removeEntry } from '../core/edits.js';
 import { TIME_CALCS } from '../core/timeintel.js';
 import { dialog, h, toast } from 'smaltkit/dom';
 import { field } from './panel.js';
@@ -75,7 +76,7 @@ export async function quickMeasureDialog(ctx: DialogContext, table: string, name
     field('Name', nameIn),
   );
   const ok = await dialog<boolean>(existing ? 'Edit quick measure' : 'Quick measure', body, [
-    ...(existing ? [{ label: 'Delete', value: () => (ctx.store.change('model', (r) => (r.model.measures = (r.model.measures ?? []).filter((m) => !(m.table === table && m.name === name)))), false) }] : []),
+    ...(existing ? [{ label: 'Delete', value: () => (hasEntry(ctx.store.report, 'measures', table, name!) && ctx.store.change('model', (r) => removeEntry(r, 'measures', table, name!, 'all')), false) }] : []),
     { label: 'Cancel' },
     {
       label: existing ? 'Save' : 'Add measure',
@@ -93,12 +94,8 @@ export async function quickMeasureDialog(ctx: DialogContext, table: string, name
           description: `${TIME_CALCS[calc].label}${calc === 'rolling' ? ` (${n})` : ''} of ${base.name}`,
           ...(calc === 'yoy%' ? { format: 'percent' } : base.format ? { format: base.format } : {}),
         };
-        ctx.store.change('model', (r) => {
-          const ms = (r.model.measures ??= []);
-          const i = existing ? ms.findIndex((x) => x.table === table && x.name === name) : -1;
-          if (i >= 0) ms[i] = m;
-          else ms.push(m);
-        });
+        // Undo can run while the dialog is open and take the measure away: then it is added again.
+        ctx.store.change('model', (r) => putEntry(r, 'measures', m, existing && hasEntry(r, 'measures', table, name!) ? { table, name: name! } : undefined));
         return true;
       },
     },

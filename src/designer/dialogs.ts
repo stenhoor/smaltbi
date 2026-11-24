@@ -4,6 +4,7 @@ import type { CalcColumn, DataStep, Format, Measure, SqlValue, Theme } from '../
 import { formatter } from '../core/format.js';
 import { compileQuery } from '../core/compile.js';
 import { Model } from '../core/model.js';
+import * as edit from '../core/edits.js';
 import { BUILTIN_THEMES, mergeTheme } from '../theme/theme.js';
 import { formatFromName } from 'smaltkit/manifest';
 import { dialog, download, esc, fileName, h, pickFile, toast } from 'smaltkit/dom';
@@ -168,7 +169,7 @@ export async function dataDialog(ctx: DialogContext): Promise<boolean> {
   const ok = await dialog('Data', body, [{ label: 'Cancel' }, { label: 'Apply', primary: true, value: () => true }], { wide: true });
   if (!ok) return false;
   if (data.init !== 'none') data.database = { name: data.database?.name ?? fileName(ctx.store.report.name, 'report'), storage: storage.value as 'memory' | 'opfs' };
-  ctx.store.change('data', (r) => (r.data = data));
+  ctx.store.change('data', (r) => edit.setData(r, data));
   return true;
 }
 
@@ -245,7 +246,8 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
     buttons.push({
       label: 'Delete',
       value: () => {
-        ctx.store.change('model', (r) => ((r.model[listKey] as (Measure | CalcColumn)[]) = list.filter((x) => x !== existing)));
+        // Undo can run while the dialog is open and take the entry away.
+        if (edit.hasEntry(ctx.store.report, listKey, existing.table, existing.name)) ctx.store.change('model', (r) => edit.removeEntry(r, listKey, existing.table, existing.name));
         return true;
       },
     });
@@ -255,13 +257,8 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
     value: async () => {
       if (!(await test())) return undefined;
       const m = build();
-      ctx.store.change('model', (r) => {
-        const l = [...((r.model[listKey] ?? []) as (Measure | CalcColumn)[])];
-        const i = existing ? l.findIndex((x) => x.table === existing.table && x.name === existing.name) : -1;
-        if (i >= 0) l[i] = m;
-        else l.push(m);
-        (r.model[listKey] as (Measure | CalcColumn)[]) = l;
-      });
+      // Undo can run while the dialog is open and take the entry away: then it is added again.
+      ctx.store.change('model', (r) => edit.putEntry(r, listKey, m, existing && edit.hasEntry(r, listKey, existing.table, existing.name) ? existing : undefined));
       return true;
     },
   });
@@ -358,7 +355,7 @@ export async function themeDialog(ctx: DialogContext, apply: (t: Theme | string)
   const ok = await dialog('Theme', body, [{ label: 'Cancel' }, { label: 'Use this theme', primary: true, value: () => true }], { wide: true });
   const isBuiltin = Object.values(BUILTIN_THEMES).some((t) => JSON.stringify(mergeTheme(BUILTIN_THEMES.smalt!, t)) === JSON.stringify(current));
   const key = Object.entries(BUILTIN_THEMES).find(([, t]) => JSON.stringify(mergeTheme(BUILTIN_THEMES.smalt!, t)) === JSON.stringify(current))?.[0];
-  if (ok) ctx.store.change('theme', (r) => (r.theme = isBuiltin && key ? key : current));
+  if (ok) ctx.store.change('theme', (r) => edit.setTheme(r, isBuiltin && key ? key : current));
   else await apply(original ?? 'smalt');
 }
 
@@ -370,12 +367,7 @@ export async function publishDialog(ctx: DialogContext): Promise<void> {
   const snapshot = h('input', { type: 'checkbox', checked: noSteps }) as HTMLInputElement;
   const badge = h('input', { type: 'checkbox', checked: r.branding?.poweredBy !== false }) as HTMLInputElement;
   badge.addEventListener('change', () =>
-    ctx.store.change('report', (rep) => {
-      const branding = { ...(rep.branding ?? {}), poweredBy: badge.checked };
-      if (branding.poweredBy) delete (branding as { poweredBy?: boolean }).poweredBy;
-      rep.branding = Object.keys(branding).length ? branding : undefined;
-      if (!rep.branding) delete rep.branding;
-    }),
+    ctx.store.change('report', (rep) => edit.setPoweredBy(rep, badge.checked)),
   );
   const status = h('div.sbd-hint');
   const body = h(

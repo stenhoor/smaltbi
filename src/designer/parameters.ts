@@ -1,6 +1,7 @@
 // Model → Parameters…: what-if parameters, values readers change with a Parameter control and measures use as
 // `[@Name]`. Each has a name, a type (number or text), a default, and a range (numbers) or choices (text).
 import type { Parameter } from '../core/types.js';
+import { setParameters } from '../core/edits.js';
 import { dialog, h, toast } from 'smaltkit/dom';
 import type { DocStore } from './store.js';
 
@@ -100,8 +101,5 @@ export async function parametersDialog(store: DocStore): Promise<void> {
     },
   ]);
   if (!ok) return;
-  store.change('model', (r) => {
-    if (list.length) r.model.parameters = list;
-    else delete r.model.parameters;
-  });
+  store.change('model', (r) => setParameters(r, list));
 }

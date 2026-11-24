@@ -6,6 +6,7 @@
 // Drag a card to arrange the diagram, drag a column onto another table's column to relate them,
 // click a line to edit or delete the relationship.
 import type { Relationship, Report } from '../core/types.js';
+import * as edit from '../core/edits.js';
 import type { Model, TableInfo } from '../core/model.js';
 import { splitRef } from '../core/sql.js';
 import { h, toast } from 'smaltkit/dom';
@@ -379,7 +380,7 @@ export class ModelView {
       removeEventListener('pointermove', move);
       removeEventListener('pointerup', up);
       card.classList.remove('sbd-mv-dragging');
-      if (moved) this.ctx.store.change('diagram', (r) => (r.model.layout = { ...(r.model.layout ?? {}), [table]: this.pos[table]! }));
+      if (moved) this.ctx.store.change('diagram', (r) => edit.setTablePosition(r, table, this.pos[table]!));
       else this.ctx.select({ kind: 'table', table });
     };
     addEventListener('pointermove', move);
@@ -429,13 +430,13 @@ export class ModelView {
       this.drawLines();
       return;
     }
-    this.ctx.store.change('model', (r) => (r.model.relationships = [...(r.model.relationships ?? []), rel]));
+    this.ctx.store.change('model', (r) => edit.addRelationships(r, [rel]));
     this.ctx.select({ kind: 'rel', index: rels.length });
     toast(`Related ${rel.from} → ${rel.to}`, 'ok');
   }
 
   autoArrange(): void {
-    this.ctx.store.change('diagram', (r) => delete r.model.layout);
+    this.ctx.store.change('diagram', (r) => edit.resetDiagram(r));
   }
 
   detect(): void {
@@ -446,7 +447,7 @@ export class ModelView {
       return true;
     });
     if (!found.length) return toast('No new relationships found');
-    this.ctx.store.change('model', (r) => (r.model.relationships = [...(r.model.relationships ?? []), ...found]));
+    this.ctx.store.change('model', (r) => edit.addRelationships(r, found));
     toast(`Added ${found.length} relationship${found.length > 1 ? 's' : ''}`, 'ok');
   }
 
