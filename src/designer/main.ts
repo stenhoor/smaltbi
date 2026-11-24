@@ -127,7 +127,7 @@ class Designer {
         onOption: this.preview
           ? undefined
           : (v, key, value) =>
-              this.store.change('visual', (r) => (value === undefined ? edit.clearVisualOption(r, v.id, key) : edit.setVisualOption(r, v.id, key, value)), v.id),
+              this.store.change('visual', (r) => edit.setVisualOption(r, v.id, key, value), v.id),
       },
       state ? { page: state.page } : undefined,
     );

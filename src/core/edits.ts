@@ -262,20 +262,12 @@ export function setVisualText(report: Report, id: string, which: 'title' | 'subt
   v[which] = text || undefined;
 }
 
-/**
- * Sets one of a visual's options. `undefined` is set too, as the Format tab does when a number is cleared: until the
- * report is saved and opened again it hides the option's default (see {@link clearVisualOption}).
- */
+/** Sets one of a visual's options; `undefined` takes it off, so its default applies (the owner, 2026-11-24). */
 export function setVisualOption(report: Report, id: string, key: string, value: unknown): void {
   const v = visualOf(report, id);
-  v.options = { ...(v.options ?? {}), [key]: value };
-}
-
-/** Takes one of a visual's options off, so its default applies. */
-export function clearVisualOption(report: Report, id: string, key: string): void {
-  const v = visualOf(report, id);
   const o = { ...(v.options ?? {}) };
-  delete o[key];
+  if (value === undefined) delete o[key];
+  else o[key] = value;
   v.options = o;
 }
 

@@ -157,12 +157,13 @@ test('one visual: text, options, limit, interactions, style, phone, SQL, repeat,
   assert.equal(visual(r, 'v2').title, 'Customers');
   assert.equal(visual(r, 'v2').subtitle, undefined);
 
-  // The Format tab keeps an emptied number as undefined; clearing takes the key off, so the default applies.
-  edit.setVisualOption(r, 'v2', 'rowHeight', undefined);
-  assert.equal('rowHeight' in visual(r, 'v2').options!, true);
+  // An option set to undefined (a number emptied in the Format tab) is taken off, so its default applies.
+  edit.setVisualOption(r, 'v2', 'rowHeight', 28);
   edit.setVisualOption(r, 'v2', 'widths', { name: 120 });
-  edit.clearVisualOption(r, 'v2', 'rowHeight');
+  assert.deepEqual(visual(r, 'v2').options, { rowHeight: 28, widths: { name: 120 } });
+  edit.setVisualOption(r, 'v2', 'rowHeight', undefined);
   assert.deepEqual(visual(r, 'v2').options, { widths: { name: 120 } });
+  assert.equal('rowHeight' in visual(r, 'v2').options!, false);
 
   edit.setVisualLimit(r, 'v2', 50);
   assert.equal(visual(r, 'v2').limit, 50);
