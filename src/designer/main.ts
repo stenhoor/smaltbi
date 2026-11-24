@@ -11,7 +11,8 @@ import { type Engine, loadEngine } from '../report/engine.js';
 import { dialog, download, fileName, h, pickFile, showMenu, toast } from 'smaltkit/dom';
 import { localFiles } from '../kit/files.js';
 import { corsHint } from 'smaltkit/urls';
-import { DocStore, emptyReport, freeSpot, newId, type ChangeKind } from './store.js';
+import { DocStore, emptyReport, type ChangeKind } from './store.js';
+import * as edit from '../core/edits.js';
 import { type AlignMode, align, clipText, distribute, guides, parseClip, placePasted, sameSize } from './arrange.js';
 import { FIELD_MIME, draggedRefs, fieldsPane } from './fields.js';
 import { defaultFilter, panel } from './panel.js';
@@ -126,16 +127,7 @@ class Designer {
         onOption: this.preview
           ? undefined
           : (v, key, value) =>
-              this.store.change(
-                'visual',
-                () => {
-                  const o = { ...(v.options ?? {}) };
-                  if (value === undefined) delete o[key];
-                  else o[key] = value;
-                  v.options = o;
-                },
-                v.id,
-              ),
+              this.store.change('visual', (r) => (value === undefined ? edit.clearVisualOption(r, v.id, key) : edit.setVisualOption(r, v.id, key, value)), v.id),
       },
       state ? { page: state.page } : undefined,
     );
@@ -206,7 +198,7 @@ class Designer {
 
   renderTop(): void {
     const name = h('input.sbd-name', { value: this.store.report.name, title: 'Report name' }) as HTMLInputElement;
-    name.addEventListener('change', () => this.store.change('report', (r) => (r.name = name.value || 'Untitled report')));
+    name.addEventListener('change', () => this.store.change('report', (r) => edit.renameReport(r, name.value)));
     const btn = (label: string, title: string, fn: () => void, cls = '') => h('button.sbd-tbtn' + cls, { title, onclick: fn }, label);
     this.top.replaceChildren(
       h('a.sbd-logo', {
@@ -363,8 +355,8 @@ class Designer {
           editColumn: (t, n) => void measureDialog(this.dctx, t, n, 'column'),
           filter: (ref) => {
             const sel = this.selected ? this.store.visual(this.selected)?.visual : undefined;
-            if (sel) this.store.change('visual', () => (sel.filters = [...(sel.filters ?? []), defaultFilter(this, ref)]), sel.id);
-            else this.store.change('page', () => (this.page.filters = [...(this.page.filters ?? []), defaultFilter(this, ref)]), this.page.id);
+            if (sel) this.store.change('visual', (r) => edit.addFilter(r, { visual: sel.id }, defaultFilter(this, ref)), sel.id);
+            else this.store.change('page', (r) => edit.addFilter(r, { page: this.page.id }, defaultFilter(this, ref)), this.page.id);
             this.tab = 'Filters';
             this.renderPanel();
           },
@@ -444,7 +436,7 @@ class Designer {
               showMenu(me.clientX, me.clientY, [
                 { label: 'Rename', action: () => this.renamePage(p.id) },
                 { label: 'Duplicate', action: () => this.duplicatePage(p.id) },
-                { label: p.hidden ? 'Show in viewer' : 'Hide in viewer', action: () => this.store.change('pages', () => (p.hidden = !p.hidden || undefined)) },
+                { label: p.hidden ? 'Show in viewer' : 'Hide in viewer', action: () => this.store.change('pages', (r) => edit.setPageHidden(r, p.id, !p.hidden)) },
                 { label: 'Move left', disabled: r.pages[0] === p, action: () => this.movePage(p.id, -1) },
                 { label: 'Move right', disabled: r.pages.at(-1) === p, action: () => this.movePage(p.id, 1) },
                 { label: 'Delete', disabled: r.pages.length < 2, action: () => this.deletePage(p.id) },
@@ -467,43 +459,29 @@ class Designer {
   }
 
   addPage(): void {
-    const id = newId('page', this.store.report.pages.map((p) => p.id));
-    this.store.change('pages', (r) => r.pages.push({ id, name: `Page ${r.pages.length + 1}`, visuals: [] }));
+    const id = this.store.change('pages', (r) => edit.addPage(r));
     this.goToPage(id);
   }
 
   renamePage(id: string): void {
     const p = this.store.page(id);
     const name = p && prompt('Page name', p.name);
-    if (p && name) this.store.change('pages', () => (p.name = name));
+    if (p && name) this.store.change('pages', (r) => edit.renamePage(r, id, name));
   }
 
   duplicatePage(id: string): void {
-    const p = this.store.page(id);
-    if (!p) return;
-    const copy = structuredClone(p);
-    copy.id = newId('page', this.store.report.pages.map((x) => x.id));
-    copy.name = p.name + ' (copy)';
-    const taken = this.store.report.pages.flatMap((x) => x.visuals.map((v) => v.id));
-    for (const v of copy.visuals) {
-      v.id = newId('v', taken);
-      taken.push(v.id);
-    }
-    this.store.change('pages', (r) => r.pages.splice(r.pages.indexOf(p) + 1, 0, copy));
-    this.goToPage(copy.id);
+    if (!this.store.page(id)) return;
+    const copy = this.store.change('pages', (r) => edit.duplicatePage(r, id));
+    this.goToPage(copy!);
   }
 
   movePage(id: string, d: number): void {
-    this.store.change('pages', (r) => {
-      const i = r.pages.findIndex((p) => p.id === id);
-      const [p] = r.pages.splice(i, 1);
-      r.pages.splice(Math.max(0, Math.min(r.pages.length, i + d)), 0, p!);
-    });
+    this.store.change('pages', (r) => edit.movePage(r, id, d));
   }
 
   deletePage(id: string): void {
     if (!confirm('Delete this page?')) return;
-    this.store.change('pages', (r) => (r.pages = r.pages.filter((p) => p.id !== id)));
+    this.store.change('pages', (r) => edit.removePage(r, id));
     this.goToPage(this.store.report.pages[0]!.id);
   }
 
@@ -549,7 +527,7 @@ class Designer {
     if (!vs.length) return;
     const next = fn(vs.map((v) => v.layout), pageLayout(this.session.theme, this.page).columns);
     if (next.every((l, i) => JSON.stringify(l) === JSON.stringify(vs[i]!.layout))) return;
-    this.store.change('layout', () => vs.forEach((v, i) => (v.layout = next[i]!)), vs[0]!.id);
+    this.store.change('layout', (r) => edit.setLayouts(r, this.page.id, vs.map((v, i) => [v.id, next[i]!] as const)), vs[0]!.id);
   }
 
   /** Copy the selected visuals as clipboard text (other pages, reports and tabs can paste them). */
@@ -563,7 +541,7 @@ class Designer {
     const vs = parseClip(text);
     if (!vs) return false;
     const copies = placePasted(this.page, vs, this.allVisualIds(), pageLayout(this.session.theme, this.page).columns);
-    this.store.change('page', () => this.page.visuals.push(...copies), this.page.id);
+    this.store.change('page', (r) => edit.addVisuals(r, this.page.id, copies), this.page.id);
     // Fields this report doesn't have (pasted from another report) are named, not silently dropped.
     const missing = new Set<string>();
     for (const v of copies) for (const list of Object.values(v.fields ?? {})) for (const f of list) {
@@ -581,7 +559,7 @@ class Designer {
   deleteSelected(): void {
     const ids = new Set(this.selection);
     if (!ids.size) return;
-    this.store.change('page', () => (this.page.visuals = this.page.visuals.filter((v) => !ids.has(v.id))), this.page.id);
+    this.store.change('page', (r) => edit.removeVisuals(r, this.page.id, ids), this.page.id);
     this.select(null);
   }
 
@@ -592,11 +570,9 @@ class Designer {
   createVisual(type: string, fields: Record<string, FieldRef[]> = {}, at?: { x: number; y: number }): void {
     const def = visualDef(type);
     if (!def) return;
-    const size = type === 'card' ? { w: 3, h: 2 } : type === 'slicer' ? { w: 3, h: 3 } : type === 'text' ? { w: 6, h: 1 } : { w: 5, h: 5 };
-    const spot = at ?? freeSpot(this.page, size.w, size.h, pageLayout(this.session.theme, this.page).columns);
-    const v: Visual = { id: newId('v', this.allVisualIds()), type, layout: { x: Math.min(spot.x, 12 - size.w), y: spot.y, ...size }, fields };
-    this.store.change('page', () => this.page.visuals.push(v), this.page.id);
-    this.select(v.id);
+    const columns = pageLayout(this.session.theme, this.page).columns;
+    const id = this.store.change('page', (r) => edit.createVisual(r, this.page.id, type, fields, { at, columns }), this.page.id);
+    this.select(id!);
   }
 
   /** Change a visual's type, moving fields to compatible roles. */
@@ -604,28 +580,7 @@ class Designer {
     const to = visualDef(type);
     const from = visualDef(v.type);
     if (!to || !from) return;
-    const dims: FieldRef[] = [];
-    const measures: FieldRef[] = [];
-    for (const r of from.roles) for (const f of v.fields[r.name] ?? []) (r.kind === 'dimension' ? dims : measures).push(f);
-    const fields: Record<string, FieldRef[]> = {};
-    const fill = (list: FieldRef[], kind: 'dimension' | 'measure') => {
-      for (const role of to.roles.filter((r) => r.kind === kind)) {
-        const n = role.max ?? (role.drill || kind === 'measure' ? list.length : list.length);
-        const take = list.splice(0, n);
-        if (take.length) fields[role.name] = take;
-      }
-    };
-    fill(dims, 'dimension');
-    fill(measures, 'measure');
-    this.store.change(
-      'visual',
-      () => {
-        v.type = type;
-        v.fields = fields;
-        v.options = undefined;
-      },
-      v.id,
-    );
+    this.store.change('visual', (r) => edit.changeVisualType(r, v.id, type, { from: from.roles, to: to.roles }), v.id);
   }
 
   /**
@@ -675,23 +630,19 @@ class Designer {
     const roles = def.roles.filter((r) => r.kind === wantKind);
     const role = roles.find((r) => !(sel.fields[r.name] ?? []).length) ?? roles.find((r) => !r.max || (sel.fields[r.name] ?? []).length < r.max) ?? def.roles.find((r) => !r.max || (sel.fields[r.name] ?? []).length < r.max);
     if (!role) return toast(`${def.label} has no room for another field`, 'error');
-    this.store.change('visual', () => (sel.fields = { ...sel.fields, [role.name]: [...(sel.fields[role.name] ?? []), ref] }), sel.id);
+    this.store.change('visual', (r) => edit.addField(r, sel.id, role.name, ref), sel.id);
     this.select(sel.id);
   }
 
   deleteVisual(id: string): void {
-    this.store.change('page', () => (this.page.visuals = this.page.visuals.filter((v) => v.id !== id)), this.page.id);
+    this.store.change('page', (r) => edit.removeVisuals(r, this.page.id, [id]), this.page.id);
     this.select(null);
   }
 
   duplicateVisual(id: string): void {
-    const v = this.page.visuals.find((x) => x.id === id);
-    if (!v) return;
-    const copy = structuredClone(v);
-    copy.id = newId('v', this.allVisualIds());
-    copy.layout = { ...copy.layout, ...freeSpot(this.page, v.layout.w, v.layout.h) };
-    this.store.change('page', () => this.page.visuals.push(copy), this.page.id);
-    this.select(copy.id);
+    if (!this.page.visuals.some((x) => x.id === id)) return;
+    const copy = this.store.change('page', (r) => edit.duplicateVisual(r, this.page.id, id), this.page.id);
+    this.select(copy!);
   }
 
   /** Move / resize handles and drop targets on each visual frame (edit mode). */
@@ -786,7 +737,7 @@ class Designer {
         frame.classList.remove('sbd-dragging');
         this.draggedAt = Date.now();
         const changed = members.filter((m) => JSON.stringify(moved.get(m.id)) !== JSON.stringify(m.layout));
-        if (changed.length) this.store.change('layout', () => changed.forEach((m) => (m.layout = moved.get(m.id)!)), v.id);
+        if (changed.length) this.store.change('layout', (r) => edit.setLayouts(r, this.page.id, changed.map((m) => [m.id, moved.get(m.id)!] as const)), v.id);
       };
       addEventListener('pointermove', move);
       addEventListener('pointerup', up);
@@ -925,7 +876,7 @@ class Designer {
         e.preventDefault();
         const i = this.modelSel.index;
         this.selectModel(null);
-        this.store.change('model', (r) => (r.model.relationships = (r.model.relationships ?? []).filter((_, j) => j !== i)));
+        this.store.change('model', (r) => edit.removeRelationship(r, i));
       } else if (e.key === 'Escape' && this.mode === 'model' && !this.preview) this.selectModel(null);
       else if ((e.key === 'Delete' || e.key === 'Backspace') && this.selected) {
         e.preventDefault();

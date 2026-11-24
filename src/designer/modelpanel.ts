@@ -1,6 +1,7 @@
 // The right-hand panel in model view: the model overview, the selected table (label, visibility,
 // measures, calculated columns, hierarchies) or the selected relationship (columns, active, delete).
-import type { Hierarchy } from '../core/types.js';
+import type { Hierarchy, TableSettings } from '../core/types.js';
+import * as edit from '../core/edits.js';
 import { splitRef } from '../core/sql.js';
 import { h, toast } from 'smaltkit/dom';
 import { checkbox, field, textInput } from './panel.js';
@@ -65,12 +66,7 @@ function tablePanel(ctx: ModelPanelContext, table: string): HTMLElement {
   const t = ctx.session.model.tables.get(table);
   if (!t) return overview(ctx);
   const settings = () => ctx.store.report.model.tables?.[table] ?? {};
-  const setSettings = (patch: Record<string, unknown>) =>
-    ctx.store.change('model', (r) => {
-      const tables = { ...(r.model.tables ?? {}) };
-      tables[table] = { ...(tables[table] ?? {}), ...patch };
-      r.model.tables = tables;
-    });
+  const setSettings = (patch: Partial<TableSettings>) => ctx.store.change('model', (r) => edit.setTableSettings(r, table, patch));
   const hiers = ctx.store.report.model.hierarchies ?? [];
   const levelsIn = textInput('', () => {}) as HTMLInputElement;
   levelsIn.placeholder = 'Year, Quarter, Month';
@@ -105,7 +101,7 @@ function tablePanel(ctx: ModelPanelContext, table: string): HTMLElement {
           'div.sbd-step',
           {},
           h('span', {}, h('b', {}, x.name), ': ', x.levels.join(' › ')),
-          h('button.sbd-chip-btn', { title: 'Remove', onclick: () => ctx.store.change('model', (r) => (r.model.hierarchies = (r.model.hierarchies ?? []).filter((y) => !(y.table === x.table && y.name === x.name)))) }, '×'),
+          h('button.sbd-chip-btn', { title: 'Remove', onclick: () => ctx.store.change('model', (r) => edit.removeHierarchy(r, x.table, x.name)) }, '×'),
         ),
       ),
     h('div.sbd-row', {}, nameIn, levelsIn),
@@ -117,7 +113,7 @@ function tablePanel(ctx: ModelPanelContext, table: string): HTMLElement {
           const missing = levels.filter((l) => !t.columns.has(l));
           if (!nameIn.value.trim() || levels.length < 2) return toast('A hierarchy needs a name and at least two levels', 'error');
           if (missing.length) return toast(`Not columns of ${table}: ${missing.join(', ')}`, 'error');
-          ctx.store.change('model', (r) => (r.model.hierarchies = [...(r.model.hierarchies ?? []), { table, name: nameIn.value.trim(), levels } as Hierarchy]));
+          ctx.store.change('model', (r) => edit.addHierarchy(r, { table, name: nameIn.value.trim(), levels } as Hierarchy));
         },
       },
       '+ Add hierarchy',
@@ -132,7 +128,7 @@ function relPanel(ctx: ModelPanelContext, index: number): HTMLElement {
   if (!r) return overview(ctx);
   const m = ctx.session.model;
   const cols = [...m.tables.values()].flatMap((t) => [...t.columns.values()].filter((c) => !c.calc).map((c) => `${t.name}.${c.name}`));
-  const update = (patch: Partial<typeof r>) => ctx.store.change('model', (rep) => (rep.model.relationships = (rep.model.relationships ?? []).map((x, i) => (i === index ? { ...x, ...patch } : x))));
+  const update = (patch: Partial<typeof r>) => ctx.store.change('model', (rep) => edit.updateRelationship(rep, index, patch));
   const colSelect = (value: string, key: 'from' | 'to') =>
     h('select.sbd-input', { onchange: (e: Event) => update({ [key]: (e.target as HTMLSelectElement).value }) }, ...cols.map((c) => h('option', { value: c, selected: c === value }, c)));
   const [ft] = splitRef(r.from);
@@ -188,7 +184,7 @@ function relPanel(ctx: ModelPanelContext, index: number): HTMLElement {
         {
           onclick: () => {
             ctx.select(null);
-            ctx.store.change('model', (rep) => (rep.model.relationships = (rep.model.relationships ?? []).filter((_, i) => i !== index)));
+            ctx.store.change('model', (rep) => edit.removeRelationship(rep, index));
           },
         },
         'Delete',

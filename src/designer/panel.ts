@@ -1,9 +1,10 @@
 // The right-hand panel: Build (visual types and field wells), Format, Filters and SQL.
-import type { Aggregation, FieldRef, Filter, FilterOp, Page, PageSize, SqlValue, Visual } from '../core/types.js';
+import type { Aggregation, FieldRef, Filter, FilterOp, Page, PageSize, Report, SqlValue, Visual } from '../core/types.js';
 import { conditionalSection } from './conditional.js';
 import { referenceSection } from './reflines.js';
 import { aggLabel, refName } from '../core/model.js';
 import { quoteIdent } from '../core/sql.js';
+import * as edit from '../core/edits.js';
 import { type OptionDef, type VisualDef, visualDef, visualDefs } from '../visuals/index.js';
 import { h, showMenu, toast } from 'smaltkit/dom';
 import { FIELD_MIME, draggedRefs } from './fields.js';
@@ -99,33 +100,24 @@ function well(ctx: PanelContext, v: Visual, def: VisualDef, roleName: string): H
     const kind = model.kindOf(ref);
     let label = spec.label ?? ref.split('.').slice(1).join('.');
     if (role.kind === 'measure' && kind === 'column') label = `${aggLabel(spec.agg ?? (model.column(ref)?.type === 'number' ? 'sum' : 'count'))} of ${label}`;
-    const update = (fn: (list: FieldRef[]) => void) =>
-      ctx.store.change(
-        'visual',
-        () => {
-          const list = [...(v.fields[roleName] ?? [])];
-          fn(list);
-          v.fields = { ...v.fields, [roleName]: list };
-        },
-        v.id,
-      );
+    const update = (fn: (rep: Report) => void) => ctx.store.change('visual', fn, v.id);
     const menu = () => {
       const items = [];
       if (role.kind === 'measure' && kind === 'column') {
         for (const agg of ['sum', 'avg', 'min', 'max', 'count', 'countd'] as Aggregation[])
-          items.push({ label: (spec.agg === agg ? '✓ ' : '') + aggLabel(agg), action: () => update((l) => (l[i] = { ...spec, agg })) });
+          items.push({ label: (spec.agg === agg ? '✓ ' : '') + aggLabel(agg), action: () => update((rep) => edit.setField(rep, v.id, roleName, i, edit.withAgg(r, agg))) });
         items.push({ label: '', separator: true });
       }
       items.push({
         label: 'Rename for this visual…',
         action: () => {
           const name = prompt('Label', spec.label ?? '');
-          if (name !== null) update((l) => (l[i] = name ? { ...spec, label: name } : spec.agg ? { field: spec.field, agg: spec.agg } : spec.field));
+          if (name !== null) update((rep) => edit.setField(rep, v.id, roleName, i, edit.withLabel(r, name)));
         },
       });
-      if (i > 0) items.push({ label: 'Move up', action: () => update((l) => l.splice(i - 1, 0, l.splice(i, 1)[0]!)) });
-      if (i < refs.length - 1) items.push({ label: 'Move down', action: () => update((l) => l.splice(i + 1, 0, l.splice(i, 1)[0]!)) });
-      items.push({ label: 'Remove', action: () => update((l) => l.splice(i, 1)) });
+      if (i > 0) items.push({ label: 'Move up', action: () => update((rep) => edit.moveField(rep, v.id, roleName, i, i - 1)) });
+      if (i < refs.length - 1) items.push({ label: 'Move down', action: () => update((rep) => edit.moveField(rep, v.id, roleName, i, i + 1)) });
+      items.push({ label: 'Remove', action: () => update((rep) => edit.removeField(rep, v.id, roleName, i)) });
       return items;
     };
     return h(
@@ -149,19 +141,19 @@ function well(ctx: PanelContext, v: Visual, def: VisualDef, roleName: string): H
           if (ke.altKey && to >= 0 && to < refs.length) {
             ke.preventDefault();
             ke.stopPropagation();
-            update((l) => l.splice(to, 0, l.splice(i, 1)[0]!));
+            update((rep) => edit.moveField(rep, v.id, roleName, i, to));
             focusChip(roleName, to);
           } else if (ke.key === 'Delete' || ke.key === 'Backspace') {
             ke.preventDefault();
             ke.stopPropagation();
-            update((l) => l.splice(i, 1));
+            update((rep) => edit.removeField(rep, v.id, roleName, i));
             focusChip(roleName, Math.min(i, refs.length - 2));
           }
         },
       },
       h('span.sbd-chip-label', { title: ref }, label),
       h('button.sbd-chip-btn', { title: 'Options', onclick: (e: Event) => showMenu((e as MouseEvent).clientX, (e as MouseEvent).clientY, menu()) }, '▾'),
-      h('button.sbd-chip-btn', { title: 'Remove', onclick: () => update((l) => l.splice(i, 1)) }, '×'),
+      h('button.sbd-chip-btn', { title: 'Remove', onclick: () => update((rep) => edit.removeField(rep, v.id, roleName, i)) }, '×'),
     );
   });
   const zone = h(
@@ -205,38 +197,10 @@ function well(ctx: PanelContext, v: Visual, def: VisualDef, roleName: string): H
     marker.remove();
     const refsIn = draggedRefs(e.dataTransfer);
     if (!refsIn.length) return;
-    let at = dropIndex(e);
+    const at = dropIndex(e);
     const moveData = e.dataTransfer!.getData(MOVE_MIME);
-    const move = moveData ? (JSON.parse(moveData) as { visual: string; role: string; i: number; spec: FieldRef }) : null;
-    ctx.store.change(
-      'visual',
-      () => {
-        const fields = { ...v.fields };
-        let incoming: FieldRef[] = refsIn;
-        if (move && move.visual === v.id) {
-          // A chip moved within this visual: take it out of its well (keeping its aggregation and label).
-          const from = [...(fields[move.role] ?? [])];
-          from.splice(move.i, 1);
-          fields[move.role] = from;
-          if (move.role === roleName && move.i < at) at--;
-          const spec = move.spec;
-          // A dimension well has no aggregation.
-          incoming = [role.kind === 'dimension' && typeof spec !== 'string' && spec.agg ? (spec.label ? { field: spec.field, label: spec.label } : spec.field) : spec];
-        }
-        const list = [...(fields[roleName] ?? [])];
-        list.splice(at, 0, ...incoming);
-        // A well with a maximum keeps the dropped fields (and as many of the others as fit).
-        if (role.max && list.length > role.max) {
-          const keep = new Set(incoming);
-          let extra = list.length - role.max;
-          for (let j = list.length - 1; j >= 0 && extra > 0; j--) if (!keep.has(list[j]!)) (list.splice(j, 1), extra--);
-          list.splice(role.max);
-        }
-        fields[roleName] = list;
-        v.fields = fields;
-      },
-      v.id,
-    );
+    const move = moveData ? (JSON.parse(moveData) as edit.MovedField) : null;
+    ctx.store.change('visual', (rep) => edit.dropFields(rep, v.id, role, at, refsIn, move), v.id);
   });
   return zone;
 }
@@ -245,16 +209,16 @@ function well(ctx: PanelContext, v: Visual, def: VisualDef, roleName: string): H
 
 function formatTab(ctx: PanelContext, v: Visual): HTMLElement {
   const def = visualDef(v.type);
-  const set = (fn: () => void) => ctx.store.change('visual', fn, v.id);
+  const set = (fn: (r: Report) => void) => ctx.store.change('visual', fn, v.id);
   const out = h('div.sbd-form');
   out.append(
-    field('Title', textInput(v.title ?? '', (val) => set(() => (v.title = val || undefined)))),
-    field('Subtitle', textInput(v.subtitle ?? '', (val) => set(() => (v.subtitle = val || undefined)))),
+    field('Title', textInput(v.title ?? '', (val) => set((r) => edit.setVisualText(r, v.id, 'title', val)))),
+    field('Subtitle', textInput(v.subtitle ?? '', (val) => set((r) => edit.setVisualText(r, v.id, 'subtitle', val)))),
   );
   for (const o of def?.options ?? []) {
     if (o.section) out.append(h('div.sbd-section-title', {}, o.section));
     if (o.when && (v.options?.[o.when.key] ?? def?.options?.find((x) => x.key === o.when!.key)?.default) !== o.when.equals) continue;
-    out.append(optionInput(o, v.options?.[o.key] ?? o.default, (val) => set(() => (v.options = { ...(v.options ?? {}), [o.key]: val }))));
+    out.append(optionInput(o, v.options?.[o.key] ?? o.default, (val) => set((r) => edit.setVisualOption(r, v.id, o.key, val))));
   }
   if (def?.refLines) out.append(referenceSection(ctx, v));
   if (def && !def.static) {
@@ -267,11 +231,11 @@ function formatTab(ctx: PanelContext, v: Visual): HTMLElement {
           min: 1,
           value: v.limit ?? def.limit ?? '',
           placeholder: String(def.limit ?? 'none'),
-          onchange: (e: Event) => set(() => (v.limit = Number((e.target as HTMLInputElement).value) || undefined)),
+          onchange: (e: Event) => set((r) => edit.setVisualLimit(r, v.id, Number((e.target as HTMLInputElement).value))),
         }),
       ),
-      checkbox('Filters other visuals', v.interactions?.filterOthers !== false, (on) => set(() => (v.interactions = { ...(v.interactions ?? {}), filterOthers: on }))),
-      checkbox('Filtered by other visuals', v.interactions?.filteredByOthers !== false, (on) => set(() => (v.interactions = { ...(v.interactions ?? {}), filteredByOthers: on }))),
+      checkbox('Filters other visuals', v.interactions?.filterOthers !== false, (on) => set((r) => edit.setInteraction(r, v.id, 'filterOthers', on))),
+      checkbox('Filtered by other visuals', v.interactions?.filteredByOthers !== false, (on) => set((r) => edit.setInteraction(r, v.id, 'filteredByOthers', on))),
     );
   }
   if (def?.conditional) out.append(conditionalSection(ctx, v, def));
@@ -282,10 +246,10 @@ function formatTab(ctx: PanelContext, v: Visual): HTMLElement {
       h('input.sbd-input', {
         type: 'color',
         value: String(v.style?.surface ?? '#ffffff'),
-        onchange: (e: Event) => set(() => (v.style = { ...(v.style ?? {}), surface: (e.target as HTMLInputElement).value })),
+        onchange: (e: Event) => set((r) => edit.setVisualStyle(r, v.id, 'surface', (e.target as HTMLInputElement).value)),
       }),
     ),
-    ...(v.style ? [h('button.sbd-link', { onclick: () => set(() => delete v.style) }, 'Reset to theme')] : []),
+    ...(v.style ? [h('button.sbd-link', { onclick: () => set((r) => edit.resetVisualStyle(r, v.id)) }, 'Reset to theme')] : []),
     phoneSection(ctx, v),
     h('div.sbd-section-title', {}, 'Position'),
     h(
@@ -298,7 +262,7 @@ function formatTab(ctx: PanelContext, v: Visual): HTMLElement {
             type: 'number',
             min: k === 'w' || k === 'h' ? 1 : 0,
             value: v.layout[k],
-            onchange: (e: Event) => ctx.store.change('layout', () => (v.layout = { ...v.layout, [k]: Math.max(k === 'w' || k === 'h' ? 1 : 0, Number((e.target as HTMLInputElement).value) || 0) }), v.id),
+            onchange: (e: Event) => ctx.store.change('layout', (r) => edit.setVisualLayout(r, v.id, { ...v.layout, [k]: Math.max(k === 'w' || k === 'h' ? 1 : 0, Number((e.target as HTMLInputElement).value) || 0) }), v.id),
           }),
         ),
       ),
@@ -309,23 +273,23 @@ function formatTab(ctx: PanelContext, v: Visual): HTMLElement {
 
 function pageTab(ctx: PanelContext): HTMLElement {
   const p = ctx.page;
-  const set = (fn: () => void) => ctx.store.change('page', fn, p.id);
+  const set = (fn: (r: Report) => void) => ctx.store.change('page', fn, p.id);
   const dt = h('div.sbd-well', {}, h('div.sbd-well-head', {}, h('span', {}, 'Drill-through fields')));
   for (const [i, ref] of (p.drillthrough ?? []).entries())
-    dt.append(h('div.sbd-chip', {}, h('span.sbd-chip-label', {}, ref), h('button.sbd-chip-btn', { onclick: () => set(() => (p.drillthrough = (p.drillthrough ?? []).filter((_, j) => j !== i))) }, '×')));
+    dt.append(h('div.sbd-chip', {}, h('span.sbd-chip-label', {}, ref), h('button.sbd-chip-btn', { onclick: () => set((r) => edit.removeDrillthrough(r, p.id, i)) }, '×')));
   dt.append(h('div.sbd-drop', {}, 'Drop a field to make this page a drill-through target'));
   dt.addEventListener('dragover', (e) => e.dataTransfer?.types.includes(FIELD_MIME) && e.preventDefault());
   dt.addEventListener('drop', (e) => {
     e.preventDefault();
     const ref = e.dataTransfer!.getData(FIELD_MIME);
-    if (ref) set(() => (p.drillthrough = [...new Set([...(p.drillthrough ?? []), ref])]));
+    if (ref) set((r) => edit.addDrillthrough(r, p.id, ref));
   });
   return h(
     'div.sbd-form',
     {},
     h('div.sbd-section-title', {}, 'Page'),
-    field('Name', textInput(p.name, (val) => ctx.store.change('pages', () => (p.name = val || p.name)))),
-    checkbox('Hidden in the viewer', !!p.hidden, (on) => ctx.store.change('pages', () => (p.hidden = on || undefined))),
+    field('Name', textInput(p.name, (val) => ctx.store.change('pages', (r) => edit.renamePage(r, p.id, val)))),
+    checkbox('Hidden in the viewer', !!p.hidden, (on) => ctx.store.change('pages', (r) => edit.setPageHidden(r, p.id, on))),
     pageSizeSection(ctx, p),
     dt,
   );
@@ -382,9 +346,9 @@ const OPS: [FilterOp, string][] = [
 function filtersTab(ctx: PanelContext, v: Visual | undefined): HTMLElement {
   const out = h('div');
   const r = ctx.store.report;
-  if (v) out.append(filterSection(ctx, 'This visual', v.filters ?? [], (fs) => ctx.store.change('visual', () => (v.filters = fs), v.id)));
-  out.append(filterSection(ctx, 'This page', ctx.page.filters ?? [], (fs) => ctx.store.change('page', () => (ctx.page.filters = fs), ctx.page.id)));
-  out.append(filterSection(ctx, 'All pages', r.filters ?? [], (fs) => ctx.store.change('report', () => (r.filters = fs))));
+  if (v) out.append(filterSection(ctx, 'This visual', v.filters ?? [], (fs) => ctx.store.change('visual', (rep) => edit.setFilters(rep, { visual: v.id }, fs), v.id)));
+  out.append(filterSection(ctx, 'This page', ctx.page.filters ?? [], (fs) => ctx.store.change('page', (rep) => edit.setFilters(rep, { page: ctx.page.id }, fs), ctx.page.id)));
+  out.append(filterSection(ctx, 'All pages', r.filters ?? [], (fs) => ctx.store.change('report', (rep) => edit.setFilters(rep, 'report', fs))));
   return out;
 }
 
@@ -500,8 +464,8 @@ function sqlTab(ctx: PanelContext, v: Visual): HTMLElement {
       h(
         'div.sbd-row',
         {},
-        h('button.sbd-btn.sbd-primary', { onclick: () => ctx.store.change('visual', () => (v.sql = ta.value), v.id) }, 'Apply'),
-        h('button.sbd-btn', { onclick: () => ctx.store.change('visual', () => delete v.sql, v.id) }, 'Back to generated SQL'),
+        h('button.sbd-btn.sbd-primary', { onclick: () => ctx.store.change('visual', (r) => edit.setCustomSql(r, v.id, ta.value), v.id) }, 'Apply'),
+        h('button.sbd-btn', { onclick: () => ctx.store.change('visual', (r) => edit.setCustomSql(r, v.id, undefined), v.id) }, 'Back to generated SQL'),
       ),
     );
   }
@@ -526,7 +490,7 @@ function sqlTab(ctx: PanelContext, v: Visual): HTMLElement {
           onclick: () => {
             try {
               const custom = ctx.view.sqlFor(v, true);
-              ctx.store.change('visual', () => (v.sql = custom), v.id);
+              ctx.store.change('visual', (r) => edit.setCustomSql(r, v.id, custom), v.id);
             } catch (e) {
               toast((e as Error).message, 'error');
             }
@@ -540,7 +504,7 @@ function sqlTab(ctx: PanelContext, v: Visual): HTMLElement {
 
 /** Page size: responsive (the default) or a fixed sheet: a preset, portrait or landscape, or a custom size. */
 function pageSizeSection(ctx: PanelContext, p: Page): HTMLElement {
-  const set = (size: PageSize | undefined) => ctx.store.change('page', () => (size ? (p.size = size) : delete p.size), p.id);
+  const set = (size: PageSize | undefined) => ctx.store.change('page', (r) => edit.setPageSize(r, p.id, size), p.id);
   const size = p.size;
   const preset = size?.preset ?? '';
   const px = pageSize(p);
@@ -603,7 +567,7 @@ function pageSizeSection(ctx: PanelContext, p: Page): HTMLElement {
             value: rows,
             onchange: (e: Event) => {
               const n = Math.max(1, Math.min(60, Math.round(Number((e.target as HTMLInputElement).value)) || rows));
-              ctx.store.change('page', () => (p.layout = { ...(p.layout ?? {}), rows: n }), p.id);
+              ctx.store.change('page', (r) => edit.setPageRows(r, p.id, n), p.id);
             },
           }),
         )
@@ -616,19 +580,8 @@ function phoneSection(ctx: PanelContext, v: Visual): HTMLElement {
   const p = ctx.page;
   const seq = phoneSequence(p).map((x) => x.id);
   const at = seq.indexOf(v.id);
-  const setPhone = (next: Visual['phone']) =>
-    ctx.store.change(
-      'layout',
-      () => {
-        const clean = { ...(v.phone ?? {}), ...next };
-        if (!clean.hidden) delete clean.hidden;
-        if (!clean.h) delete clean.h;
-        if (Object.keys(clean).length) v.phone = clean;
-        else delete v.phone;
-      },
-      v.id,
-    );
-  const move = (by: -1 | 1) => ctx.store.change('layout', () => (p.phoneOrder = movePhone(p, v.id, by)), v.id);
+  const setPhone = (next: Visual['phone']) => ctx.store.change('layout', (r) => edit.setVisualPhone(r, v.id, next), v.id);
+  const move = (by: -1 | 1) => ctx.store.change('layout', (r) => edit.setPhoneOrder(r, p.id, movePhone(p, v.id, by)), v.id);
   return h(
     'div.sbd-phone',
     {},
@@ -661,13 +614,13 @@ function phoneSection(ctx: PanelContext, v: Visual): HTMLElement {
         ),
       ),
     ),
-    p.phoneOrder ? h('button.sbd-link', { onclick: () => ctx.store.change('layout', () => delete p.phoneOrder, v.id) }, 'Back to reading order') : null,
+    p.phoneOrder ? h('button.sbd-link', { onclick: () => ctx.store.change('layout', (r) => edit.setPhoneOrder(r, p.id, undefined), v.id) }, 'Back to reading order') : null,
   );
 }
 
 /** Repeat for each: a field (a dimension) whose values each get a copy of the visual, and how the copies are laid out. */
 function repeatWell(ctx: PanelContext, v: Visual): HTMLElement {
-  const set = (repeat: Visual['repeat']) => ctx.store.change('visual', () => (repeat ? (v.repeat = repeat) : delete v.repeat), v.id);
+  const set = (repeat: Visual['repeat']) => ctx.store.change('visual', (rep) => edit.setRepeat(rep, v.id, repeat), v.id);
   const r = v.repeat;
   const fixedPage = !!pageSize(ctx.store.visual(v.id)?.page);
   // A whole-number option of the repeat (or of its copy size), empty for none.

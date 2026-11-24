@@ -1,5 +1,6 @@
 // The designer's document: the report being edited, undo/redo history and autosave.
 import type { Page, Report, Visual } from '../core/types.js';
+import { findPage, findVisual } from '../core/edits.js';
 
 const AUTOSAVE = 'smaltbi.autosave';
 
@@ -29,11 +30,12 @@ export class DocStore {
     this.redoStack = [];
   }
 
-  /** Apply a change: checkpoint, mutate, notify. */
-  change(kind: ChangeKind, fn: (r: Report) => void, id?: string): void {
+  /** Apply a change: checkpoint, mutate, notify. Returns what `fn` returns (the id of a page or visual it added). */
+  change<T>(kind: ChangeKind, fn: (r: Report) => T, id?: string): T {
     this.checkpoint();
-    fn(this.report);
+    const out = fn(this.report);
     this.notify(kind, id);
+    return out;
   }
 
   notify(kind: ChangeKind, id?: string): void {
@@ -98,21 +100,12 @@ export class DocStore {
   // ---------------------------------------------------------------- lookups
 
   page(id: string): Page | undefined {
-    return this.report.pages.find((p) => p.id === id);
+    return findPage(this.report, id);
   }
 
   visual(id: string): { page: Page; visual: Visual } | undefined {
-    for (const page of this.report.pages) {
-      const visual = page.visuals.find((v) => v.id === id);
-      if (visual) return { page, visual };
-    }
-    return undefined;
+    return findVisual(this.report, id);
   }
-}
-
-export function newId(prefix: string, taken: Iterable<string>): string {
-  const set = new Set(taken);
-  for (let i = 1; ; i++) if (!set.has(`${prefix}${i}`)) return `${prefix}${i}`;
 }
 
 export function emptyReport(): Report {
@@ -124,11 +117,4 @@ export function emptyReport(): Report {
     theme: 'smalt',
     pages: [{ id: 'page1', name: 'Page 1', visuals: [] }],
   };
-}
-
-/** First free spot of size w×h on a 12-column page. */
-export function freeSpot(page: Page, w: number, h: number, cols = 12): { x: number; y: number } {
-  const taken = (x: number, y: number) => page.visuals.some((v) => x < v.layout.x + v.layout.w && x + w > v.layout.x && y < v.layout.y + v.layout.h && y + h > v.layout.y);
-  for (let y = 0; y < 200; y++) for (let x = 0; x + w <= cols; x++) if (!taken(x, y)) return { x, y };
-  return { x: 0, y: Math.max(0, ...page.visuals.map((v) => v.layout.y + v.layout.h)) };
 }
