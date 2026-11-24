@@ -15,8 +15,8 @@ import type { Aggregation, CalcColumn, ConditionalRule, DataSpec, FieldRef, Filt
 // ---------------------------------------------------------------- ids, places and lookups
 
 /**
- * A change the report can't take: its target isn't in the report (`no page "page7"`), or the name it gives a measure or
- * a calculated column is taken.
+ * A change the report can't take: its target isn't in the report (`no page "page7"`), or the name it gives a measure, a
+ * calculated column or a hierarchy collides with another ({@link nameCollision}).
  */
 export class EditError extends Error {}
 
@@ -455,8 +455,10 @@ export function setTableSettings(report: Report, table: string, patch: Partial<T
   report.model.tables = tables;
 }
 
-/** Adds a hierarchy (a drill path). */
-export function addHierarchy(report: Report, hierarchy: Hierarchy): void {
+/** Adds a hierarchy (a drill path). A name that collides is refused ({@link nameCollision}). */
+export function addHierarchy(report: Report, hierarchy: Hierarchy, schema: SchemaInfo): void {
+  const collision = nameCollision(report, schema, 'hierarchy', hierarchy.table, hierarchy.name);
+  if (collision !== null) throw new EditError(collision);
   report.model.hierarchies = [...(report.model.hierarchies ?? []), hierarchy];
 }
 
@@ -501,48 +503,39 @@ export function hasEntry(report: Report, list: 'measures' | 'columns', table: st
 }
 
 /**
- * True if another measure of the model, in any table, has this name, whatever its case (as `[Name]` refers to it). The
- * measure being edited, `except` (the first with its table and name, the one {@link putEntry} replaces), doesn't count.
+ * Why a measure, a calculated column or a hierarchy can't take this name on its table, or `null` (the owner,
+ * 2026-11-24: no colliding names, whatever their case). A table's fields are what `table.Name` finds: its data's columns
+ * (from `schema`), its calculated columns, its measures and its hierarchies; a name may be none of them. A measure's name
+ * may also be no other measure's, in any table, as `[Name]` refers to it. The one being edited, `except` (the first of
+ * its kind with that table and name, the one {@link putEntry} replaces), doesn't count.
  */
-export function measureNameTaken(report: Report, name: string, except?: { table: string; name: string }): boolean {
-  const measures = report.model.measures ?? [];
-  const skip = except ? measures.findIndex((m) => m.table === except.table && m.name === except.name) : -1;
-  return measures.some((m, i) => i !== skip && m.name.toLowerCase() === name.toLowerCase());
-}
-
-/**
- * True if a calculated column can't have this name on its table: the table already has a field by that name, whatever
- * its case (the owner, 2026-11-24). A table's fields are what `table.Name` finds: its data's columns (from `schema`),
- * its calculated columns, its measures and its hierarchies. The column being edited, `except` (the first with its table
- * and name, the one {@link putEntry} replaces), doesn't count.
- */
-export function columnNameTaken(report: Report, schema: SchemaInfo, table: string, name: string, except?: { table: string; name: string }): boolean {
-  const calc = report.model.columns ?? [];
-  const skip = except ? calc.findIndex((c) => c.table === except.table && c.name === except.name) : -1;
-  const names = [
+export function nameCollision(report: Report, schema: SchemaInfo, kind: 'measure' | 'column' | 'hierarchy', table: string, name: string, except?: { table: string; name: string }): string | null {
+  const same = (n: string) => n.toLowerCase() === name.toLowerCase();
+  const others = <T extends { table: string; name: string }>(list: readonly T[], of: typeof kind): T[] => {
+    const skip = except && kind === of ? list.findIndex((x) => x.table === except.table && x.name === except.name) : -1;
+    return list.filter((_, i) => i !== skip);
+  };
+  const measures = others(report.model.measures ?? [], 'measure');
+  if (kind === 'measure' && measures.some((m) => same(m.name))) return `a measure named ${name} already exists`;
+  const fields = [
     ...(schema.tables.find((t) => t.name === table)?.columns.map((c) => c.name) ?? []),
-    ...calc.filter((c, i) => i !== skip && c.table === table).map((c) => c.name),
-    ...(report.model.measures ?? []).filter((m) => m.table === table).map((m) => m.name),
-    ...(report.model.hierarchies ?? []).filter((h) => h.table === table).map((h) => h.name),
+    ...others(report.model.columns ?? [], 'column').filter((c) => c.table === table).map((c) => c.name),
+    ...measures.filter((m) => m.table === table).map((m) => m.name),
+    ...others(report.model.hierarchies ?? [], 'hierarchy').filter((h) => h.table === table).map((h) => h.name),
   ];
-  return names.some((n) => n.toLowerCase() === name.toLowerCase());
+  return fields.some(same) ? `${table} already has a field named ${name}` : null;
 }
 
 /**
- * Adds a measure or a calculated column, or replaces the first with the table and name of `replacing`
- * (one being edited). A measure whose name another measure has is refused ({@link measureNameTaken}), and so is a
- * calculated column whose name its table already has ({@link columnNameTaken}, which needs the data's `schema`); the
- * owner, 2026-11-24.
+ * Adds a measure or a calculated column, or replaces the first with the table and name of `replacing` (one being
+ * edited). A name that collides is refused ({@link nameCollision}, which needs the data's `schema`).
  */
-export function putEntry(report: Report, list: 'measures' | 'columns', entry: Measure | CalcColumn, replacing?: { table: string; name: string }, schema?: SchemaInfo): void {
+export function putEntry(report: Report, list: 'measures' | 'columns', entry: Measure | CalcColumn, replacing: { table: string; name: string } | undefined, schema: SchemaInfo): void {
   const l = [...((report.model[list] ?? []) as (Measure | CalcColumn)[])];
   const i = replacing ? l.findIndex((x) => x.table === replacing.table && x.name === replacing.name) : -1;
   if (replacing && i < 0) missing(entryName(list, replacing.table, replacing.name));
-  if (list === 'measures' && measureNameTaken(report, entry.name, replacing)) throw new EditError(`a measure named ${entry.name} already exists`);
-  if (list === 'columns') {
-    if (!schema) throw new Error("putEntry needs the data's schema for a calculated column");
-    if (columnNameTaken(report, schema, entry.table, entry.name, replacing)) throw new EditError(`${entry.table} already has a field named ${entry.name}`);
-  }
+  const collision = nameCollision(report, schema, list === 'measures' ? 'measure' : 'column', entry.table, entry.name, replacing);
+  if (collision !== null) throw new EditError(collision);
   if (i >= 0) l[i] = entry;
   else l.push(entry);
   (report.model[list] as (Measure | CalcColumn)[]) = l;

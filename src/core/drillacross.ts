@@ -6,7 +6,7 @@
 //        k  AS (SELECT d0… FROM f0 UNION SELECT d0… FROM f1)
 //   SELECT k.d0…, <each measure from f0/f1 columns> FROM k LEFT JOIN f0 ON … LEFT JOIN f1 ON …
 //
-// A measure that combines facts, `[Revenue] / [Target]`, is split at its references: each part goes to its fact's
+// A measure that combines facts, `[Revenue] / [Budget target]`, is split at its references: each part goes to its fact's
 // query and the division happens after the line-up. Every number is still computed at its own table's grain.
 import type { Filter } from './types.js';
 import { type Model, ModelError, type ResolvedField } from './model.js';
@@ -164,7 +164,7 @@ function split(model: Model, m: ResolvedField, factOf: (t: Set<string>) => strin
   };
   if (!spec || seen.has(spec.name.toLowerCase())) throw unshared();
   // Its own tables have no common fact (SUM(sales.x) / SUM(budget.y)): the facts are mixed inside the aggregates.
-  const mixed = () => new ModelError(`${m.label} mixes tables that are computed separately: write it from measures of each table, for example [Revenue] / [Target]`);
+  const mixed = () => new ModelError(`${m.label} mixes tables that are computed separately: write it from measures of each table, for example [Revenue] / [Budget target]`);
   const ownFact = (() => {
     try {
       return model.chooseRoot(new Set(m.tables), [...m.tables]);

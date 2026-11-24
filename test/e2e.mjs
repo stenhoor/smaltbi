@@ -1089,20 +1089,20 @@ try {
   await until(page, () => !window.smaltbi.session?.schema?.tables.some((t) => t.name === 'country'), undefined, 30000);
 
   // Two facts in one visual (ADR 0009, drill-across): the sample's budget beside its sales, lined up by the category
-  // table both relate to; [Revenue] / [Target] after the line-up; the totals row the same way.
+  // table both relate to; [Revenue] / [Budget target] after the line-up; the totals row the same way.
   await page.evaluate(() => {
     const s = window.smaltbi.store;
     const pg = s.report.pages[0];
     s.change('page', () => pg.visuals.push(
-      { id: 'e2e-across', type: 'table', layout: { x: 0, y: 40, w: 8, h: 5 }, fields: { columns: ['category.category'], values: ['sales.Revenue', 'budget.Target', 'sales.Revenue vs target'] }, sort: [{ by: 'columns:0', dir: 'asc' }] },
-      { id: 'e2e-across-bad', type: 'column', layout: { x: 8, y: 40, w: 4, h: 5 }, fields: { category: ['products.name'], values: ['budget.Target'] } },
+      { id: 'e2e-across', type: 'table', layout: { x: 0, y: 40, w: 8, h: 5 }, fields: { columns: ['category.category'], values: ['sales.Revenue', 'budget.Budget target', 'sales.Revenue vs target'] }, sort: [{ by: 'columns:0', dir: 'asc' }] },
+      { id: 'e2e-across-bad', type: 'column', layout: { x: 8, y: 40, w: 4, h: 5 }, fields: { category: ['products.name'], values: ['budget.Budget target'] } },
     ), pg.id);
   });
   const across = await until(page, () => document.querySelectorAll('.sb-visual[data-id=e2e-across] tbody tr').length === 4 && /\$1,372,000/.test(document.querySelector('.sb-visual[data-id=e2e-across] tfoot')?.textContent ?? ''), undefined, 30000);
   const acrossRows = await page.evaluate(() => [...document.querySelectorAll('.sb-visual[data-id=e2e-across] tbody tr')].map((tr) => [...tr.cells].map((c) => c.textContent)));
   const num = (t) => Number(String(t).replace(/[^\d.]/g, ''));
   const ratioOk = acrossRows.length === 4 && acrossRows.every((r) => Math.abs((num(r[1]) / num(r[2])) * 100 - num(r[3])) < 0.15);
-  const refusedAcross = await until(page, () => /Target has no relationship to name/.test(document.querySelector('.sb-visual[data-id=e2e-across-bad] .sb-visual-body')?.textContent ?? ''), undefined, 15000);
+  const refusedAcross = await until(page, () => /Budget target has no relationship to name/.test(document.querySelector('.sb-visual[data-id=e2e-across-bad] .sb-visual-body')?.textContent ?? ''), undefined, 15000);
   check(across && ratioOk && refusedAcross, `two facts in one table: revenue and target by category, the ratio after the line-up, the target total; a field only sales has is refused (${JSON.stringify(acrossRows)}, ${refusedAcross})`);
   await page.evaluate(() => {
     const s = window.smaltbi.store;
@@ -1131,16 +1131,20 @@ try {
   await page.click('.sk-dialog-foot button:has-text("Cancel")');
   const aov = await page.evaluate(() => window.smaltbi.store.report.model.measures.find((m) => m.name === 'Avg Order Value').sql);
   check(errMarked && aov === '[Revenue] / NULLIF([Orders], 0)', `measure editor: a failed test marks the error; Cancel keeps the measure (${errMarked}, ${aov})`);
-  // A name another measure has, whatever its case, is refused, as in the quick-measure dialog; the dialog stays open.
+  // No colliding names: one another measure has, whatever its case, is refused; the dialog stays open.
   await page.locator('.sbd-field:has(.sbd-flabel:text-is("Avg Order Value"))').click({ button: 'right' });
   await page.click('.sk-menu-item:has-text("Edit measure…")');
   await page.waitForSelector('.sk-dialog .sk-editor .sk-ed-input');
   await page.locator('.sk-dialog input[placeholder="Revenue"]').fill('revenue');
   await page.click('.sk-dialog-foot button:has-text("Save")');
-  const nameTaken = await until(page, () => /There is already a measure named revenue\./.test(document.querySelector('.sk-dialog[open] .sbd-test')?.textContent ?? ''), undefined, 5000);
+  const nameTaken = await until(page, () => /Name taken: a measure named revenue already exists\./.test(document.querySelector('.sk-dialog[open] .sbd-test')?.textContent ?? ''), undefined, 5000);
+  // Nor a name a field of its table has: sales has a column quantity.
+  await page.locator('.sk-dialog input[placeholder="Revenue"]').fill('Quantity');
+  await page.click('.sk-dialog-foot button:has-text("Save")');
+  const fieldTaken = await until(page, () => /Name taken: sales already has a field named Quantity\./.test(document.querySelector('.sk-dialog[open] .sbd-test')?.textContent ?? ''), undefined, 5000);
   await page.click('.sk-dialog-foot button:has-text("Cancel")');
   const revenues = await page.evaluate(() => window.smaltbi.store.report.model.measures.filter((m) => m.name.toLowerCase() === 'revenue').length);
-  check(nameTaken && revenues === 1, `measure editor: a name another measure has is refused, and the dialog stays open (${nameTaken}, ${revenues})`);
+  check(nameTaken && fieldTaken && revenues === 1, `measure editor: a name another measure or a field of its table has is refused, and the dialog stays open (${nameTaken}, ${fieldTaken}, ${revenues})`);
   // A calculated column can't take a name its table already has: here one of the data's columns, in another case.
   await page.locator('button.sbd-table:has(span:text-is("Sales"))').click({ button: 'right' });
   await page.click('.sk-menu-item:has-text("New calculated column…")');

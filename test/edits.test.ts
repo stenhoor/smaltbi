@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import * as edit from '../src/core/edits.js';
 import { visualDef } from '../src/visuals/index.js';
 import { DocStore } from '../src/designer/store.js';
+import { sampleSession } from './helpers.js';
 import type { Report, Visual } from '../src/core/types.js';
 import type { SchemaInfo } from '../src/core/model.js';
 
@@ -271,7 +272,9 @@ test('the model: tables, hierarchies, relationships and the diagram', () => {
   edit.setTableSettings(r, 'orders', { hidden: true });
   assert.deepEqual(r.model.tables, { orders: { label: 'Orders', hidden: true } });
 
-  edit.addHierarchy(r, { table: 'orders', name: 'Calendar', levels: ['year', 'month'] });
+  edit.addHierarchy(r, { table: 'orders', name: 'Calendar', levels: ['year', 'month'] }, schema);
+  refused(r, () => edit.addHierarchy(r, { table: 'orders', name: 'calendar', levels: ['date'] }, schema), 'orders already has a field named calendar');
+  refused(r, () => edit.addHierarchy(r, { table: 'orders', name: 'AMOUNT', levels: ['date'] }, schema), 'orders already has a field named AMOUNT');
   edit.removeHierarchy(r, 'orders', 'Calendar');
   assert.deepEqual(r.model.hierarchies, []);
 
@@ -294,33 +297,37 @@ test('the model: tables, hierarchies, relationships and the diagram', () => {
 
 test('measures and calculated columns: added, replaced, removed', () => {
   const r = report();
-  edit.putEntry(r, 'measures', { table: 'orders', name: 'Orders', sql: 'COUNT(*)' });
-  edit.putEntry(r, 'measures', { table: 'orders', name: 'Revenue', sql: 'SUM(orders.net)' }, { table: 'orders', name: 'Revenue' });
+  edit.putEntry(r, 'measures', { table: 'orders', name: 'Orders', sql: 'COUNT(*)' }, undefined, schema);
+  edit.putEntry(r, 'measures', { table: 'orders', name: 'Revenue', sql: 'SUM(orders.net)' }, { table: 'orders', name: 'Revenue' }, schema);
   assert.deepEqual(r.model.measures!.map((m) => [m.name, m.sql]), [['Revenue', 'SUM(orders.net)'], ['Orders', 'COUNT(*)']]);
   edit.putEntry(r, 'columns', { table: 'orders', name: 'Year', sql: "strftime('%Y', orders.date)", type: 'text' }, undefined, schema);
   assert.equal(r.model.columns!.length, 1);
 
-  // A name another measure has, in any table and whatever its case, is refused; the one being edited keeps its own.
-  assert.equal(edit.measureNameTaken(r, 'orders'), true);
-  assert.equal(edit.measureNameTaken(r, 'Orders', { table: 'orders', name: 'Orders' }), false);
-  refused(r, () => edit.putEntry(r, 'measures', { table: 'customers', name: 'REVENUE', sql: 'COUNT(*)' }), 'a measure named REVENUE already exists');
-  refused(r, () => edit.putEntry(r, 'measures', { table: 'orders', name: 'Revenue', sql: '1' }, { table: 'orders', name: 'Orders' }), 'a measure named Revenue already exists');
-  edit.putEntry(r, 'measures', { table: 'orders', name: 'Order count', sql: 'COUNT(*)' }, { table: 'orders', name: 'Orders' });
+  // No colliding names, whatever their case (the owner, 2026-11-24). A measure: no other measure's name, in any table,
+  // and no field of its table (a data column, a calculated column, a hierarchy).
+  const collides = (kind: 'measure' | 'column' | 'hierarchy', table: string, name: string, except?: { table: string; name: string }) => edit.nameCollision(r, schema, kind, table, name, except);
+  assert.equal(collides('measure', 'customers', 'orders'), 'a measure named orders already exists');
+  assert.equal(collides('measure', 'orders', 'Orders', { table: 'orders', name: 'Orders' }), null, 'the measure being edited keeps its name');
+  assert.equal(collides('measure', 'orders', 'amount'), 'orders already has a field named amount');
+  assert.equal(collides('measure', 'customers', 'amount'), null, "another table's columns don't count for a measure");
+  refused(r, () => edit.putEntry(r, 'measures', { table: 'customers', name: 'REVENUE', sql: 'COUNT(*)' }, undefined, schema), 'a measure named REVENUE already exists');
+  refused(r, () => edit.putEntry(r, 'measures', { table: 'orders', name: 'Revenue', sql: '1' }, { table: 'orders', name: 'Orders' }, schema), 'a measure named Revenue already exists');
+  refused(r, () => edit.putEntry(r, 'measures', { table: 'orders', name: 'Year', sql: 'COUNT(*)' }, undefined, schema), 'orders already has a field named Year');
+  edit.putEntry(r, 'measures', { table: 'orders', name: 'Order count', sql: 'COUNT(*)' }, { table: 'orders', name: 'Orders' }, schema);
   assert.deepEqual(r.model.measures!.map((m) => m.name), ['Revenue', 'Order count']);
-  // A calculated column can't have a name its table already has, whatever its case: a column of the data, another
-  // calculated column, a measure or a hierarchy. Another table's names don't count; the column being edited keeps its own.
+
+  // A calculated column: no field of its table. Another table's names don't count; the one being edited keeps its own.
   r.model.hierarchies = [{ table: 'orders', name: 'Calendar', levels: ['Year', 'date'] }];
   const column = (name: string) => ({ table: 'orders', name, sql: 'orders.amount * 2', type: 'number' as const });
   refused(r, () => edit.putEntry(r, 'columns', column('AMOUNT'), undefined, schema), 'orders already has a field named AMOUNT');
   refused(r, () => edit.putEntry(r, 'columns', column('year'), undefined, schema), 'orders already has a field named year');
   refused(r, () => edit.putEntry(r, 'columns', column('revenue'), undefined, schema), 'orders already has a field named revenue');
   refused(r, () => edit.putEntry(r, 'columns', column('calendar'), undefined, schema), 'orders already has a field named calendar');
-  assert.equal(edit.columnNameTaken(r, schema, 'customers', 'amount'), false);
-  assert.equal(edit.columnNameTaken(r, schema, 'orders', 'Year', { table: 'orders', name: 'Year' }), false);
+  assert.equal(collides('column', 'customers', 'amount'), null);
+  assert.equal(collides('column', 'orders', 'Year', { table: 'orders', name: 'Year' }), null);
   edit.putEntry(r, 'columns', { table: 'orders', name: 'Year', sql: "substr(orders.date, 1, 4)", type: 'text' }, { table: 'orders', name: 'Year' }, schema);
   edit.putEntry(r, 'columns', column('Double amount'), undefined, schema);
   assert.deepEqual(r.model.columns!.map((c) => [c.name, c.sql]), [['Year', 'substr(orders.date, 1, 4)'], ['Double amount', 'orders.amount * 2']]);
-  assert.throws(() => edit.putEntry(r, 'columns', column('Triple'), undefined), /needs the data's schema/);
 
   // Reports from before this rule can have two measures with one table and name: the measure dialog removes the first,
   // the quick-measure dialog every one.
@@ -351,9 +358,20 @@ test('a target that is not in the report: an EditError, and nothing changes', ()
   refused(r, () => edit.removeHierarchy(r, 'orders', 'Calendar'), 'no hierarchy "Calendar" on orders');
   refused(r, () => edit.removeEntry(r, 'measures', 'orders', 'Profit'), 'no measure orders.Profit');
   refused(r, () => edit.removeEntry(r, 'columns', 'orders', 'Year', 'all'), 'no calculated column orders.Year');
-  refused(r, () => edit.putEntry(r, 'measures', { table: 'orders', name: 'Profit', sql: '1' }, { table: 'orders', name: 'Profit' }), 'no measure orders.Profit');
+  refused(r, () => edit.putEntry(r, 'measures', { table: 'orders', name: 'Profit', sql: '1' }, { table: 'orders', name: 'Profit' }, schema), 'no measure orders.Profit');
   assert.equal(edit.hasEntry(r, 'measures', 'orders', 'Revenue'), true);
   assert.equal(edit.hasEntry(r, 'measures', 'orders', 'Profit'), false);
+});
+
+test('the sample report has no colliding names', async () => {
+  const { report: sample, schema: sampleSchema } = await sampleSession();
+  const m = sample.model;
+  const found = [
+    ...(m.measures ?? []).map((x) => edit.nameCollision(sample, sampleSchema, 'measure', x.table, x.name, x)),
+    ...(m.columns ?? []).map((x) => edit.nameCollision(sample, sampleSchema, 'column', x.table, x.name, x)),
+    ...(m.hierarchies ?? []).map((x) => edit.nameCollision(sample, sampleSchema, 'hierarchy', x.table, x.name, x)),
+  ].filter((x) => x !== null);
+  assert.deepEqual(found, []);
 });
 
 test('DocStore.change: a change that throws leaves no undo step, and the redo history stays', () => {
