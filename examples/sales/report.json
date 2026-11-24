@@ -40,8 +40,8 @@
     ],
     "measures": [
       { "table": "sales", "name": "Revenue", "sql": "SUM([Line Revenue])", "format": { "currency": "USD", "decimals": 0 } },
-      { "table": "budget", "name": "Target", "sql": "SUM(budget.target)", "format": { "currency": "USD", "decimals": 0 }, "description": "The budget: each year's target by category" },
-      { "table": "sales", "name": "Revenue vs target", "sql": "[Revenue] / NULLIF([Target], 0)", "format": "percent", "description": "Revenue as a share of the target: two facts, lined up by the fields they share" },
+      { "table": "budget", "name": "Budget target", "sql": "SUM(budget.target)", "format": { "currency": "USD", "decimals": 0 }, "description": "The budget: each year's target by category" },
+      { "table": "sales", "name": "Revenue vs target", "sql": "[Revenue] / NULLIF([Budget target], 0)", "format": "percent", "description": "Revenue as a share of the target: two facts, lined up by the fields they share" },
       { "table": "sales", "name": "Cost", "sql": "SUM(sales.quantity * products.unit_cost)", "format": { "currency": "USD", "decimals": 0 } },
       { "table": "sales", "name": "Gross Margin", "sql": "[Revenue] - [Cost]", "format": { "currency": "USD", "decimals": 0 } },
       { "table": "sales", "name": "Margin %", "sql": "([Revenue] - [Cost]) / NULLIF([Revenue], 0)", "format": "percent" },
@@ -130,9 +130,9 @@
         { "id": "g-title", "type": "text", "layout": { "x": 0, "y": 0, "w": 6, "h": 1 }, "fields": {}, "options": { "text": "# Targets\nRevenue (sales) beside the budget's targets: two facts, lined up by category and year" } },
         { "id": "g-year", "type": "slicer", "layout": { "x": 6, "y": 0, "w": 6, "h": 1 }, "fields": { "field": ["year.year"] }, "options": { "style": "buttons", "single": true } },
         { "id": "g-rev", "type": "card", "layout": { "x": 0, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Revenue"] } },
-        { "id": "g-tgt", "type": "card", "layout": { "x": 4, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["budget.Target"] } },
+        { "id": "g-tgt", "type": "card", "layout": { "x": 4, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["budget.Budget target"] } },
         { "id": "g-pct", "type": "card", "layout": { "x": 8, "y": 1, "w": 4, "h": 2 }, "fields": { "values": ["sales.Revenue vs target"] }, "conditional": [{ "apply": "*", "op": "gte", "value": 1, "tone": "good", "icon": "up" }, { "apply": "*", "op": "lt", "value": 1, "tone": "bad", "icon": "down" }] },
-        { "id": "g-cat", "type": "column", "title": "Revenue and target by category", "layout": { "x": 0, "y": 3, "w": 6, "h": 6 }, "fields": { "category": ["category.category"], "values": ["sales.Revenue", "budget.Target"] }, "options": { "labels": false } },
+        { "id": "g-cat", "type": "column", "title": "Revenue and target by category", "layout": { "x": 0, "y": 3, "w": 6, "h": 6 }, "fields": { "category": ["category.category"], "values": ["sales.Revenue", "budget.Budget target"] }, "options": { "labels": false } },
         { "id": "g-matrix", "type": "matrix", "title": "Revenue against target", "subtitle": "2026 has targets and no sales yet", "layout": { "x": 6, "y": 3, "w": 6, "h": 6 }, "fields": { "rows": ["category.category"], "columns": ["year.year"], "values": ["sales.Revenue vs target"] }, "options": { "format": "heat" } }
       ]
     },
