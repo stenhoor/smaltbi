@@ -1,7 +1,7 @@
 // The "Quick measure" dialog: a time-intelligence measure (year to date, same period last year, rolling months, …)
 // over a measure of the model, worked out from the date table (core/timeintel.ts). No SQL to write.
 import type { Measure, TimeCalcKind } from '../core/types.js';
-import { hasEntry, measureNameTaken, putEntry, removeEntry } from '../core/edits.js';
+import { hasEntry, nameCollision, putEntry, removeEntry } from '../core/edits.js';
 import { TIME_CALCS } from '../core/timeintel.js';
 import { dialog, h, toast } from 'smaltkit/dom';
 import { field } from './panel.js';
@@ -85,7 +85,8 @@ export async function quickMeasureDialog(ctx: DialogContext, table: string, name
         const { base, calc, n } = current();
         const newName = nameIn.value.trim();
         if (!newName) return (toast('Give the measure a name', 'error'), undefined);
-        if (measureNameTaken(ctx.store.report, newName, existing ? { table, name: name! } : undefined)) return (toast(`There is already a measure named ${newName}`, 'error'), undefined);
+        const collision = nameCollision(ctx.store.report, ctx.session.schema, 'measure', base.table, newName, existing ? { table, name: name! } : undefined);
+        if (collision !== null) return (toast(`Name taken: ${collision}`, 'error'), undefined);
         const m: Measure = {
           table: base.table,
           name: newName,
@@ -95,7 +96,7 @@ export async function quickMeasureDialog(ctx: DialogContext, table: string, name
           ...(calc === 'yoy%' ? { format: 'percent' } : base.format ? { format: base.format } : {}),
         };
         // Undo can run while the dialog is open and take the measure away: then it is added again.
-        ctx.store.change('model', (r) => putEntry(r, 'measures', m, existing && hasEntry(r, 'measures', table, name!) ? { table, name: name! } : undefined));
+        ctx.store.change('model', (r) => putEntry(r, 'measures', m, existing && hasEntry(r, 'measures', table, name!) ? { table, name: name! } : undefined, ctx.session.schema));
         return true;
       },
     },

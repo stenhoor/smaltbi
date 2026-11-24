@@ -1,5 +1,5 @@
 // "Make a table" (ADR 0009, decision 3a), on the real engine: a budget by category related to products.category (not
-// unique) is refused; the made table fixes it, and Revenue beside Target by category is right.
+// unique) is refused; the made table fixes it, and Revenue beside Budget target by category is right.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compileQuery } from '../src/core/compile.js';
