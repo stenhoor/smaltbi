@@ -246,7 +246,8 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
     buttons.push({
       label: 'Delete',
       value: () => {
-        ctx.store.change('model', (r) => edit.removeEntry(r, listKey, existing.table, existing.name));
+        // Undo can run while the dialog is open and take the entry away.
+        if (edit.hasEntry(ctx.store.report, listKey, existing.table, existing.name)) ctx.store.change('model', (r) => edit.removeEntry(r, listKey, existing.table, existing.name));
         return true;
       },
     });
@@ -256,7 +257,8 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
     value: async () => {
       if (!(await test())) return undefined;
       const m = build();
-      ctx.store.change('model', (r) => edit.putEntry(r, listKey, m, existing));
+      // Undo can run while the dialog is open and take the entry away: then it is added again.
+      ctx.store.change('model', (r) => edit.putEntry(r, listKey, m, existing && edit.hasEntry(r, listKey, existing.table, existing.name) ? existing : undefined));
       return true;
     },
   });

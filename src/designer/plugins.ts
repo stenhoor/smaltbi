@@ -25,7 +25,8 @@ export async function pluginsDialog(ctx: DialogContext, onChange: () => void): P
                 {
                   title: 'Remove the plugin (its visuals stop working when the report is opened again)',
                   onclick: () => {
-                    ctx.store.change('report', (rep) => removePlugin(rep, i));
+                    // Undo can run while the dialog is open and take the plugin away.
+                    if (i < (ctx.store.report.plugins ?? []).length) ctx.store.change('report', (rep) => removePlugin(rep, i));
                     render();
                   },
                 },

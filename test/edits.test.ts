@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as edit from '../src/core/edits.js';
 import { visualDef } from '../src/visuals/index.js';
+import { DocStore } from '../src/designer/store.js';
 import type { Report, Visual } from '../src/core/types.js';
 
 const L = (x: number, y: number, w: number, h: number) => ({ x, y, w, h });
@@ -26,6 +27,13 @@ function report(): Report {
 }
 
 const visual = (r: Report, id: string): Visual => edit.findVisual(r, id)!.visual;
+
+/** Throws an EditError with this message, and leaves the report as it was. */
+function refused(r: Report, fn: () => unknown, message: string): void {
+  const before = JSON.stringify(r);
+  assert.throws(fn, (e: unknown) => e instanceof edit.EditError && e.message === message);
+  assert.equal(JSON.stringify(r), before, `nothing changed: ${message}`);
+}
 
 test('new ids and free spots', () => {
   assert.equal(edit.newId('v', ['v1', 'v3']), 'v2');
@@ -64,8 +72,8 @@ test('filters on the report, a page or a visual', () => {
   assert.deepEqual(visual(r, 'v2').filters?.map((x) => x.values), [['North'], ['South']]);
   edit.setFilters(r, { visual: 'v2' }, []);
   assert.deepEqual(visual(r, 'v2').filters, []);
-  edit.addFilter(r, { page: 'nope' }, f);
-  assert.equal(JSON.stringify(r).includes('nope'), false, 'a scope that is not in the report changes nothing');
+  refused(r, () => edit.addFilter(r, { page: 'nope' }, f), 'no page "nope"');
+  refused(r, () => edit.setFilters(r, { visual: 'nope' }, []), 'no visual "nope"');
 });
 
 test('pages: add, rename, hide, duplicate, move, remove', () => {
@@ -86,14 +94,13 @@ test('pages: add, rename, hide, duplicate, move, remove', () => {
   assert.deepEqual(r.pages.map((p) => p.id), ['page1', 'page4', 'page2', 'page3'], 'the copy goes after the page');
   assert.equal(r.pages[1]!.name, 'Overview (copy)');
   assert.deepEqual(r.pages[1]!.visuals.map((v) => v.id), ['v3'], 'its visuals get ids no visual has');
-  assert.equal(edit.duplicatePage(r, 'nope'), undefined);
+  refused(r, () => edit.duplicatePage(r, 'nope'), 'no page "nope"');
 
   edit.movePage(r, 'page3', -10);
   assert.deepEqual(r.pages.map((p) => p.id), ['page3', 'page1', 'page4', 'page2'], 'stops at the first place');
   edit.movePage(r, 'page3', 1);
   assert.deepEqual(r.pages.map((p) => p.id), ['page1', 'page3', 'page4', 'page2']);
-  edit.movePage(r, 'nope', 1);
-  assert.deepEqual(r.pages.map((p) => p.id), ['page1', 'page3', 'page4', 'page2'], 'a page that is not there moves nothing');
+  refused(r, () => edit.movePage(r, 'nope', 1), 'no page "nope"');
   edit.removePage(r, 'page4');
   assert.deepEqual(r.pages.map((p) => p.id), ['page1', 'page3', 'page2']);
 });
@@ -125,18 +132,19 @@ test('visuals on a page: create, add, duplicate, lay out, remove', () => {
   assert.deepEqual(visual(r, 'v3').layout, L(3, 0, 5, 5), 'the first free spot of its size');
   edit.createVisual(r, 'page1', 'card', {}, { at: { x: 11, y: 8 }, columns: 12 });
   assert.deepEqual(visual(r, 'v4').layout, L(9, 8, 3, 2), 'kept on a 12-column page');
-  assert.equal(edit.createVisual(r, 'nope', 'card', {}, { columns: 12 }), undefined);
+  refused(r, () => edit.createVisual(r, 'nope', 'card', {}, { columns: 12 }), 'no page "nope"');
 
   edit.addVisuals(r, 'page2', [{ id: 'v9', type: 'text', layout: L(0, 5, 6, 1), fields: {} }]);
   assert.deepEqual(r.pages[1]!.visuals.map((v) => v.id), ['v2', 'v9']);
 
   assert.equal(edit.duplicateVisual(r, 'page1', 'v1'), 'v5');
   assert.deepEqual(visual(r, 'v5').layout, L(8, 0, 3, 2), 'its size, on the first free spot');
-  assert.equal(edit.duplicateVisual(r, 'page1', 'v2'), undefined, 'only a visual of that page');
+  refused(r, () => edit.duplicateVisual(r, 'page1', 'v2'), 'no visual "v2" on page "page1"');
 
-  edit.setLayouts(r, 'page1', [['v1', L(0, 6, 3, 2)], ['v3', L(3, 6, 5, 5)], ['v2', L(0, 0, 1, 1)]]);
+  refused(r, () => edit.setLayouts(r, 'page1', [['v1', L(0, 6, 3, 2)], ['v2', L(0, 0, 1, 1)]]), 'no visual "v2" on page "page1"');
+  edit.setLayouts(r, 'page1', [['v1', L(0, 6, 3, 2)], ['v3', L(3, 6, 5, 5)]]);
   assert.deepEqual(visual(r, 'v1').layout, L(0, 6, 3, 2));
-  assert.deepEqual(visual(r, 'v2').layout, L(0, 0, 5, 5), 'a visual of another page is not moved');
+  refused(r, () => edit.removeVisuals(r, 'page1', ['v1', 'v2']), 'no visual "v2" on page "page1"');
 
   edit.removeVisuals(r, 'page1', new Set(['v1', 'v3']));
   assert.deepEqual(r.pages[0]!.visuals.map((v) => v.id), ['v4', 'v5']);
@@ -289,4 +297,37 @@ test('measures and calculated columns: added, replaced, removed', () => {
   edit.putEntry(r, 'measures', { table: 'orders', name: 'Orders', sql: 'COUNT(*)' });
   edit.removeEntry(r, 'measures', 'orders', 'Orders', 'all');
   assert.deepEqual(r.model.measures!.map((m) => m.name), ['Revenue']);
+});
+
+test('a target that is not in the report: an EditError, and nothing changes', () => {
+  const r = report();
+  refused(r, () => edit.renamePage(r, 'page9', 'X'), 'no page "page9"');
+  refused(r, () => edit.removePage(r, 'page9'), 'no page "page9"');
+  refused(r, () => edit.setVisualText(r, 'v9', 'title', 'X'), 'no visual "v9"');
+  refused(r, () => edit.changeVisualType(r, 'v9', 'bar', { from: [], to: [] }), 'no visual "v9"');
+  refused(r, () => edit.removeDrillthrough(r, 'page1', 0), 'no drill-through field at 0 on page "page1"');
+  refused(r, () => edit.removeField(r, 'v2', 'columns', 2), 'no field at 2 in columns of visual "v2"');
+  refused(r, () => edit.moveField(r, 'v2', 'columns', 5, 0), 'no field at 5 in columns of visual "v2"');
+  refused(r, () => edit.setField(r, 'v2', 'values', 0, 'orders.amount'), 'no field at 0 in values of visual "v2"');
+  refused(r, () => edit.removePlugin(r, 0), 'no plugin at 0');
+  refused(r, () => edit.updateRelationship(r, 1, { active: false }), 'no relationship at 1');
+  refused(r, () => edit.removeRelationship(r, -1), 'no relationship at -1');
+  refused(r, () => edit.removeHierarchy(r, 'orders', 'Calendar'), 'no hierarchy "Calendar" on orders');
+  refused(r, () => edit.removeEntry(r, 'measures', 'orders', 'Profit'), 'no measure orders.Profit');
+  refused(r, () => edit.removeEntry(r, 'columns', 'orders', 'Year', 'all'), 'no calculated column orders.Year');
+  refused(r, () => edit.putEntry(r, 'measures', { table: 'orders', name: 'Profit', sql: '1' }, { table: 'orders', name: 'Profit' }), 'no measure orders.Profit');
+  assert.equal(edit.hasEntry(r, 'measures', 'orders', 'Revenue'), true);
+  assert.equal(edit.hasEntry(r, 'measures', 'orders', 'Profit'), false);
+});
+
+test('DocStore.change: a change that throws leaves no undo step, and the redo history stays', () => {
+  const store = new DocStore(report(), '');
+  store.change('report', (r) => edit.renameReport(r, 'First'));
+  store.undo();
+  assert.equal(store.canRedo, true);
+  assert.throws(() => store.change('pages', (r) => edit.renamePage(r, 'page9', 'X')), edit.EditError);
+  assert.equal(store.canUndo, false, 'no undo step for the refused change');
+  assert.equal(store.canRedo, true, 'redo still there');
+  assert.equal(store.change('pages', (r) => edit.addPage(r)), 'page3', 'change returns what its function returns');
+  assert.equal(store.canUndo, true);
 });

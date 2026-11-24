@@ -30,10 +30,22 @@ export class DocStore {
     this.redoStack = [];
   }
 
-  /** Apply a change: checkpoint, mutate, notify. Returns what `fn` returns (the id of a page or visual it added). */
+  /**
+   * Apply a change: checkpoint, mutate, notify. Returns what `fn` returns (the id of a page or visual it added). If `fn`
+   * throws (core/edits.ts: its target isn't in the report, and it changed nothing), the checkpoint is dropped and the
+   * redo history kept, and the error goes on to the caller.
+   */
   change<T>(kind: ChangeKind, fn: (r: Report) => T, id?: string): T {
+    const redo = this.redoStack;
     this.checkpoint();
-    const out = fn(this.report);
+    let out: T;
+    try {
+      out = fn(this.report);
+    } catch (e) {
+      this.undoStack.pop();
+      this.redoStack = redo;
+      throw e;
+    }
     this.notify(kind, id);
     return out;
   }

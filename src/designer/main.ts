@@ -472,7 +472,7 @@ class Designer {
   duplicatePage(id: string): void {
     if (!this.store.page(id)) return;
     const copy = this.store.change('pages', (r) => edit.duplicatePage(r, id));
-    this.goToPage(copy!);
+    this.goToPage(copy);
   }
 
   movePage(id: string, d: number): void {
@@ -559,7 +559,9 @@ class Designer {
   deleteSelected(): void {
     const ids = new Set(this.selection);
     if (!ids.size) return;
-    this.store.change('page', (r) => edit.removeVisuals(r, this.page.id, ids), this.page.id);
+    // Undo can take away a selected visual: only those still on the page are removed.
+    const onPage = [...ids].filter((id) => this.page.visuals.some((v) => v.id === id));
+    if (onPage.length) this.store.change('page', (r) => edit.removeVisuals(r, this.page.id, onPage), this.page.id);
     this.select(null);
   }
 
@@ -572,7 +574,7 @@ class Designer {
     if (!def) return;
     const columns = pageLayout(this.session.theme, this.page).columns;
     const id = this.store.change('page', (r) => edit.createVisual(r, this.page.id, type, fields, { at, columns }), this.page.id);
-    this.select(id!);
+    this.select(id);
   }
 
   /** Change a visual's type, moving fields to compatible roles. */
@@ -642,7 +644,7 @@ class Designer {
   duplicateVisual(id: string): void {
     if (!this.page.visuals.some((x) => x.id === id)) return;
     const copy = this.store.change('page', (r) => edit.duplicateVisual(r, this.page.id, id), this.page.id);
-    this.select(copy!);
+    this.select(copy);
   }
 
   /** Move / resize handles and drop targets on each visual frame (edit mode). */
@@ -876,7 +878,8 @@ class Designer {
         e.preventDefault();
         const i = this.modelSel.index;
         this.selectModel(null);
-        this.store.change('model', (r) => edit.removeRelationship(r, i));
+        // Undo can take away the selected relationship.
+        if (i < (this.store.report.model.relationships ?? []).length) this.store.change('model', (r) => edit.removeRelationship(r, i));
       } else if (e.key === 'Escape' && this.mode === 'model' && !this.preview) this.selectModel(null);
       else if ((e.key === 'Delete' || e.key === 'Backspace') && this.selected) {
         e.preventDefault();

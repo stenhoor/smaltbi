@@ -27,7 +27,7 @@ bundled: it is loaded at run time from `vendor/smaltdb/` and runs in a Web Worke
 | `core/model.ts` | `Model`: the schema (from introspection) overlaid with the spec. Resolves field references to SQL expressions, expands `[Measure]` / `[Column]` references, finds join paths. |
 | `core/compile.ts` | `compileQuery()`: dimensions + measures + filters → one SQL statement. `wrapCustomSql()` applies filters to custom SQL. |
 | `core/datetable.ts`, `core/timeintel.ts` | The generated date table, and time-intelligence measures compiled over it. |
-| `core/edits.ts` | Changes to a report: adding, changing and removing pages, visuals, fields, filters, measures, relationships and the rest. The designer makes every change through these functions, inside `DocStore.change`, so the agent's actions can make them through the same code. |
+| `core/edits.ts` | Changes to a report: adding, changing and removing pages, visuals, fields, filters, measures, relationships and the rest. The designer makes every change through these functions, inside `DocStore.change`, so the agent's actions can make them through the same code. A change whose target isn't in the report throws an `EditError` and changes nothing, and `DocStore.change` keeps no undo step for it. |
 | `core/format.ts` | Display formats, re-exported from `smaltkit/format` (presets, Intl options, small patterns, dates without time-zone shifts). |
 | `smaltkit/manifest` | Data steps (the environment manifest format, shared with smaltui and smaltnb): import, link, SQL, inline rows, connections. |
 | `data/introspect.ts` | Tables, columns and BI types (dates are detected from ISO strings), keys, foreign keys. |

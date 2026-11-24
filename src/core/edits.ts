@@ -4,12 +4,21 @@
 // the report in place. The designer calls them inside `DocStore.change`, which records the undo step and refreshes what
 // depends on the kind of change. They use neither the DOM nor the engine.
 //
-// A function whose target isn't in the report changes nothing. The designer gives a new page or visual an id no other
-// page or visual of the report has (`newId`), and finds a visual by the first with its id (`DocStore.visual`); these
-// functions find one the same way.
+// A function whose target isn't in the report (a page, a visual, a relationship, a measure…) throws an `EditError`
+// and changes nothing (the owner, 2026-11-24); `DocStore.change` then records no undo step. Tables aren't listed in the
+// report (they come from the data), so a function that names a table doesn't check it. The designer gives a new page or
+// visual an id no other page or visual of the report has (`newId`), and finds a visual by the first with its id
+// (`DocStore.visual`); these functions find one the same way.
 import type { Aggregation, CalcColumn, ConditionalRule, DataSpec, FieldRef, Filter, Hierarchy, Measure, Page, PageSize, Parameter, PluginRef, Relationship, Report, TableSettings, Theme, Visual } from './types.js';
 
 // ---------------------------------------------------------------- ids, places and lookups
+
+/** A change whose target isn't in the report: `no page "page7"`. */
+export class EditError extends Error {}
+
+const missing = (what: string): never => {
+  throw new EditError(`no ${what}`);
+};
 
 /** The first `prefix` followed by a number that isn't in `taken`. */
 export function newId(prefix: string, taken: Iterable<string>): string {
@@ -43,7 +52,10 @@ export function visualIds(report: Report): string[] {
   return report.pages.flatMap((p) => p.visuals.map((v) => v.id));
 }
 
-const visualOf = (report: Report, id: string): Visual | undefined => findVisual(report, id)?.visual;
+const pageOf = (report: Report, id: string): Page => findPage(report, id) ?? missing(`page "${id}"`);
+const visualOf = (report: Report, id: string): Visual => findVisual(report, id)?.visual ?? missing(`visual "${id}"`);
+const visualOn = (page: Page, id: string): Visual => page.visuals.find((v) => v.id === id) ?? missing(`visual "${id}" on page "${page.id}"`);
+const itemAt = <T>(list: readonly T[] | undefined, index: number, what: string): T => (Number.isInteger(index) && index >= 0 && index < (list?.length ?? 0) ? list![index]! : missing(what));
 
 // ---------------------------------------------------------------- the report
 
@@ -77,6 +89,7 @@ export function addPlugin(report: Report, ref: PluginRef): void {
 
 /** Removes the plugin at `index` of the report's plugins. */
 export function removePlugin(report: Report, index: number): void {
+  itemAt(report.plugins, index, `plugin at ${index}`);
   report.plugins = (report.plugins ?? []).filter((_, j) => j !== index);
   if (!report.plugins.length) delete report.plugins;
 }
@@ -86,21 +99,20 @@ export function removePlugin(report: Report, index: number): void {
 /** Where a filter applies: every page (`'report'`), one page, or one visual. */
 export type FilterScope = 'report' | { page: string } | { visual: string };
 
-function filtersAt(report: Report, scope: FilterScope): { filters?: Filter[] } | undefined {
+function filtersAt(report: Report, scope: FilterScope): { filters?: Filter[] } {
   if (scope === 'report') return report;
-  return 'page' in scope ? findPage(report, scope.page) : visualOf(report, scope.visual);
+  return 'page' in scope ? pageOf(report, scope.page) : visualOf(report, scope.visual);
 }
 
 /** Replaces the filters of the report, a page or a visual. */
 export function setFilters(report: Report, scope: FilterScope, filters: Filter[]): void {
-  const at = filtersAt(report, scope);
-  if (at) at.filters = filters;
+  filtersAt(report, scope).filters = filters;
 }
 
 /** Adds a filter after the others of the report, a page or a visual. */
 export function addFilter(report: Report, scope: FilterScope, filter: Filter): void {
-  const at = filtersAt(report, scope);
-  if (at) at.filters = [...(at.filters ?? []), filter];
+  const holder = filtersAt(report, scope);
+  holder.filters = [...(holder.filters ?? []), filter];
 }
 
 // ---------------------------------------------------------------- pages
@@ -114,20 +126,18 @@ export function addPage(report: Report): string {
 
 /** Renames a page; an empty name keeps the page's name. */
 export function renamePage(report: Report, id: string, name: string): void {
-  const p = findPage(report, id);
-  if (p) p.name = name || p.name;
+  const p = pageOf(report, id);
+  p.name = name || p.name;
 }
 
 /** Hides a page in the viewer, or shows it again. */
 export function setPageHidden(report: Report, id: string, hidden: boolean): void {
-  const p = findPage(report, id);
-  if (p) p.hidden = hidden || undefined;
+  pageOf(report, id).hidden = hidden || undefined;
 }
 
 /** Copies a page after it, named with " (copy)", its visuals with new ids. Returns the copy's id. */
-export function duplicatePage(report: Report, id: string): string | undefined {
-  const p = findPage(report, id);
-  if (!p) return undefined;
+export function duplicatePage(report: Report, id: string): string {
+  const p = pageOf(report, id);
   const copy = structuredClone(p);
   copy.id = newId('page', report.pages.map((x) => x.id));
   copy.name = p.name + ' (copy)';
@@ -143,46 +153,46 @@ export function duplicatePage(report: Report, id: string): string | undefined {
 /** Moves a page `by` places (negative: to the left), stopping at either end. */
 export function movePage(report: Report, id: string, by: number): void {
   const i = report.pages.findIndex((p) => p.id === id);
-  if (i < 0) return;
+  if (i < 0) missing(`page "${id}"`);
   const [p] = report.pages.splice(i, 1);
   report.pages.splice(Math.max(0, Math.min(report.pages.length, i + by)), 0, p!);
 }
 
 /** Removes a page. */
 export function removePage(report: Report, id: string): void {
+  pageOf(report, id);
   report.pages = report.pages.filter((p) => p.id !== id);
 }
 
 /** Adds a drill-through field to a page (a field already there isn't added twice). */
 export function addDrillthrough(report: Report, pageId: string, field: string): void {
-  const p = findPage(report, pageId);
-  if (p) p.drillthrough = [...new Set([...(p.drillthrough ?? []), field])];
+  const p = pageOf(report, pageId);
+  p.drillthrough = [...new Set([...(p.drillthrough ?? []), field])];
 }
 
 /** Removes the drill-through field at `index` of a page's. */
 export function removeDrillthrough(report: Report, pageId: string, index: number): void {
-  const p = findPage(report, pageId);
-  if (p) p.drillthrough = (p.drillthrough ?? []).filter((_, j) => j !== index);
+  const p = pageOf(report, pageId);
+  itemAt(p.drillthrough, index, `drill-through field at ${index} on page "${pageId}"`);
+  p.drillthrough = (p.drillthrough ?? []).filter((_, j) => j !== index);
 }
 
 /** A page's fixed size, or none: responsive. */
 export function setPageSize(report: Report, pageId: string, size: PageSize | undefined): void {
-  const p = findPage(report, pageId);
-  if (!p) return;
+  const p = pageOf(report, pageId);
   if (size) p.size = size;
   else delete p.size;
 }
 
 /** The rows of a page with a fixed size. */
 export function setPageRows(report: Report, pageId: string, rows: number): void {
-  const p = findPage(report, pageId);
-  if (p) p.layout = { ...(p.layout ?? {}), rows };
+  const p = pageOf(report, pageId);
+  p.layout = { ...(p.layout ?? {}), rows };
 }
 
 /** The order of a page's visuals on phones (ids), or none: reading order. */
 export function setPhoneOrder(report: Report, pageId: string, order: string[] | undefined): void {
-  const p = findPage(report, pageId);
-  if (!p) return;
+  const p = pageOf(report, pageId);
   if (order) p.phoneOrder = order;
   else delete p.phoneOrder;
 }
@@ -198,9 +208,8 @@ export function newVisualSize(type: string): { w: number; h: number } {
  * Adds a visual of a type to a page, with these fields: at `at`, else at the first free spot of a page of `columns`
  * columns. Returns its id.
  */
-export function createVisual(report: Report, pageId: string, type: string, fields: Record<string, FieldRef[]>, place: { at?: { x: number; y: number }; columns: number }): string | undefined {
-  const page = findPage(report, pageId);
-  if (!page) return undefined;
+export function createVisual(report: Report, pageId: string, type: string, fields: Record<string, FieldRef[]>, place: { at?: { x: number; y: number }; columns: number }): string {
+  const page = pageOf(report, pageId);
   const size = newVisualSize(type);
   const spot = place.at ?? freeSpot(page, size.w, size.h, place.columns);
   const v: Visual = { id: newId('v', visualIds(report)), type, layout: { x: Math.min(spot.x, 12 - size.w), y: spot.y, ...size }, fields };
@@ -210,22 +219,21 @@ export function createVisual(report: Report, pageId: string, type: string, field
 
 /** Adds visuals, as they are, to a page (pasted ones: `placePasted` gives them ids and places). */
 export function addVisuals(report: Report, pageId: string, visuals: Visual[]): void {
-  findPage(report, pageId)?.visuals.push(...visuals);
+  pageOf(report, pageId).visuals.push(...visuals);
 }
 
-/** Removes visuals from a page. */
+/** Removes visuals from a page; each must be on it. */
 export function removeVisuals(report: Report, pageId: string, ids: Iterable<string>): void {
-  const page = findPage(report, pageId);
-  if (!page) return;
+  const page = pageOf(report, pageId);
   const drop = new Set(ids);
+  for (const id of drop) visualOn(page, id);
   page.visuals = page.visuals.filter((v) => !drop.has(v.id));
 }
 
 /** Copies a visual of a page onto the page's first free spot of its size. Returns the copy's id. */
-export function duplicateVisual(report: Report, pageId: string, id: string): string | undefined {
-  const page = findPage(report, pageId);
-  const v = page?.visuals.find((x) => x.id === id);
-  if (!page || !v) return undefined;
+export function duplicateVisual(report: Report, pageId: string, id: string): string {
+  const page = pageOf(report, pageId);
+  const v = visualOn(page, id);
   const copy = structuredClone(v);
   copy.id = newId('v', visualIds(report));
   copy.layout = { ...copy.layout, ...freeSpot(page, v.layout.w, v.layout.h) };
@@ -233,14 +241,11 @@ export function duplicateVisual(report: Report, pageId: string, id: string): str
   return copy.id;
 }
 
-/** New places and sizes for visuals of a page, by id (moved, resized, aligned or nudged together). */
+/** New places and sizes for visuals of a page, by id (moved, resized, aligned or nudged together); each must be on it. */
 export function setLayouts(report: Report, pageId: string, layouts: Iterable<readonly [string, Visual['layout']]>): void {
-  const page = findPage(report, pageId);
-  if (!page) return;
-  for (const [id, layout] of layouts) {
-    const v = page.visuals.find((x) => x.id === id);
-    if (v) v.layout = layout;
-  }
+  const page = pageOf(report, pageId);
+  const found = [...layouts].map(([id, layout]) => [visualOn(page, id), layout] as const);
+  for (const [v, layout] of found) v.layout = layout;
 }
 
 // ---------------------------------------------------------------- one visual
@@ -248,13 +253,13 @@ export function setLayouts(report: Report, pageId: string, layouts: Iterable<rea
 /** A visual's place and size. */
 export function setVisualLayout(report: Report, id: string, layout: Visual['layout']): void {
   const v = visualOf(report, id);
-  if (v) v.layout = layout;
+  v.layout = layout;
 }
 
 /** A visual's title or subtitle; empty takes it off. */
 export function setVisualText(report: Report, id: string, which: 'title' | 'subtitle', text: string): void {
   const v = visualOf(report, id);
-  if (v) v[which] = text || undefined;
+  v[which] = text || undefined;
 }
 
 /**
@@ -263,13 +268,12 @@ export function setVisualText(report: Report, id: string, which: 'title' | 'subt
  */
 export function setVisualOption(report: Report, id: string, key: string, value: unknown): void {
   const v = visualOf(report, id);
-  if (v) v.options = { ...(v.options ?? {}), [key]: value };
+  v.options = { ...(v.options ?? {}), [key]: value };
 }
 
 /** Takes one of a visual's options off, so its default applies. */
 export function clearVisualOption(report: Report, id: string, key: string): void {
   const v = visualOf(report, id);
-  if (!v) return;
   const o = { ...(v.options ?? {}) };
   delete o[key];
   v.options = o;
@@ -278,31 +282,30 @@ export function clearVisualOption(report: Report, id: string, key: string): void
 /** The most rows a visual's query returns; 0 or none: the visual type's own limit. */
 export function setVisualLimit(report: Report, id: string, limit: number | undefined): void {
   const v = visualOf(report, id);
-  if (v) v.limit = limit || undefined;
+  v.limit = limit || undefined;
 }
 
 /** Whether a visual's selections filter the others, or the others' filter it. */
 export function setInteraction(report: Report, id: string, key: 'filterOthers' | 'filteredByOthers', on: boolean): void {
   const v = visualOf(report, id);
-  if (v) v.interactions = { ...(v.interactions ?? {}), [key]: on };
+  v.interactions = { ...(v.interactions ?? {}), [key]: on };
 }
 
 /** Overrides one of the theme's tokens for a visual (`surface`: its background). */
 export function setVisualStyle(report: Report, id: string, key: string, value: string | number): void {
   const v = visualOf(report, id);
-  if (v) v.style = { ...(v.style ?? {}), [key]: value };
+  v.style = { ...(v.style ?? {}), [key]: value };
 }
 
 /** Back to the theme's style for a visual. */
 export function resetVisualStyle(report: Report, id: string): void {
   const v = visualOf(report, id);
-  if (v) delete v.style;
+  delete v.style;
 }
 
 /** How a visual shows on phones: hidden there, or its own height in rows. What isn't set is taken off. */
 export function setVisualPhone(report: Report, id: string, next: Visual['phone']): void {
   const v = visualOf(report, id);
-  if (!v) return;
   const clean = { ...(v.phone ?? {}), ...next };
   if (!clean.hidden) delete clean.hidden;
   if (!clean.h) delete clean.h;
@@ -313,7 +316,6 @@ export function setVisualPhone(report: Report, id: string, next: Visual['phone']
 /** A visual's custom SQL, or none: the generated query. */
 export function setCustomSql(report: Report, id: string, sql: string | undefined): void {
   const v = visualOf(report, id);
-  if (!v) return;
   if (sql === undefined) delete v.sql;
   else v.sql = sql;
 }
@@ -321,7 +323,6 @@ export function setCustomSql(report: Report, id: string, sql: string | undefined
 /** Repeats a visual for each value of a field, or stops repeating it. */
 export function setRepeat(report: Report, id: string, repeat: Visual['repeat']): void {
   const v = visualOf(report, id);
-  if (!v) return;
   if (repeat) v.repeat = repeat;
   else delete v.repeat;
 }
@@ -329,7 +330,7 @@ export function setRepeat(report: Report, id: string, repeat: Visual['repeat']):
 /** A visual's conditional formatting rules, in order (the first that matches applies). */
 export function setConditional(report: Report, id: string, rules: ConditionalRule[]): void {
   const v = visualOf(report, id);
-  if (v) v.conditional = rules.length ? rules : undefined;
+  v.conditional = rules.length ? rules : undefined;
 }
 
 // ---------------------------------------------------------------- a visual's fields
@@ -348,7 +349,6 @@ export interface RoleShape {
  */
 export function changeVisualType(report: Report, id: string, type: string, roles: { from: readonly RoleShape[]; to: readonly RoleShape[] }): void {
   const v = visualOf(report, id);
-  if (!v) return;
   const dims: FieldRef[] = [];
   const measures: FieldRef[] = [];
   for (const r of roles.from) for (const f of v.fields[r.name] ?? []) (r.kind === 'dimension' ? dims : measures).push(f);
@@ -370,12 +370,12 @@ export function changeVisualType(report: Report, id: string, type: string, roles
 /** Adds a field at the end of one of a visual's roles. */
 export function addField(report: Report, id: string, role: string, field: FieldRef): void {
   const v = visualOf(report, id);
-  if (v) v.fields = { ...v.fields, [role]: [...(v.fields[role] ?? []), field] };
+  v.fields = { ...v.fields, [role]: [...(v.fields[role] ?? []), field] };
 }
 
-function editRole(report: Report, id: string, role: string, fn: (list: FieldRef[]) => void): void {
+function editRole(report: Report, id: string, role: string, index: number, fn: (list: FieldRef[]) => void): void {
   const v = visualOf(report, id);
-  if (!v) return;
+  itemAt(v.fields[role], index, `field at ${index} in ${role} of visual "${id}"`);
   const list = [...(v.fields[role] ?? [])];
   fn(list);
   v.fields = { ...v.fields, [role]: list };
@@ -383,17 +383,17 @@ function editRole(report: Report, id: string, role: string, fn: (list: FieldRef[
 
 /** Replaces the field at `index` of a visual's role (with another aggregation or label: {@link withAgg}, {@link withLabel}). */
 export function setField(report: Report, id: string, role: string, index: number, field: FieldRef): void {
-  editRole(report, id, role, (l) => (l[index] = field));
+  editRole(report, id, role, index, (l) => (l[index] = field));
 }
 
 /** Moves the field at `from` of a visual's role to `to`. */
 export function moveField(report: Report, id: string, role: string, from: number, to: number): void {
-  editRole(report, id, role, (l) => l.splice(to, 0, l.splice(from, 1)[0]!));
+  editRole(report, id, role, from, (l) => l.splice(to, 0, l.splice(from, 1)[0]!));
 }
 
 /** Removes the field at `index` of a visual's role. */
 export function removeField(report: Report, id: string, role: string, index: number): void {
-  editRole(report, id, role, (l) => l.splice(index, 1));
+  editRole(report, id, role, index, (l) => l.splice(index, 1));
 }
 
 /** A field with an aggregation (a column in a measure role). */
@@ -423,7 +423,7 @@ export interface MovedField {
  */
 export function dropFields(report: Report, id: string, role: RoleShape, at: number, refs: FieldRef[], move?: MovedField | null): void {
   const v = visualOf(report, id);
-  if (!v) return;
+  if (move && move.visual === v.id) itemAt(v.fields[move.role], move.i, `field at ${move.i} in ${move.role} of visual "${id}"`);
   const fields = { ...v.fields };
   let incoming: FieldRef[] = refs;
   if (move && move.visual === v.id) {
@@ -465,6 +465,7 @@ export function addHierarchy(report: Report, hierarchy: Hierarchy): void {
 
 /** Removes a table's hierarchies with this name. */
 export function removeHierarchy(report: Report, table: string, name: string): void {
+  if (!(report.model.hierarchies ?? []).some((y) => y.table === table && y.name === name)) missing(`hierarchy "${name}" on ${table}`);
   report.model.hierarchies = (report.model.hierarchies ?? []).filter((y) => !(y.table === table && y.name === name));
 }
 
@@ -475,11 +476,13 @@ export function addRelationships(report: Report, relationships: Relationship[]):
 
 /** Changes the relationship at `index` of the model's. */
 export function updateRelationship(report: Report, index: number, patch: Partial<Relationship>): void {
+  itemAt(report.model.relationships, index, `relationship at ${index}`);
   report.model.relationships = (report.model.relationships ?? []).map((x, i) => (i === index ? { ...x, ...patch } : x));
 }
 
 /** Removes the relationship at `index` of the model's. */
 export function removeRelationship(report: Report, index: number): void {
+  itemAt(report.model.relationships, index, `relationship at ${index}`);
   report.model.relationships = (report.model.relationships ?? []).filter((_, i) => i !== index);
 }
 
@@ -493,6 +496,13 @@ export function resetDiagram(report: Report): void {
   delete report.model.layout;
 }
 
+const entryName = (list: 'measures' | 'columns', table: string, name: string) => `${list === 'measures' ? 'measure' : 'calculated column'} ${table}.${name}`;
+
+/** True if the model has a measure or calculated column with this table and name. */
+export function hasEntry(report: Report, list: 'measures' | 'columns', table: string, name: string): boolean {
+  return ((report.model[list] ?? []) as (Measure | CalcColumn)[]).some((x) => x.table === table && x.name === name);
+}
+
 /**
  * Adds a measure or a calculated column, or replaces the first with the table and name of `replacing`
  * (one being edited).
@@ -500,6 +510,7 @@ export function resetDiagram(report: Report): void {
 export function putEntry(report: Report, list: 'measures' | 'columns', entry: Measure | CalcColumn, replacing?: { table: string; name: string }): void {
   const l = [...((report.model[list] ?? []) as (Measure | CalcColumn)[])];
   const i = replacing ? l.findIndex((x) => x.table === replacing.table && x.name === replacing.name) : -1;
+  if (replacing && i < 0) missing(entryName(list, replacing.table, replacing.name));
   if (i >= 0) l[i] = entry;
   else l.push(entry);
   (report.model[list] as (Measure | CalcColumn)[]) = l;
@@ -513,6 +524,7 @@ export function removeEntry(report: Report, list: 'measures' | 'columns', table:
   const l = (report.model[list] ?? []) as (Measure | CalcColumn)[];
   const matches = (x: Measure | CalcColumn) => x.table === table && x.name === name;
   const first = l.findIndex(matches);
+  if (first < 0) missing(entryName(list, table, name));
   (report.model[list] as (Measure | CalcColumn)[]) = which === 'all' ? l.filter((x) => !matches(x)) : l.filter((_, j) => j !== first);
 }
 
