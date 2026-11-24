@@ -5,6 +5,7 @@ import * as edit from '../src/core/edits.js';
 import { visualDef } from '../src/visuals/index.js';
 import { DocStore } from '../src/designer/store.js';
 import type { Report, Visual } from '../src/core/types.js';
+import type { SchemaInfo } from '../src/core/model.js';
 
 const L = (x: number, y: number, w: number, h: number) => ({ x, y, w, h });
 
@@ -27,6 +28,14 @@ function report(): Report {
 }
 
 const visual = (r: Report, id: string): Visual => edit.findVisual(r, id)!.visual;
+
+/** The data's tables, as introspection gives them. */
+const schema: SchemaInfo = {
+  tables: [
+    { name: 'orders', kind: 'table', columns: [{ name: 'id', type: 'number', pk: true }, { name: 'amount', type: 'number' }, { name: 'date', type: 'date' }] },
+    { name: 'customers', kind: 'table', columns: [{ name: 'id', type: 'number', pk: true }, { name: 'name', type: 'text' }] },
+  ],
+};
 
 /** Throws an EditError with this message, and leaves the report as it was. */
 function refused(r: Report, fn: () => unknown, message: string): void {
@@ -288,15 +297,38 @@ test('measures and calculated columns: added, replaced, removed', () => {
   edit.putEntry(r, 'measures', { table: 'orders', name: 'Orders', sql: 'COUNT(*)' });
   edit.putEntry(r, 'measures', { table: 'orders', name: 'Revenue', sql: 'SUM(orders.net)' }, { table: 'orders', name: 'Revenue' });
   assert.deepEqual(r.model.measures!.map((m) => [m.name, m.sql]), [['Revenue', 'SUM(orders.net)'], ['Orders', 'COUNT(*)']]);
-  edit.putEntry(r, 'columns', { table: 'orders', name: 'Year', sql: "strftime('%Y', orders.date)", type: 'text' });
+  edit.putEntry(r, 'columns', { table: 'orders', name: 'Year', sql: "strftime('%Y', orders.date)", type: 'text' }, undefined, schema);
   assert.equal(r.model.columns!.length, 1);
 
-  // Two measures with one table and name: the measure dialog removes the first, the quick-measure dialog every one.
-  edit.putEntry(r, 'measures', { table: 'orders', name: 'Orders', sql: 'COUNT(orders.id)' });
-  edit.removeEntry(r, 'measures', 'orders', 'Orders');
+  // A name another measure has, in any table and whatever its case, is refused; the one being edited keeps its own.
+  assert.equal(edit.measureNameTaken(r, 'orders'), true);
+  assert.equal(edit.measureNameTaken(r, 'Orders', { table: 'orders', name: 'Orders' }), false);
+  refused(r, () => edit.putEntry(r, 'measures', { table: 'customers', name: 'REVENUE', sql: 'COUNT(*)' }), 'a measure named REVENUE already exists');
+  refused(r, () => edit.putEntry(r, 'measures', { table: 'orders', name: 'Revenue', sql: '1' }, { table: 'orders', name: 'Orders' }), 'a measure named Revenue already exists');
+  edit.putEntry(r, 'measures', { table: 'orders', name: 'Order count', sql: 'COUNT(*)' }, { table: 'orders', name: 'Orders' });
+  assert.deepEqual(r.model.measures!.map((m) => m.name), ['Revenue', 'Order count']);
+  // A calculated column can't have a name its table already has, whatever its case: a column of the data, another
+  // calculated column, a measure or a hierarchy. Another table's names don't count; the column being edited keeps its own.
+  r.model.hierarchies = [{ table: 'orders', name: 'Calendar', levels: ['Year', 'date'] }];
+  const column = (name: string) => ({ table: 'orders', name, sql: 'orders.amount * 2', type: 'number' as const });
+  refused(r, () => edit.putEntry(r, 'columns', column('AMOUNT'), undefined, schema), 'orders already has a field named AMOUNT');
+  refused(r, () => edit.putEntry(r, 'columns', column('year'), undefined, schema), 'orders already has a field named year');
+  refused(r, () => edit.putEntry(r, 'columns', column('revenue'), undefined, schema), 'orders already has a field named revenue');
+  refused(r, () => edit.putEntry(r, 'columns', column('calendar'), undefined, schema), 'orders already has a field named calendar');
+  assert.equal(edit.columnNameTaken(r, schema, 'customers', 'amount'), false);
+  assert.equal(edit.columnNameTaken(r, schema, 'orders', 'Year', { table: 'orders', name: 'Year' }), false);
+  edit.putEntry(r, 'columns', { table: 'orders', name: 'Year', sql: "substr(orders.date, 1, 4)", type: 'text' }, { table: 'orders', name: 'Year' }, schema);
+  edit.putEntry(r, 'columns', column('Double amount'), undefined, schema);
+  assert.deepEqual(r.model.columns!.map((c) => [c.name, c.sql]), [['Year', 'substr(orders.date, 1, 4)'], ['Double amount', 'orders.amount * 2']]);
+  assert.throws(() => edit.putEntry(r, 'columns', column('Triple'), undefined), /needs the data's schema/);
+
+  // Reports from before this rule can have two measures with one table and name: the measure dialog removes the first,
+  // the quick-measure dialog every one.
+  r.model.measures!.push({ table: 'orders', name: 'Order count', sql: 'COUNT(orders.id)' });
+  edit.removeEntry(r, 'measures', 'orders', 'Order count');
   assert.deepEqual(r.model.measures!.map((m) => m.sql), ['SUM(orders.net)', 'COUNT(orders.id)']);
-  edit.putEntry(r, 'measures', { table: 'orders', name: 'Orders', sql: 'COUNT(*)' });
-  edit.removeEntry(r, 'measures', 'orders', 'Orders', 'all');
+  r.model.measures!.push({ table: 'orders', name: 'Order count', sql: 'COUNT(*)' });
+  edit.removeEntry(r, 'measures', 'orders', 'Order count', 'all');
   assert.deepEqual(r.model.measures!.map((m) => m.name), ['Revenue']);
 });
 

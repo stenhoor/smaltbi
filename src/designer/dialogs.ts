@@ -210,6 +210,18 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
       result.textContent = 'Enter a name and an expression.';
       return false;
     }
+    // A measure's name is the model's: another measure, in any table, can't have it (the quick-measure dialog's rule).
+    if (kind === 'measure' && edit.measureNameTaken(ctx.store.report, m.name, existing)) {
+      result.className = 'sbd-test sbd-bad';
+      result.textContent = `There is already a measure named ${m.name}.`;
+      return false;
+    }
+    // A calculated column's name can't be one its table already has: a column, a measure or a hierarchy.
+    if (kind === 'column' && edit.columnNameTaken(ctx.store.report, ctx.session.schema, m.table, m.name, existing)) {
+      result.className = 'sbd-test sbd-bad';
+      result.textContent = `${m.table} already has a field named ${m.name}.`;
+      return false;
+    }
     const others = list.filter((x) => x !== existing);
     const spec = { ...model, [listKey]: [...others, m] };
     try {
@@ -258,7 +270,7 @@ export async function measureDialog(ctx: DialogContext, table: string, name?: st
       if (!(await test())) return undefined;
       const m = build();
       // Undo can run while the dialog is open and take the entry away: then it is added again.
-      ctx.store.change('model', (r) => edit.putEntry(r, listKey, m, existing && edit.hasEntry(r, listKey, existing.table, existing.name) ? existing : undefined));
+      ctx.store.change('model', (r) => edit.putEntry(r, listKey, m, existing && edit.hasEntry(r, listKey, existing.table, existing.name) ? existing : undefined, ctx.session.schema));
       return true;
     },
   });
